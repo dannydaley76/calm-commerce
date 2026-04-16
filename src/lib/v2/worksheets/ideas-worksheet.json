@@ -1,0 +1,62 @@
+{
+  "worksheet": {
+    "id": "ideas-worksheet",
+    "chapterId": "chapter-3",
+    "title": "Product Ideas Worksheet",
+    "description": "Score and shortlist your product ideas using real evidence before committing to one.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["product_ideas"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field-group",
+      "key": "product_ideas",
+      "label": "Product Idea",
+      "repeatMin": 2,
+      "repeatMax": 3,
+      "summaryFieldKey": "idea_description",
+      "fields": [
+        {
+          "type": "field",
+          "id": "pi-1",
+          "key": "idea_description",
+          "label": "Idea description",
+          "fieldType": "text",
+          "required": true,
+          "helpText": "Describe the product in one sentence. Be specific — 'reusable water bottle' is too broad, 'insulated water bottle for trail runners' is useful."
+        },
+        {
+          "type": "field",
+          "id": "pi-2",
+          "key": "demand_evidence",
+          "label": "Demand evidence",
+          "fieldType": "textarea",
+          "required": true,
+          "helpText": "What did you find that suggests people are already looking for this? Bestseller ranks, search volumes, review counts, community posts — any real signal counts."
+        },
+        {
+          "type": "field",
+          "id": "pi-3",
+          "key": "competition_notes",
+          "label": "Competition notes",
+          "fieldType": "textarea",
+          "required": false,
+          "helpText": "How many sellers are already doing this well? Is there a gap you could fill, or is the market saturated?"
+        },
+        {
+          "type": "field",
+          "id": "pi-4",
+          "key": "seasonality",
+          "label": "Seasonality",
+          "fieldType": "single-select",
+          "required": false,
+          "helpText": "Does demand for this product peak at certain times of year, or is it consistent?",
+          "options": ["Year-round", "Seasonal", "Unknown"]
+        }
+      ]
+    }
+  ]
+}

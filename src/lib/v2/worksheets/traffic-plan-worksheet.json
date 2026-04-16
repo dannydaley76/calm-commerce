@@ -1,0 +1,51 @@
+{
+  "worksheet": {
+    "id": "traffic-plan-worksheet",
+    "chapterId": "chapter-11",
+    "title": "Traffic Plan Worksheet",
+    "description": "Plan your free traffic strategy. Where will you show up, how often, and what will you do first?",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["free_channels_chosen", "first_week_actions"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "tp-1",
+      "key": "free_channels_chosen",
+      "label": "Free channels chosen",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "Which specific channels will you use? (e.g. Reddit r/dogs, Facebook group 'First-time dog owners UK', Instagram). Include the platform and the specific community or account."
+    },
+    {
+      "type": "field",
+      "id": "tp-2",
+      "key": "community_plan",
+      "label": "Community participation plan",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "For each community: how will you become a genuine member before mentioning your product? What will you contribute?"
+    },
+    {
+      "type": "field",
+      "id": "tp-3",
+      "key": "posting_frequency",
+      "label": "Posting frequency",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "How many times per week will you post on social media? Be realistic based on your time budget from Chapter 4."
+    },
+    {
+      "type": "field",
+      "id": "tp-4",
+      "key": "first_week_actions",
+      "label": "First week actions",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "Specifically: what will you do this week? Join which communities, post on which platforms, reach out to which people in your network?"
+    }
+  ]
+}

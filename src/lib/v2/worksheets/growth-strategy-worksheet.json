@@ -1,0 +1,78 @@
+{
+  "worksheet": {
+    "id": "growth-strategy-worksheet",
+    "chapterId": "chapter-16",
+    "title": "Growth Strategy Worksheet",
+    "description": "Define your growth approach and update your Founder Rules for the next phase.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["growth_strategy"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "gs-1",
+      "key": "growth_strategy",
+      "label": "Growth strategy",
+      "fieldType": "single-select",
+      "required": true,
+      "helpText": "What is your primary growth move right now?",
+      "options": [
+        "Scale ad spend gradually",
+        "Go deeper on the current product",
+        "Add a second product for the same customer",
+        "Add a product for a new customer",
+        "Open a second store",
+        "Improve systems and retention first"
+      ]
+    },
+    {
+      "type": "field",
+      "id": "gs-2",
+      "key": "reason",
+      "label": "Why this approach",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What evidence or reasoning led you to this choice? Be honest about constraints."
+    },
+    {
+      "type": "field",
+      "id": "gs-3",
+      "key": "second_store_considerations",
+      "label": "Second store considerations",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "If considering a second store: is your first store operationally stable? Can it run a week without daily involvement? What market have you identified?"
+    },
+    {
+      "type": "field",
+      "id": "gs-4",
+      "key": "new_time_budget",
+      "label": "Updated time budget",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "How many hours per week are you committing now? Has this changed from Chapter 4?"
+    },
+    {
+      "type": "field",
+      "id": "gs-5",
+      "key": "new_money_cap",
+      "label": "Updated monthly cap",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "Your new monthly spending limit. If the business is generating revenue, does this now come from business earnings rather than personal savings?"
+    },
+    {
+      "type": "field",
+      "id": "gs-6",
+      "key": "updated_decision_thresholds",
+      "label": "Updated decision thresholds",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Recalibrate your kill, continue, and escalation criteria for this more mature stage of the business."
+    }
+  ]
+}

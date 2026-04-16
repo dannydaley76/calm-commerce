@@ -1,0 +1,61 @@
+{
+  "worksheet": {
+    "id": "customer-profile-worksheet",
+    "chapterId": "chapter-7",
+    "title": "Customer Profile Worksheet",
+    "description": "Define the specific person you are selling to. The more precise this is, the easier everything else becomes.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["customer_description", "core_problem"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "cp-1",
+      "key": "customer_description",
+      "label": "Niche customer description",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "Who is this person specifically? Include their situation, what they are trying to do, what words they use, and why generic products have not satisfied them."
+    },
+    {
+      "type": "field",
+      "id": "cp-2",
+      "key": "core_problem",
+      "label": "Core problem you solve",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "In your customer's own words: what frustration or unmet need does your product address?"
+    },
+    {
+      "type": "field",
+      "id": "cp-3",
+      "key": "where_they_gather",
+      "label": "Where they gather online",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "List 3–5 specific communities, subreddits, groups, or channels where your customer spends time."
+    },
+    {
+      "type": "field",
+      "id": "cp-4",
+      "key": "what_they_value_most",
+      "label": "What they value most",
+      "fieldType": "single-select",
+      "required": false,
+      "helpText": "What is the primary driver behind your customer's buying decision?",
+      "options": ["Price — best deal", "Convenience — easiest solution", "Quality and durability", "Uniqueness or personalisation", "Problem solved completely"]
+    },
+    {
+      "type": "field",
+      "id": "cp-5",
+      "key": "what_builds_trust",
+      "label": "What would make them trust a new seller",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Given they have never heard of you, what signals would make this specific customer feel confident enough to buy?"
+    }
+  ]
+}

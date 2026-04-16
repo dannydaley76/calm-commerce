@@ -1,0 +1,123 @@
+{
+  "worksheet": {
+    "id": "unit-economics-worksheet",
+    "chapterId": "chapter-5",
+    "title": "Unit Economics Worksheet",
+    "description": "Run the numbers on each shortlisted idea to find out which ones can actually make money.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["idea_economics", "chosen_idea"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field-group",
+      "key": "idea_economics",
+      "label": "Idea",
+      "repeatMin": 1,
+      "repeatMax": 3,
+      "summaryFieldKey": "idea_name",
+      "fields": [
+        {
+          "type": "field",
+          "id": "ue-1",
+          "key": "idea_name",
+          "label": "Idea name",
+          "fieldType": "text",
+          "required": true,
+          "helpText": "Name this idea (copy from your Chapter 3 worksheet, e.g. 'insulated water bottle for trail runners')."
+        },
+        {
+          "type": "field",
+          "id": "ue-2",
+          "key": "product_cost",
+          "label": "Product cost per unit",
+          "fieldType": "text",
+          "required": true,
+          "currencyAware": true,
+          "helpText": "What you pay the supplier per unit. Use real quotes where possible."
+        },
+        {
+          "type": "field",
+          "id": "ue-3",
+          "key": "shipping_to_customer",
+          "label": "Shipping to customer",
+          "fieldType": "text",
+          "required": true,
+          "currencyAware": true,
+          "helpText": "Cost to send one order to the buyer. Include packaging materials."
+        },
+        {
+          "type": "field",
+          "id": "ue-4",
+          "key": "platform_fees",
+          "label": "Platform fees (% or fixed)",
+          "fieldType": "text",
+          "required": true,
+          "helpText": "Marketplace or store fees per sale. E.g. '10% Etsy' or '£2.50 fixed'."
+        },
+        {
+          "type": "field",
+          "id": "ue-5",
+          "key": "selling_price",
+          "label": "Intended selling price",
+          "fieldType": "text",
+          "required": true,
+          "currencyAware": true,
+          "helpText": "What you plan to charge the customer."
+        },
+        {
+          "type": "field",
+          "id": "ue-6",
+          "key": "margin_per_unit",
+          "label": "Margin per unit",
+          "fieldType": "text",
+          "required": false,
+          "currencyAware": true,
+          "helpText": "Selling price minus all costs. Calculate this yourself: is it enough to advertise profitably?"
+        },
+        {
+          "type": "field",
+          "id": "ue-7",
+          "key": "variant_complexity",
+          "label": "Variant complexity",
+          "fieldType": "single-select",
+          "required": false,
+          "helpText": "How many SKUs would you need to stock at launch?",
+          "options": ["1 SKU — simple", "2–5 SKUs — manageable", "6–15 SKUs — complex", "16+ SKUs — very complex"]
+        },
+        {
+          "type": "field",
+          "id": "ue-8",
+          "key": "viable",
+          "label": "Decision",
+          "fieldType": "single-select",
+          "required": true,
+          "helpText": "Based on the numbers, does this idea pass the economics test?",
+          "options": ["Yes — proceed", "Marginal — possible with adjustments", "No — eliminate"]
+        }
+      ]
+    },
+    {
+      "type": "field",
+      "id": "ue-9",
+      "key": "chosen_idea",
+      "label": "Your chosen idea",
+      "fieldType": "cross-worksheet-select",
+      "sourceGroupKey": "product_ideas",
+      "sourceLabelKey": "idea_description",
+      "required": true,
+      "helpText": "Select the idea that passed both the demand test (Chapter 3) and the numbers test."
+    },
+    {
+      "type": "field",
+      "id": "ue-10",
+      "key": "reason_for_choice",
+      "label": "Why this idea",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "In a sentence or two: why does this idea have better economics than the others?"
+    }
+  ]
+}

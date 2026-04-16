@@ -1,0 +1,85 @@
+{
+  "worksheet": {
+    "id": "iteration-decision-worksheet",
+    "chapterId": "chapter-15",
+    "title": "Iteration Decision Worksheet",
+    "description": "Diagnose what is not working, plan your next iteration, and record what you learned.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["current_diagnosis"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "id-1",
+      "key": "current_diagnosis",
+      "label": "Diagnosis",
+      "fieldType": "single-select",
+      "required": true,
+      "helpText": "Where in the chain is the problem? Be honest — this shapes what to fix.",
+      "options": [
+        "Low traffic — marketing problem",
+        "Good traffic, low conversion — listing or offer problem",
+        "Good traffic + conversion, CPA too high — ad efficiency problem",
+        "Good traffic + conversion, margin too thin — cost structure problem",
+        "Mixed results, need more data",
+        "Things are working — continue"
+      ]
+    },
+    {
+      "type": "field",
+      "id": "id-2",
+      "key": "evidence_for_diagnosis",
+      "label": "Evidence for this diagnosis",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What specific numbers or observations led you to this diagnosis?"
+    },
+    {
+      "type": "field",
+      "id": "id-3",
+      "key": "planned_iteration",
+      "label": "Planned iteration",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "One specific change you will make this cycle. Be precise. (e.g. 'Rewrite the description opening paragraph to lead with the problem')"
+    },
+    {
+      "type": "field",
+      "id": "id-4",
+      "key": "expected_outcome",
+      "label": "Expected outcome",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "What metric do you expect to improve, and by roughly how much?"
+    },
+    {
+      "type": "field",
+      "id": "id-5",
+      "key": "iteration_result",
+      "label": "Iteration result",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Fill this in after the iteration cycle. What actually happened? Did the metric move?"
+    },
+    {
+      "type": "field",
+      "id": "id-6",
+      "key": "decision",
+      "label": "Decision",
+      "fieldType": "single-select",
+      "required": false,
+      "helpText": "Based on the result, what is your next move?",
+      "options": [
+        "Iterate again — one more change",
+        "Pivot product — same customer, different product",
+        "Pivot customer — same product, different audience",
+        "Pivot channel — same product + customer, different traffic source",
+        "Pivot offer — same product, different packaging or price",
+        "Continue — things are working"
+      ]
+    }
+  ]
+}

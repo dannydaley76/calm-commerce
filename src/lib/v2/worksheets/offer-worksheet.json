@@ -1,0 +1,71 @@
+{
+  "worksheet": {
+    "id": "offer-worksheet",
+    "chapterId": "chapter-8",
+    "title": "Offer Worksheet",
+    "description": "Turn your product into an offer — the complete package that makes a specific customer choose yours over every other option.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["positioning_statement", "final_price"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "ow-1",
+      "key": "key_differentiator",
+      "label": "Key differentiator",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "In one phrase: what makes yours clearly better at the thing your customer cares most about?"
+    },
+    {
+      "type": "field",
+      "id": "ow-2",
+      "key": "minimum_viable_version",
+      "label": "Minimum viable offer",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Describe the simplest version of this offer that still solves the problem and feels credible. What is included? How many variants?"
+    },
+    {
+      "type": "field",
+      "id": "ow-3",
+      "key": "offer_summary",
+      "label": "Offer summary",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Describe the complete offer: product, price, promise, and what makes it feel right for this specific buyer."
+    },
+    {
+      "type": "field",
+      "id": "ow-4",
+      "key": "positioning_statement",
+      "label": "Positioning statement",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "One sentence: '[Product] for [customer] who need [key benefit] — [differentiator].' This is your internal clarity tool, not a tagline."
+    },
+    {
+      "type": "field",
+      "id": "ow-5",
+      "key": "final_price",
+      "label": "Final selling price",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "The price you will put on the listing. Must be above your floor from Chapter 5."
+    },
+    {
+      "type": "field",
+      "id": "ow-6",
+      "key": "margin_after_all_costs",
+      "label": "Margin at this price",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "Re-run your Chapter 5 unit economics with this final price. What do you keep per sale?"
+    }
+  ]
+}

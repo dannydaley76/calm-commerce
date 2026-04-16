@@ -1,0 +1,60 @@
+{
+  "worksheet": {
+    "id": "product-listing-worksheet",
+    "chapterId": "chapter-9",
+    "title": "Product Listing Worksheet",
+    "description": "Build your listing. Title, description, objection handling, and photo plan — all in one place.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["product_title", "product_description_draft"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "pl-1",
+      "key": "product_title",
+      "label": "Product title",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "Lead with core search terms, then add specificity. What it is + who it is for + one key detail."
+    },
+    {
+      "type": "field",
+      "id": "pl-2",
+      "key": "product_description_draft",
+      "label": "Product description draft",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "Lead with the problem and your solution. Then cover specifications, what's included, compatibility, care instructions, and shipping. Write it for your specific customer from Chapter 7."
+    },
+    {
+      "type": "field",
+      "id": "pl-3",
+      "key": "objections_addressed",
+      "label": "Objections addressed",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What would make your customer hesitate? List the top 2–3 objections and confirm your description answers each one."
+    },
+    {
+      "type": "field",
+      "id": "pl-4",
+      "key": "key_images_needed",
+      "label": "Key photos needed",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "List the shots you need: clean product shot, detail shot, scale shot, in-use shot. Add any others specific to your product."
+    },
+    {
+      "type": "field",
+      "id": "pl-5",
+      "key": "images_captured",
+      "label": "Photos taken",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "Check this once you have taken your product photos."
+    }
+  ]
+}

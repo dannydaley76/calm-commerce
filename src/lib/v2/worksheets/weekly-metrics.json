@@ -1,0 +1,107 @@
+{
+  "worksheet": {
+    "id": "weekly-metrics",
+    "chapterId": "chapter-17",
+    "title": "Weekly Metrics",
+    "description": "Your recurring dashboard entry. Log these numbers every week. Consistency matters more than precision.",
+    "mode": "recurring",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["week_ending", "revenue"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "wm-1",
+      "key": "week_ending",
+      "label": "Week ending",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "Date this week ended (e.g. 'Sun 18 May')."
+    },
+    {
+      "type": "field",
+      "id": "wm-2",
+      "key": "revenue",
+      "label": "Revenue",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "Total revenue for the week."
+    },
+    {
+      "type": "field",
+      "id": "wm-3",
+      "key": "orders",
+      "label": "Orders",
+      "fieldType": "number",
+      "required": false,
+      "helpText": "Number of orders received this week."
+    },
+    {
+      "type": "field",
+      "id": "wm-4",
+      "key": "traffic",
+      "label": "Traffic",
+      "fieldType": "number",
+      "required": false,
+      "helpText": "Total store visitors this week."
+    },
+    {
+      "type": "field",
+      "id": "wm-5",
+      "key": "ad_spend",
+      "label": "Ad spend",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "Total paid advertising spend this week. Enter 0 if not running ads."
+    },
+    {
+      "type": "field",
+      "id": "wm-6",
+      "key": "new_email_subscribers",
+      "label": "New email subscribers",
+      "fieldType": "number",
+      "required": false,
+      "helpText": "How many new people joined your email list this week."
+    },
+    {
+      "type": "field",
+      "id": "wm-7",
+      "key": "refunds_returns",
+      "label": "Refunds / returns",
+      "fieldType": "number",
+      "required": false,
+      "helpText": "Number of refunds or return requests this week."
+    },
+    {
+      "type": "field",
+      "id": "wm-8",
+      "key": "what_worked",
+      "label": "What worked",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "One thing that performed well. What drove it?"
+    },
+    {
+      "type": "field",
+      "id": "wm-9",
+      "key": "what_to_change",
+      "label": "What to change",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "The single most important adjustment for next week."
+    },
+    {
+      "type": "field",
+      "id": "wm-10",
+      "key": "notes",
+      "label": "Notes",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Anything else worth recording this week."
+    }
+  ]
+}

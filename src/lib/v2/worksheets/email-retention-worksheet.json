@@ -1,0 +1,69 @@
+{
+  "worksheet": {
+    "id": "email-retention-worksheet",
+    "chapterId": "chapter-13",
+    "title": "Email and Retention Plan Worksheet",
+    "description": "Plan how you will collect emails, what you will send, and how you will turn buyers into repeat customers.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["email_collection_method", "welcome_email_subject"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "er-1",
+      "key": "email_collection_method",
+      "label": "Email collection method",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "How will you collect email addresses on your store? (e.g. pop-up with 10% discount, embedded form with free guide)"
+    },
+    {
+      "type": "field",
+      "id": "er-2",
+      "key": "incentive_offered",
+      "label": "Incentive offered",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "What will you give in exchange for their email? (e.g. '10% off first order', 'free care guide PDF')"
+    },
+    {
+      "type": "field",
+      "id": "er-3",
+      "key": "welcome_email_subject",
+      "label": "Welcome email subject line",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "The subject line of your first automated email. Keep it warm and direct."
+    },
+    {
+      "type": "field",
+      "id": "er-4",
+      "key": "welcome_email_key_message",
+      "label": "Welcome email key message",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What will you say in the welcome email? Deliver your promise, introduce yourself briefly, include a product link."
+    },
+    {
+      "type": "field",
+      "id": "er-5",
+      "key": "post_purchase_follow_up_plan",
+      "label": "Post-purchase follow-up plan",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What will you send after someone buys? Outline your post-purchase sequence: order confirmation, shipping notification, follow-up with review request."
+    },
+    {
+      "type": "field",
+      "id": "er-6",
+      "key": "repeat_purchase_strategy",
+      "label": "Repeat purchase strategy",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "How will you encourage customers to come back? When will you contact them again, and with what offer or message?"
+    }
+  ]
+}

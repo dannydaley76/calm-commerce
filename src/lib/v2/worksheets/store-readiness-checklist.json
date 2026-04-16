@@ -1,0 +1,96 @@
+{
+  "worksheet": {
+    "id": "store-readiness-checklist",
+    "chapterId": "chapter-10",
+    "title": "Store Readiness Checklist",
+    "description": "Tick each building block as you complete it. Your store is ready when everything is checked.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["platform_chosen", "store_tested_with_friend"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "src-1",
+      "key": "platform_chosen",
+      "label": "Platform chosen",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "Which platform will you use? (e.g. Shopify, Etsy, WooCommerce, Big Cartel)"
+    },
+    {
+      "type": "field",
+      "id": "src-2",
+      "key": "product_page_live",
+      "label": "Product page live",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "Product listing from Chapter 9 is uploaded and looks correct on desktop and mobile."
+    },
+    {
+      "type": "field",
+      "id": "src-3",
+      "key": "about_page_live",
+      "label": "About page live",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "A genuine, readable about page that answers: who you are, why you started, why they should buy from you."
+    },
+    {
+      "type": "field",
+      "id": "src-4",
+      "key": "contact_method_visible",
+      "label": "Contact method visible",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "An email address or contact form is easy to find."
+    },
+    {
+      "type": "field",
+      "id": "src-5",
+      "key": "returns_policy_published",
+      "label": "Returns policy published",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "Clear, plain-language returns and refunds policy is visible to buyers."
+    },
+    {
+      "type": "field",
+      "id": "src-6",
+      "key": "payment_processing_active",
+      "label": "Payment processing active",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "Stripe and/or PayPal connected. A test transaction completed successfully."
+    },
+    {
+      "type": "field",
+      "id": "src-7",
+      "key": "privacy_policy_live",
+      "label": "Privacy policy live",
+      "fieldType": "checkbox",
+      "required": false,
+      "helpText": "Privacy policy and terms of service pages published (platform templates are fine to start)."
+    },
+    {
+      "type": "field",
+      "id": "src-8",
+      "key": "store_tested_with_friend",
+      "label": "Store tested with a real person",
+      "fieldType": "checkbox",
+      "required": true,
+      "helpText": "A friend or family member went through your store as a customer and gave you honest feedback."
+    },
+    {
+      "type": "field",
+      "id": "src-9",
+      "key": "store_url",
+      "label": "Store URL",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "Your live store address (optional — add it when you are ready to share)."
+    }
+  ]
+}

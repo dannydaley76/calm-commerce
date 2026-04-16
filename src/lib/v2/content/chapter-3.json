@@ -1,0 +1,113 @@
+{
+  "program": {
+    "slug": "digital-product",
+    "title": "Digital Product"
+  },
+  "chapter": {
+    "id": "chapter-4",
+    "number": 4,
+    "slug": "set-your-founder-rules",
+    "title": "Set Your Founder Rules",
+    "summary": "Define the operating rules that keep your business decisions disciplined, measurable, and realistic.",
+    "estimatedReadMinutes": 12,
+    "estimatedWorkMinutes": 15,
+    "worksheetId": "founder-rules-sheet"
+  },
+  "blocks": [
+    { "id": "c3-b1", "type": "eyebrow", "content": "Chapter 3" },
+    { "id": "c3-b2", "type": "headline", "content": "Set Your Founder Rules" },
+    {
+      "id": "c3-b3",
+      "type": "lead",
+      "content": "This chapter is where you stop hoping that discipline will magically appear later. Instead, you decide how you will operate before stress, doubt, or excitement start making choices for you."
+    },
+    {
+      "id": "c3-b4",
+      "type": "paragraph",
+      "content": "Most early founders do not fail because they lack ideas. They fail because they keep changing direction, breaking their own limits, or making decisions based on mood instead of evidence. Founder rules fix that."
+    },
+    {
+      "id": "c3-b5",
+      "type": "paragraph",
+      "content": "Your rules are not there to make the process feel rigid for the sake of it. They are there to protect your time, your money, and your attention so you can keep moving without constant second-guessing."
+    },
+    { "id": "c3-b6", "type": "sectionHeading", "content": "Start with your real constraints" },
+    {
+      "id": "c3-b7",
+      "type": "paragraph",
+      "content": "Your business has to fit your real life, not your fantasy life. That means your rules must begin with the actual resources you have now: your weekly time, your available budget, and the level of complexity you can realistically manage."
+    },
+    {
+      "id": "c3-b8",
+      "type": "bullets",
+      "items": [
+        "How many hours per week can you genuinely give this?",
+        "What is the most you can afford to spend each month without stress?",
+        "How long are you willing to run a test before judging the result?"
+      ]
+    },
+    { "id": "c3-b9", "type": "sectionHeading", "content": "Define rules before emotion gets involved" },
+    {
+      "id": "c3-b10",
+      "type": "paragraph",
+      "content": "The best time to make good decisions is before you are emotionally attached to an idea. Once you start imagining what a product could become, it gets much harder to evaluate it fairly."
+    },
+    {
+      "id": "c3-b11",
+      "type": "paragraph",
+      "content": "That is why founder rules need to include clear kill criteria, continue criteria, and escalation criteria. You should know in advance what results mean stop, what results mean keep going, and what results justify investing more."
+    },
+    {
+      "id": "c3-b12",
+      "type": "callout",
+      "style": "insight",
+      "content": "Interesting is not enough. Personal preference is not enough. If the evidence is weak, the idea does not earn more time just because you like it."
+    },
+    { "id": "c3-b13", "type": "sectionHeading", "content": "Use data over ego" },
+    {
+      "id": "c3-b14",
+      "type": "paragraph",
+      "content": "Many founders waste months trying to force a weak idea to work because it feels personal. Your rules should protect you from that. Data over ego means you measure what matters and allow the evidence to guide your next step."
+    },
+    {
+      "id": "c3-b15",
+      "type": "numberedList",
+      "items": [
+        "Set the minimum test period.",
+        "Choose the signals that matter most.",
+        "Decide what result means the idea is not strong enough.",
+        "Decide what result means you should continue.",
+        "Decide what result means you should invest more confidently."
+      ]
+    },
+    { "id": "c3-b16", "type": "sectionHeading", "content": "Boring can be profitable" },
+    {
+      "id": "c3-b17",
+      "type": "paragraph",
+      "content": "A good founder does not need an exciting idea. They need a useful one. Some of the best opportunities look ordinary, practical, or even dull at first glance. That is not a weakness. Often it is a sign of real demand."
+    },
+    {
+      "id": "c3-b18",
+      "type": "workedExample",
+      "title": "Mini-case",
+      "content": "A founder ignores flashy trends and instead tests a simple product for busy dog owners who need durable seat covers. It is not glamorous, but the demand is obvious, the buyer is easy to find, and the problem is real."
+    },
+    { "id": "c3-b19", "type": "sectionHeading", "content": "Complete your Founder Rules Sheet" },
+    {
+      "id": "c3-b20",
+      "type": "paragraph",
+      "content": "Before you move on, complete your Founder Rules Sheet. This is your operating system for the next stage of the journey. It gives you a practical way to protect your time, budget, and decision quality."
+    },
+    {
+      "id": "c3-b21",
+      "type": "recap",
+      "items": [
+        "Your business must fit your real constraints.",
+        "Rules should be set before emotion distorts your judgment.",
+        "Data should decide whether you stop, continue, or invest more.",
+        "Boring ideas can still be commercially strong.",
+        "The Founder Rules Sheet is the output of this chapter."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "worksheet": {
+    "id": "sourcing-model-sheet",
+    "chapterId": "chapter-2",
+    "title": "Sourcing Model Worksheet",
+    "description": "Choose how you will source and sell your products, and capture the reasoning behind your choice.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": [
+        "sourcing_model",
+        "why_this_model",
+        "estimated_startup_cost",
+        "timeline_to_first_listing"
+      ]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "sm-1",
+      "key": "sourcing_model",
+      "label": "Your sourcing model",
+      "fieldType": "single-select",
+      "required": true,
+      "helpText": "Choose the model that fits where you are right now. You can move to a different model later.",
+      "options": [
+        "Reselling",
+        "Print-on-demand",
+        "Dropshipping",
+        "Private label",
+        "Design and manufacture"
+      ]
+    },
+    {
+      "type": "field",
+      "id": "sm-2",
+      "key": "why_this_model",
+      "label": "Why this model fits your situation",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "There are no wrong answers. 'Because I can start quickly and learn as I go' is a perfectly good reason."
+    },
+    {
+      "type": "field",
+      "id": "sm-3",
+      "key": "estimated_startup_cost",
+      "label": "Estimated startup cost",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "A rough estimate of what you expect to spend before your first listing is live. Include samples, tools, and any upfront inventory."
+    },
+    {
+      "type": "field",
+      "id": "sm-4",
+      "key": "timeline_to_first_listing",
+      "label": "Timeline to first listing",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "How long do you expect it to take to have your first product listed for sale? Example: '2 weeks' or '6–8 weeks'."
+    }
+  ]
+}

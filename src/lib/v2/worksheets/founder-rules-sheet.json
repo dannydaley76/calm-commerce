@@ -1,0 +1,137 @@
+{
+  "worksheet": {
+    "id": "founder-rules-sheet",
+    "chapterId": "chapter-4",
+    "title": "Founder Rules Sheet",
+    "description": "Set the operating rules that will guide your time, budget, and business decisions during the next stage of building.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": [
+        "hours_per_week",
+        "fixed_work_blocks",
+        "weekly_review_slot",
+        "money_cap_per_month",
+        "tooling_max_spend",
+        "budget_split",
+        "minimum_experiment_duration",
+        "kill_criteria",
+        "continue_criteria",
+        "escalation_criteria",
+        "red_line_rules"
+      ]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "frs-1",
+      "key": "hours_per_week",
+      "label": "Hours per week",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "The honest number — what you can sustain even during a busy week. For most people starting out, this is between 5 and 15 hours."
+    },
+    {
+      "type": "field",
+      "id": "frs-2",
+      "key": "fixed_work_blocks",
+      "label": "Fixed work blocks",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "Specific days and times you will protect for this work. 'Tuesday and Thursday evenings 7–9' is a rule. 'Whenever I get a chance' is a wish."
+    },
+    {
+      "type": "field",
+      "id": "frs-3",
+      "key": "weekly_review_slot",
+      "label": "Weekly review slot",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "A fixed 20–30 minute slot each week to review what happened, check the numbers, and decide what to focus on next."
+    },
+    {
+      "type": "field",
+      "id": "frs-4",
+      "key": "money_cap_per_month",
+      "label": "Monthly spending cap",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "The total amount you can spend each month without it causing stress. You can increase this later when revenue starts coming in."
+    },
+    {
+      "type": "field",
+      "id": "frs-5",
+      "key": "tooling_max_spend",
+      "label": "Maximum tooling spend",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "How much of your monthly cap goes to recurring tools (store platform, email software, design tools). Keep this as low as possible early on."
+    },
+    {
+      "type": "field",
+      "id": "frs-6",
+      "key": "budget_split",
+      "label": "Testing vs tooling split",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "How you divide your budget between testing (ad spend, samples, listing fees) and tools. Example: '80% testing / 20% tools'."
+    },
+    {
+      "type": "field",
+      "id": "frs-7",
+      "key": "minimum_experiment_duration",
+      "label": "Minimum experiment duration",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "How long you will run a test before judging the result. Example: '3 weeks'. Prevents pulling the plug too early."
+    },
+    {
+      "type": "field",
+      "id": "frs-8",
+      "key": "kill_criteria",
+      "label": "Kill criteria — I will stop if…",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "What results would tell you to stop and try a different idea. Make this specific enough that you will know it when you see it."
+    },
+    {
+      "type": "field",
+      "id": "frs-9",
+      "key": "continue_criteria",
+      "label": "Continue criteria — I will keep going if…",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "What early signs are encouraging enough to justify giving an idea more time, even if results are not dramatic yet."
+    },
+    {
+      "type": "field",
+      "id": "frs-10",
+      "key": "escalation_criteria",
+      "label": "Escalation criteria — I will invest more when…",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "What results are strong enough to justify increasing your time, budget, or effort."
+    },
+    {
+      "type": "field",
+      "id": "frs-11",
+      "key": "data_over_ego_commitment",
+      "label": "Data-over-ego commitment",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Write your personal version of this commitment: your attachment to an idea is not a reason to keep going — evidence is. Optional but recommended."
+    },
+    {
+      "type": "field",
+      "id": "frs-12",
+      "key": "red_line_rules",
+      "label": "Red-line rules (non-negotiables)",
+      "fieldType": "textarea",
+      "required": true,
+      "helpText": "The boundaries you will not cross regardless of how things are going. List 2–4 rules. Example: 'I will not skip my weekly review.'"
+    }
+  ]
+}

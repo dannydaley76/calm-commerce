@@ -1,0 +1,169 @@
+{
+  "worksheetId": "chapter-4-founder-rules",
+  "chapterId": "chapter-4",
+  "title": "Founder Rules Worksheet",
+  "description": "Define your operating rules for time, money, and decision-making before you start testing.",
+  "canvasConnection": "operating-model",
+  "fields": [
+    {
+      "id": "weekly_hours_commitment",
+      "type": "number",
+      "label": "Weekly hours commitment",
+      "placeholder": "e.g., 8",
+      "helperText": "The honest number you can sustain week after week, not the ambitious number.",
+      "min": 1,
+      "max": 40,
+      "unit": "hours per week",
+      "required": true
+    },
+    {
+      "id": "work_schedule",
+      "type": "text",
+      "label": "Your work schedule",
+      "placeholder": "e.g., Tuesday and Thursday evenings 7-9pm, Saturday morning 9-11am",
+      "helperText": "Specific days and times, not 'whenever I get a chance'.",
+      "required": true
+    },
+    {
+      "id": "weekly_review_day",
+      "type": "select",
+      "label": "Weekly review day",
+      "helperText": "When will you review progress and plan the week ahead?",
+      "options": [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "required": true
+    },
+    {
+      "id": "monthly_maximum_budget",
+      "type": "currency",
+      "label": "Monthly maximum budget",
+      "placeholder": "e.g., 200",
+      "helperText": "The total amount you can spend each month without financial stress.",
+      "min": 0,
+      "required": true
+    },
+    {
+      "id": "budget_split_tools_vs_testing",
+      "type": "percentage_split",
+      "label": "Budget split: Tools vs Testing",
+      "helperText": "How will you divide your monthly budget?",
+      "splits": [
+        {
+          "id": "tools_budget",
+          "label": "Tools (platforms, software)",
+          "default": 30
+        },
+        {
+          "id": "testing_budget",
+          "label": "Testing (ads, samples, fees)",
+          "default": 70
+        }
+      ],
+      "required": true
+    },
+    {
+      "id": "stop_rule",
+      "type": "textarea",
+      "label": "Your stop rule",
+      "placeholder": "e.g., I will stop if nobody shows interest after three weeks of active testing.",
+      "helperText": "What results would tell you to try a different idea? Be specific.",
+      "rows": 2,
+      "required": true
+    },
+    {
+      "id": "continue_rule",
+      "type": "textarea",
+      "label": "Your continue rule",
+      "placeholder": "e.g., I will continue if I get questions and engagement but sales are slow.",
+      "helperText": "What early signs mean give it more time?",
+      "rows": 2,
+      "required": true
+    },
+    {
+      "id": "invest_more_rule",
+      "type": "textarea",
+      "label": "Your invest more rule",
+      "placeholder": "e.g., I will invest more if I make consistent sales within my first month of listing.",
+      "helperText": "What results justify increasing time, budget, or effort?",
+      "rows": 2,
+      "required": true
+    },
+    {
+      "id": "data_over_ego_commitment",
+      "type": "textarea",
+      "label": "Your data over ego commitment",
+      "placeholder": "e.g., I commit to following the evidence even when it contradicts my personal attachment to an idea.",
+      "helperText": "Write this in your own words. The act of writing it down makes it real.",
+      "rows": 3,
+      "required": true
+    },
+    {
+      "id": "red_line_rules",
+      "type": "checklist_with_custom",
+      "label": "Your red-line rules",
+      "helperText": "Select the non-negotiables that feel right for you, and add your own.",
+      "defaultOptions": [
+        {
+          "id": "never_skip_weekly_review",
+          "label": "I will not skip my weekly review.",
+          "defaultChecked": true
+        },
+        {
+          "id": "one_in_one_out_tools",
+          "label": "I will not add a new tool without removing one I am not using.",
+          "defaultChecked": true
+        },
+        {
+          "id": "no_spending_without_criteria",
+          "label": "I will not increase spending beyond my monthly cap without hitting escalation criteria.",
+          "defaultChecked": true
+        },
+        {
+          "id": "track_every_transaction",
+          "label": "I will track every expense and every sale from day one.",
+          "defaultChecked": true
+        }
+      ],
+      "allowCustom": true,
+      "customPlaceholder": "Add your own red-line rule...",
+      "required": true,
+      "minSelections": 1
+    },
+    {
+      "id": "tax_registration_notes",
+      "type": "textarea",
+      "label": "Tax and registration notes",
+      "placeholder": "e.g., Need to check self-registration requirements in UK by end of month.",
+      "helperText": "Any notes about tax, self-employment registration, or compliance to look into.",
+      "rows": 2,
+      "required": false
+    }
+  ],
+  "completionCriteria": {
+    "requiredFields": [
+      "weekly_hours_commitment",
+      "work_schedule",
+      "weekly_review_day",
+      "monthly_maximum_budget",
+      "stop_rule",
+      "continue_rule",
+      "invest_more_rule",
+      "data_over_ego_commitment",
+      "red_line_rules"
+    ],
+    "minWordCount": {
+      "data_over_ego_commitment": 10
+    }
+  },
+  "nextAction": {
+    "label": "Continue to Chapter 5",
+    "href": "/chapter/know-your-numbers-before-you-commit"
+  }
+}

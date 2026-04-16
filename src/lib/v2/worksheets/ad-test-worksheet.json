@@ -1,0 +1,136 @@
+{
+  "worksheet": {
+    "id": "ad-test-worksheet",
+    "chapterId": "chapter-12",
+    "title": "Ad Test Worksheet",
+    "description": "Plan your first paid ad test, record the results, and update your Founder Rules with real data.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["ad_platform", "daily_budget"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "at-1",
+      "key": "ad_platform",
+      "label": "Ad platform",
+      "fieldType": "text",
+      "required": true,
+      "helpText": "Which platform will you run your first test on? (e.g. Meta / Facebook & Instagram)"
+    },
+    {
+      "type": "field",
+      "id": "at-2",
+      "key": "daily_budget",
+      "label": "Daily budget",
+      "fieldType": "text",
+      "required": true,
+      "currencyAware": true,
+      "helpText": "Start with £5–£10/day. Confirm this fits within your monthly cap from Chapter 4."
+    },
+    {
+      "type": "field",
+      "id": "at-3",
+      "key": "test_duration",
+      "label": "Test duration",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "Run for at least 7 days. Write the end date now so you don't stop too early."
+    },
+    {
+      "type": "field",
+      "id": "at-4",
+      "key": "target_audience_description",
+      "label": "Target audience",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Describe the audience you'll target. Use your customer profile from Chapter 7: age, location, interests, behaviours."
+    },
+    {
+      "type": "field",
+      "id": "at-5",
+      "key": "ctr_after_test",
+      "label": "CTR after test",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "Click-through rate from your ads dashboard. Fill this in after the test period."
+    },
+    {
+      "type": "field",
+      "id": "at-6",
+      "key": "cpc_after_test",
+      "label": "CPC after test",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "Cost per click. Find in your ads dashboard after the test."
+    },
+    {
+      "type": "field",
+      "id": "at-7",
+      "key": "conversion_rate_after_test",
+      "label": "Conversion rate after test",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "% of ad visitors who purchased. Find in your store analytics or ads dashboard."
+    },
+    {
+      "type": "field",
+      "id": "at-8",
+      "key": "cpa_after_test",
+      "label": "CPA after test",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "Total ad spend ÷ number of sales. The most important number from this test."
+    },
+    {
+      "type": "field",
+      "id": "at-9",
+      "key": "cpa_vs_margin",
+      "label": "CPA vs margin",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Compare your CPA to your margin per sale from Chapter 5. Are you acquiring customers profitably? What is the gap?"
+    },
+    {
+      "type": "field",
+      "id": "at-10",
+      "key": "decision",
+      "label": "Ad decision",
+      "fieldType": "single-select",
+      "required": false,
+      "helpText": "Based on the results and your Founder Rules.",
+      "options": ["Continue — CPA is within target", "Iterate — adjust creative or audience", "Stop — not profitable enough to continue"]
+    },
+    {
+      "type": "field",
+      "id": "at-11",
+      "key": "updated_kill_criteria",
+      "label": "Updated kill criteria",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Rewrite your kill criteria from Chapter 4 with specific numbers from this test. (e.g. 'Stop if CPA stays above £X for two consecutive weeks')"
+    },
+    {
+      "type": "field",
+      "id": "at-12",
+      "key": "updated_continue_criteria",
+      "label": "Updated continue criteria",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Rewrite with specific thresholds. (e.g. 'Continue if CPA is trending downward week over week')"
+    },
+    {
+      "type": "field",
+      "id": "at-13",
+      "key": "updated_escalation_criteria",
+      "label": "Updated escalation criteria",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "Rewrite with real numbers. (e.g. 'Invest more when CPA is consistently below £X and conversion rate is above Y%')"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "worksheet": {
+    "id": "pre-store-test-worksheet",
+    "chapterId": "chapter-6",
+    "title": "Pre-Store Test Worksheet",
+    "description": "Plan your marketplace test, record the results, and make a data-backed decision about what comes next.",
+    "mode": "single",
+    "completionRule": {
+      "kind": "requiredFieldsComplete",
+      "requiredFieldKeys": ["test_marketplace", "decision"]
+    }
+  },
+  "fields": [
+    {
+      "type": "field",
+      "id": "pst-1",
+      "key": "test_marketplace",
+      "label": "Test marketplace",
+      "fieldType": "single-select",
+      "required": true,
+      "helpText": "Which marketplace will you use for your first listing?",
+      "options": ["eBay", "Etsy", "Amazon", "Vinted", "Facebook Marketplace", "Other"]
+    },
+    {
+      "type": "field",
+      "id": "pst-2",
+      "key": "product_listed",
+      "label": "Product listed",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "Brief description of what you listed."
+    },
+    {
+      "type": "field",
+      "id": "pst-3",
+      "key": "listing_price",
+      "label": "Listing price",
+      "fieldType": "text",
+      "required": false,
+      "currencyAware": true,
+      "helpText": "The price you set. Check it covers all costs from Chapter 5."
+    },
+    {
+      "type": "field",
+      "id": "pst-4",
+      "key": "test_duration",
+      "label": "Test duration",
+      "fieldType": "text",
+      "required": false,
+      "helpText": "How long will you run this test before judging the results? (e.g. '3 weeks')"
+    },
+    {
+      "type": "field",
+      "id": "pst-5",
+      "key": "result",
+      "label": "Test result",
+      "fieldType": "single-select",
+      "required": false,
+      "helpText": "Fill this in after the test period.",
+      "options": ["Sold — strong demand", "Interest but no sale", "Views but no engagement", "Very few views", "Still running"]
+    },
+    {
+      "type": "field",
+      "id": "pst-6",
+      "key": "units_sold",
+      "label": "Units sold",
+      "fieldType": "number",
+      "required": false,
+      "helpText": "How many units sold during the test period?"
+    },
+    {
+      "type": "field",
+      "id": "pst-7",
+      "key": "what_you_learned",
+      "label": "What you learned",
+      "fieldType": "textarea",
+      "required": false,
+      "helpText": "What did the test tell you? Buyer behaviour, questions asked, price sensitivity, anything useful."
+    },
+    {
+      "type": "field",
+      "id": "pst-8",
+      "key": "decision",
+      "label": "Your decision",
+      "fieldType": "single-select",
+      "required": true,
+      "helpText": "Based on the test results and your Founder Rules from Chapter 4.",
+      "options": ["Proceed — build the store", "Iterate and retest — adjust listing or price", "Pivot — try a different product"]
+    }
+  ]
+}
