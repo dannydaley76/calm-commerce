@@ -1877,13 +1877,17 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       {
         id: "chapter-14-step-3-weekly-review-ritual",
         title: "Your weekly review ritual",
-        inlineWorksheetFieldKeys: ["weekly_traffic", "conversion_rate", "average_order_value", "cpa_this_week", "margin_per_sale", "email_list_size"],
         blocks: [
           { type: "heading", level: 2, content: "Your weekly review ritual" },
           {
             type: "paragraph",
             content:
-              "This is your first weekly review. The same ritual you will repeat every week for as long as you run your business. Step 1 (5 min): collect your six numbers. Step 2 (5 min): compare to last week — up, down, or flat? Step 3 (5 min): identify one thing that worked. Step 4 (5 min): identify one thing to change. Step 5 (5 min): plan next week.",
+              "Once your store is live, this is the ritual you will repeat every week for as long as you run your business. Step 1 (5 min): collect your six numbers. Step 2 (5 min): compare to last week — up, down, or flat? Step 3 (5 min): identify one thing that worked. Step 4 (5 min): identify one thing to change. Step 5 (5 min): plan next week.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "You are reading this before your store is live, so you do not have numbers to log yet. That is fine — this chapter is about understanding the system so that when data starts arriving, you already know what to do with it.",
           },
           {
             type: "callout",
@@ -1896,19 +1900,23 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       {
         id: "chapter-14-step-4-update-founder-rules",
         title: "Update your Founder Rules",
-        inlineWorksheetFieldKeys: ["what_working", "what_to_change", "updated_founder_rules"],
         blocks: [
           { type: "heading", level: 2, content: "Update your Founder Rules" },
           {
             type: "paragraph",
             content:
-              "Your Founder Rules from Chapter 4 were written before you had real data. Now you have several weeks of real numbers. Revisit them and sharpen them: kill criteria can now include specific numbers, continue criteria can reference trends, escalation criteria can be grounded in evidence.",
+              "Your Founder Rules from Chapter 4 were written before you had real data. Once you have a few weeks of real numbers, revisit them and sharpen them: kill criteria can include specific numbers, continue criteria can reference trends, escalation criteria can be grounded in evidence.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "You will do this update for real once your store has been running. For now, understand that the rules you wrote are a starting point — they become more precise and more useful as data arrives.",
           },
           {
             type: "callout",
             style: "example",
             content:
-              "'I will stop if conversion stays below 1% after two listing revisions and 500 visitors.' These updated rules are not just numbers on a page — they are the decision-making system that tells you exactly what to do when results come in.",
+              "'I will stop if conversion stays below 1% after two listing revisions and 500 visitors.' Updated rules like this are not just numbers on a page — they are the decision-making system that tells you exactly what to do when results come in.",
           },
         ],
       },
@@ -2222,19 +2230,24 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       {
         id: "chapter-17-step-3-entering-your-metrics",
         title: "Entering your metrics",
-        inlineWorksheetFieldKeys: ["week_ending", "revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"],
         blocks: [
           { type: "heading", level: 2, content: "Entering your metrics" },
           {
             type: "paragraph",
             content:
-              "Each week, log your numbers here. Over time, this becomes the most valuable record your business has — the history of what happened, what you tried, and what worked. Consistency matters more than precision. A rough weekly entry is infinitely more useful than a perfect monthly entry.",
+              "Each week, log your numbers in the Metrics dashboard. Over time, this becomes the most valuable record your business has — the history of what happened, what you tried, and what worked. Consistency matters more than precision. A rough weekly entry is infinitely more useful than a perfect monthly entry.",
           },
           { type: "heading", level: 2, content: "How to read your dashboard" },
           {
             type: "paragraph",
             content:
               "Stable metrics are good news — they give you a foundation to test changes from. Gradual trends matter more than single-week changes. Connected metrics tell a story: if traffic is up but revenue is flat, conversion rate has dropped. If CPA is rising but conversion is stable, your ads are getting more expensive. The dashboard shows these relationships when you track everything in one place.",
+          },
+          {
+            type: "callout",
+            style: "insight",
+            content:
+              "When your store is live and you have your first week of numbers, head to the Metrics section in the navigation. Log your first entry there and the dashboard will start building your performance history.",
           },
         ],
       },
