@@ -65,9 +65,8 @@ export default async function ProgramPage() {
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program", active: true },
         { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/paid-test", label: "Paid Test" },
+        { href: "/metrics", label: "Metrics" },
         { href: "/account", label: "Account" },
-        { href: "/resume", label: "Resume" },
       ]}
       title="Program"
       subtitle="All chapters in sequence. Pick up where you left off or jump to any chapter."

@@ -46,6 +46,7 @@ export default async function AccountPage() {
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
         { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
         { href: "/account", label: "Account", active: true },
       ]}
       title="Account"

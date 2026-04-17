@@ -33,11 +33,14 @@ async function getMetrics(): Promise<{ authenticated: boolean; entries: MetricEn
 
 export default async function MetricsPage() {
   const { authenticated, entries } = await getMetrics();
+  const isDev = process.env.NODE_ENV !== "production";
 
   const breadcrumbs = [
     { href: "/", label: "Dashboard" },
     { href: "/program", label: "Program" },
-    { href: "/metrics", label: "Weekly Metrics", active: true },
+    { href: "/lean-canvas", label: "Lean Canvas" },
+    { href: "/metrics", label: "Metrics", active: true },
+    { href: "/account", label: "Account" },
   ];
 
   return (
@@ -46,7 +49,7 @@ export default async function MetricsPage() {
       title="Weekly Metrics"
       subtitle="Your store's performance over time. Numbers update each week as you log your metrics."
     >
-      <MetricsClient entries={entries} authenticated={authenticated} />
+      <MetricsClient entries={entries} authenticated={authenticated} isDev={isDev} />
     </LearnerShell>
   );
 }

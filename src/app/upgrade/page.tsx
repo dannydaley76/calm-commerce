@@ -1,11 +1,20 @@
 import Link from "next/link";
+import { LearnerShell } from "@/components/learner-shell";
 
 export default function UpgradePage() {
   return (
-    <main className="min-h-screen bg-[#faf8fe] px-6 py-10 text-[#30323b]">
+    <LearnerShell
+      items={[
+        { href: "/", label: "Dashboard" },
+        { href: "/program", label: "Program" },
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
+      ]}
+      title="Upgrade"
+      subtitle="Unlock the full learning experience with a paid access plan."
+    >
       <div className="mx-auto max-w-3xl rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(48,50,59,0.08)] lg:p-10">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5b48d6]">Upgrade</p>
-        <h1 className="mt-4 font-[Manrope] text-4xl font-extrabold tracking-tight">Unlock the full learning experience</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5d5f68]">
           You currently have preview access. Upgrade to unlock the paid chapters, the full worksheet journey, and the full in-app learning flow.
         </p>
@@ -28,6 +37,6 @@ export default function UpgradePage() {
           </Link>
         </div>
       </div>
-    </main>
+    </LearnerShell>
   );
 }

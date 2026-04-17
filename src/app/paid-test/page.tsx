@@ -1,9 +1,14 @@
+import { notFound } from "next/navigation";
 import { AccessLockedCard } from "@/components/access-locked-card";
 import { AccessStatusBadge } from "@/components/access-status-badge";
 import { LearnerShell } from "@/components/learner-shell";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
 export default async function PaidTestPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   const access = await getAccessStateForCurrentUser();
 
   return (
@@ -11,8 +16,9 @@ export default async function PaidTestPage() {
       items={[
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
-        { href: "/paid-test", label: "Paid Test", active: true },
-        { href: "/resume", label: "Resume" },
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
       ]}
       title="Paid access test surface"
       subtitle="A temporary product surface for verifying preview vs paid vs expired entitlement behavior while the full paid learner flow is still being built."

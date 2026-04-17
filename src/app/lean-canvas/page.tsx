@@ -269,7 +269,8 @@ export default async function LeanCanvasPage() {
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
         { href: "/lean-canvas", label: "Lean Canvas", active: true },
-        { href: "/resume", label: "Resume" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
       ]}
       title="Lean Canvas"
       subtitle="A first MVP business canvas derived from your current worksheet answers."

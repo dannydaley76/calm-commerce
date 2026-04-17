@@ -19,7 +19,7 @@ export function LearnerShell({ children, items, title, subtitle, showLogout = tr
   return (
     <main className="min-h-screen bg-[#f4faff] text-[#003748]">
       <header className="sticky top-0 z-40 bg-[rgba(244,250,255,0.95)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-8 py-[14px]">
+        <div className="mx-auto flex max-w-[1000px] items-center justify-between gap-6 px-8 py-[14px]">
           <Link href="/" className="font-[Manrope] text-[15px] font-semibold text-[#545a95]">
             Calm Commerce
           </Link>
@@ -45,7 +45,7 @@ export function LearnerShell({ children, items, title, subtitle, showLogout = tr
       </header>
 
       <div className="mx-auto max-w-[1000px] px-6 py-10 lg:px-8 lg:py-12">
-        {(title || subtitle) && title !== "Dashboard" ? (
+        {(title || subtitle) ? (
           <div className="mb-10">
             {title ? <h1 className="font-[Manrope] text-2xl font-semibold tracking-tight text-[#003748] lg:text-[30px] lg:leading-[1.25]">{title}</h1> : null}
             {subtitle ? <p className="mt-3 max-w-3xl text-base leading-[1.7] text-[#49636f]">{subtitle}</p> : null}

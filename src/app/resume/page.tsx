@@ -123,8 +123,9 @@ export default async function ResumePage() {
       items={[
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
-        { href: "/resume", label: "Resume", active: true },
-        { href: "/chapter/set-your-founder-rules", label: "Chapter 3" },
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
       ]}
       title="Resume"
       subtitle="Get back to the right place without relying on whatever CTA happened to be on the last page you visited."
@@ -133,11 +134,6 @@ export default async function ResumePage() {
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Resume</p>
         <h2 className="mt-4 font-[Manrope] text-4xl font-extrabold tracking-tight">{state.title}</h2>
         <p className="mt-4 text-base leading-8 text-[#5d5f68]">{state.description}</p>
-
-        <div className="mt-8 rounded-2xl bg-[#f4f3fa] p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Destination</p>
-          <p className="mt-2 font-mono text-sm text-[#30323b]">{state.destination}</p>
-        </div>
 
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
           <Link href={state.destination} className="inline-flex items-center justify-center rounded-xl bg-[#0053dc] px-6 py-4 font-semibold !text-white">

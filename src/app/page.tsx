@@ -104,12 +104,12 @@ export default async function DashboardPage() {
     <LearnerShell
       items={[
         { href: "/", label: "Dashboard", active: true },
-        { href: "/program", label: "Chapters" },
-        { href: "/chapter/set-your-founder-rules/worksheet", label: "Worksheets" },
-        { href: "/lean-canvas", label: "Canvas" },
+        { href: "/program", label: "Program" },
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
       ]}
       title="Dashboard"
-      subtitle="Your learner home for continuing the active chapter flow without getting lost."
     >
       <div className="space-y-16">
         <PageHero label="Current focus" title="Focusing your journey." description={primaryCta.subtext}>
