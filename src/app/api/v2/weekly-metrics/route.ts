@@ -51,12 +51,13 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as {
       week_ending?: unknown;
+      entry_type?: unknown;
       data?: unknown;
       chapterId?: unknown;
       chapterSlug?: unknown;
     };
 
-    /* ── Required field validation ── */
+    /* ── Required: week_ending ── */
     if (!isNonEmptyString(body.week_ending)) {
       return NextResponse.json(
         { error: "week_ending is required and must be a non-empty string" },
@@ -64,45 +65,62 @@ export async function POST(req: Request) {
       );
     }
 
+    const entryType =
+      body.entry_type === "validation" ? "validation" : "live_store";
+
     const data =
       body.data && typeof body.data === "object"
         ? (body.data as Record<string, unknown>)
         : {};
 
-    if (!isNonEmptyString(data.revenue)) {
-      return NextResponse.json(
-        { error: "revenue is required and must be a non-empty string" },
-        { status: 400 },
-      );
-    }
-
-    /* ── Optional numeric field validation ── */
-    const numericFields = [
-      "orders",
-      "traffic",
-      "new_email_subscribers",
-      "refunds_returns",
-    ] as const;
-
-    for (const field of numericFields) {
-      const val = data[field];
-      if (val !== undefined && val !== "" && parseOptionalNumber(val) === null) {
+    /* ── Phase-specific required field validation ── */
+    if (entryType === "live_store") {
+      if (!isNonEmptyString(data.revenue)) {
         return NextResponse.json(
-          { error: `${field} must be a non-negative number if provided` },
+          { error: "revenue is required for live store entries" },
           { status: 400 },
         );
       }
-    }
 
-    if (
-      data.ad_spend !== undefined &&
-      data.ad_spend !== "" &&
-      parseOptionalNumber(data.ad_spend) === null
-    ) {
-      return NextResponse.json(
-        { error: "ad_spend must be a non-negative number if provided" },
-        { status: 400 },
-      );
+      const liveNumericFields = [
+        "orders",
+        "traffic",
+        "new_email_subscribers",
+        "refunds_returns",
+      ] as const;
+
+      for (const field of liveNumericFields) {
+        const val = data[field];
+        if (val !== undefined && val !== "" && parseOptionalNumber(val) === null) {
+          return NextResponse.json(
+            { error: `${field} must be a non-negative number if provided` },
+            { status: 400 },
+          );
+        }
+      }
+
+      if (
+        data.ad_spend !== undefined &&
+        data.ad_spend !== "" &&
+        parseOptionalNumber(data.ad_spend) === null
+      ) {
+        return NextResponse.json(
+          { error: "ad_spend must be a non-negative number if provided" },
+          { status: 400 },
+        );
+      }
+    } else {
+      /* validation phase — numeric fields are all optional but must be valid if provided */
+      const validationNumericFields = ["impressions", "listing_clicks", "orders"] as const;
+      for (const field of validationNumericFields) {
+        const val = data[field];
+        if (val !== undefined && val !== "" && parseOptionalNumber(val) === null) {
+          return NextResponse.json(
+            { error: `${field} must be a non-negative number if provided` },
+            { status: 400 },
+          );
+        }
+      }
     }
 
     /* ── Auth ── */
@@ -112,19 +130,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    /* ── Sanitise data_json: only known keys, strings, capped length ── */
-    const allowedKeys = [
-      "revenue",
-      "orders",
-      "traffic",
-      "ad_spend",
-      "new_email_subscribers",
-      "refunds_returns",
-      "what_worked",
-      "what_to_change",
-      "notes",
-    ];
-    const sanitisedData: Record<string, string> = {};
+    /* ── Sanitise data_json: only known keys per phase, strings, capped length ── */
+    const allowedKeys =
+      entryType === "validation"
+        ? ["impressions", "listing_clicks", "orders", "profit_per_sale", "noticed"]
+        : ["revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"];
+
+    const sanitisedData: Record<string, string> = { entry_type: entryType };
     for (const key of allowedKeys) {
       if (data[key] !== undefined && data[key] !== "") {
         sanitisedData[key] = String(data[key]).slice(0, 2000);

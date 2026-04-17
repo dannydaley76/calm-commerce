@@ -815,6 +815,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "The next chapter is where it gets real: you are going to test your idea by listing it for sale on an existing marketplace and finding out whether someone will actually hand over money for it. Your first sale could be days away.",
           },
+          {
+            type: "paragraph",
+            content:
+              "As soon as your first listing goes live, start tracking. The Metrics section — available in the navigation — has a marketplace testing log built for this phase. It asks five simple questions each week: how many people saw your listing, how many clicked, how many bought, what you made per sale, and what you noticed. Logging from week one means you have data to learn from, not just results to wonder about.",
+          },
         ],
       },
     ],
