@@ -68,10 +68,9 @@ export default async function ChapterStepsPage({
       items={[
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
-        { href: "/resume", label: "Resume" },
-        ...(chapter.chapter.worksheetId === "weekly-metrics"
-          ? [{ href: "/metrics", label: "Metrics" }]
-          : []),
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
         { href: `/chapter/${slug}`, label: `Chapter ${chapter.chapter.number}`, active: true },
       ]}
       title={chapter.chapter.title}

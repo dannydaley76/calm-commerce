@@ -29,16 +29,17 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
   // Chapter 4 has a bespoke, hand-crafted worksheet page
   const isFounderRules = slug === "set-your-founder-rules";
 
-  const breadcrumbs = [
-    { href: "/", label: "Dashboard" },
-    { href: "/program", label: "Program" },
-    { href: `/chapter/${slug}`, label: `Chapter ${chapter.number}` },
-    { href: `/chapter/${slug}/worksheet`, label: "Worksheet", active: true },
-  ];
-
   return (
     <LearnerShell
-      items={breadcrumbs}
+      items={[
+        { href: "/", label: "Dashboard" },
+        { href: "/program", label: "Program" },
+        { href: "/lean-canvas", label: "Lean Canvas" },
+        { href: "/metrics", label: "Metrics" },
+        { href: "/account", label: "Account" },
+        { href: `/chapter/${slug}`, label: `Chapter ${chapter.number}` },
+        { href: `/chapter/${slug}/worksheet`, label: "Worksheet", active: true },
+      ]}
       title={worksheetDefinition.worksheet.title}
       subtitle="Complete the worksheet and return here at any time to update your answers."
     >
