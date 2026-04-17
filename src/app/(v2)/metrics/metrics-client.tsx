@@ -308,17 +308,17 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <div>
           <label className="block text-sm font-semibold text-[#003748]">What worked</label>
-          <p className="mt-0.5 text-xs text-[#5d5f68]">One thing that performed well.</p>
+          <p className="mt-0.5 text-sm text-[#5d5f68]">One thing that performed well.</p>
           <textarea className={`${inputBase} mt-2 min-h-[72px] resize-y`} value={form.what_worked ?? ""} onChange={(e) => set("what_worked", e.target.value)} disabled={isSubmitting} placeholder="e.g. Instagram post drove 3 sales…" />
         </div>
         <div>
           <label className="block text-sm font-semibold text-[#003748]">What to change</label>
-          <p className="mt-0.5 text-xs text-[#5d5f68]">The single most important adjustment.</p>
+          <p className="mt-0.5 text-sm text-[#5d5f68]">The single most important adjustment.</p>
           <textarea className={`${inputBase} mt-2 min-h-[72px] resize-y`} value={form.what_to_change ?? ""} onChange={(e) => set("what_to_change", e.target.value)} disabled={isSubmitting} placeholder="e.g. Fix the mobile checkout flow…" />
         </div>
         <div>
           <label className="block text-sm font-semibold text-[#003748]">Notes</label>
-          <p className="mt-0.5 text-xs text-[#5d5f68]">Anything else worth recording.</p>
+          <p className="mt-0.5 text-sm text-[#5d5f68]">Anything else worth recording.</p>
           <textarea className={`${inputBase} mt-2 min-h-[72px] resize-y`} value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} disabled={isSubmitting} placeholder="Optional…" />
         </div>
       </div>
@@ -328,7 +328,7 @@ function EntryForm({ onSaved }: { onSaved: () => void }) {
           type="button"
           onClick={() => void handleSubmit()}
           disabled={!canSubmit}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0053dc] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#0053dc] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
         >
           {isSubmitting ? "Saving…" : "Save this week's entry"}
         </button>
@@ -383,9 +383,10 @@ function SeedButton({ onSeeded }: { onSeeded: () => void }) {
    Main component
 ───────────────────────────────────────────────────────────── */
 
-export function MetricsClient({ entries, authenticated }: {
+export function MetricsClient({ entries, authenticated, isDev = false }: {
   entries: MetricEntry[];
   authenticated: boolean;
+  isDev?: boolean;
 }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(entries.length === 0);
@@ -407,7 +408,7 @@ export function MetricsClient({ entries, authenticated }: {
           No entries yet. Log your first week below to start tracking.
         </p>
         <EntryForm onSaved={() => router.refresh()} />
-        <SeedButton onSeeded={() => router.refresh()} />
+        {isDev ? <SeedButton onSeeded={() => router.refresh()} /> : null}
       </div>
     );
   }
@@ -469,7 +470,7 @@ export function MetricsClient({ entries, authenticated }: {
           <button
             type="button"
             onClick={() => setShowForm(false)}
-            className="text-xs text-[#8b8d99] hover:text-[#5d5f68] transition"
+            className="inline-flex items-center rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
           >
             Cancel
           </button>
@@ -578,7 +579,7 @@ export function MetricsClient({ entries, authenticated }: {
                         <button
                           type="button"
                           onClick={() => setExpandedId(isExpanded ? null : row.entry.id)}
-                          className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#545a95] transition hover:bg-[#e4e8f8]"
+                          className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]"
                         >
                           {isExpanded ? "Hide" : "View"}
                         </button>
@@ -625,16 +626,8 @@ export function MetricsClient({ entries, authenticated }: {
         </div>
       </div>
 
-      {/* ── Footer nav ── */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/program"
-          className="inline-flex items-center gap-2 rounded-xl border border-[#d9def2] bg-white px-5 py-2.5 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
-        >
-          Back to Program
-        </Link>
-        <SeedButton onSeeded={() => router.refresh()} />
-      </div>
+      {/* ── Footer: dev seed helper ── */}
+      {isDev ? <SeedButton onSeeded={() => router.refresh()} /> : null}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function StepShell({
   const progressPercent = Math.round(((currentIndex + 1) / totalSteps) * 100);
 
   return (
-    <main className="min-h-screen bg-[#faf8fe] px-6 py-8 text-[#30323b] lg:px-8 lg:py-10">
+    <div className="min-h-screen bg-[#f4faff] px-6 py-8 text-[#003748] lg:px-8 lg:py-10">
       <div className="mx-auto max-w-6xl">
         <header className="mb-8 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.04)] lg:p-8">
           <div className="flex flex-wrap items-center gap-4">
@@ -136,6 +136,6 @@ export function StepShell({
           </footer>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

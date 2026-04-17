@@ -333,7 +333,7 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
         <div className="flex flex-col gap-4 pt-4 sm:flex-row">
           <button
             onClick={onSaveDraft}
-            className="flex-1 rounded-xl bg-[#e1e2ed] px-5 py-4 font-semibold text-[#30323b]"
+            className="flex-1 rounded-xl bg-[#003748] px-5 py-4 font-semibold text-white"
           >
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save Draft"}
           </button>
