@@ -503,6 +503,7 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
 
   const allOrders = rows.map((r) => r.orders).filter((n): n is number => n !== null);
   const totalOrders = allOrders.reduce((a, b) => a + b, 0);
+  const latestProfitPerSale = rows[0]?.profitPerSale ?? null;
   const avgClickRate = (() => {
     const rates = rows.map((r) => r.clickRate).filter((n): n is number => n !== null);
     if (!rates.length) return null;
@@ -520,7 +521,12 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Weeks tracked" value={String(entries.length)} sub={entries.length === 1 ? "1 entry so far" : `${entries.length} entries`} />
         <SummaryCard label="Total orders" value={String(totalOrders)} sub="across all weeks" variant={totalOrders > 0 ? "green" : "neutral"} />
-        <SummaryCard label="Avg. click rate" value={avgClickRate !== null ? `${avgClickRate.toFixed(1)}%` : "—"} sub="Of those who saw it, clicked" variant={clickRateVariant(avgClickRate)} />
+        <SummaryCard
+          label="Latest profit / sale"
+          value={latestProfitPerSale !== null ? `£${latestProfitPerSale.toFixed(2)}` : "—"}
+          sub="After product cost, fees, postage"
+          variant={latestProfitPerSale !== null ? (latestProfitPerSale > 0 ? "green" : "red") : "neutral"}
+        />
         <SummaryCard label="Avg. buy rate" value={avgBuyRate !== null ? `${avgBuyRate.toFixed(1)}%` : "—"} sub="Of those who clicked, bought" variant={buyRateVariant(avgBuyRate)} />
       </div>
 
@@ -548,7 +554,7 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-[#eef0f7] bg-[#fafbff]">
-              {["Week", "Impressions", "Clicks", "Click rate", "Orders", "Buy rate", "Profit / sale", "Notes"].map((h, i) => (
+              {["Week", "Orders", "Profit / sale", "Impressions", "Clicks", "Click rate", "Buy rate", "Notes"].map((h, i) => (
                 <th
                   key={h}
                   className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : i === 7 ? "text-center" : "text-right"}`}
@@ -571,14 +577,16 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
                         <span className="font-[Manrope] text-sm font-semibold text-[#003748]">{row.entry.week_ending}</span>
                       </div>
                     </td>
-                    <Cell variant="neutral">{row.impressions !== null ? row.impressions.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
-                    <Cell variant="neutral">{row.clicks !== null ? row.clicks.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
-                    <Cell variant={clickRateVariant(row.clickRate)}>{row.clickRate !== null ? `${row.clickRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={wowVariant(row.ordersWow)}>
                       {row.orders !== null ? (<>{row.orders}<WowArrow dir={row.ordersWow} /></>) : <span className="text-[#c8cad4]">—</span>}
                     </Cell>
+                    <Cell variant={row.profitPerSale !== null ? (row.profitPerSale > 0 ? "green" : "red") : "muted"}>
+                      {row.profitPerSale !== null ? `£${row.profitPerSale.toFixed(2)}` : <span className="text-[#c8cad4]">—</span>}
+                    </Cell>
+                    <Cell variant="neutral">{row.impressions !== null ? row.impressions.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
+                    <Cell variant="neutral">{row.clicks !== null ? row.clicks.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
+                    <Cell variant={clickRateVariant(row.clickRate)}>{row.clickRate !== null ? `${row.clickRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={buyRateVariant(row.buyRate)}>{row.buyRate !== null ? `${row.buyRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
-                    <Cell variant="neutral">{row.profitPerSale !== null ? `£${row.profitPerSale.toFixed(2)}` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <td className="px-3 py-3 text-center">
                       {hasNotes ? (
                         <button type="button" onClick={() => setExpandedId(isExpanded ? null : row.entry.id)} className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]">
