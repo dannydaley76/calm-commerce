@@ -18,6 +18,11 @@
       "repeatMin": 1,
       "repeatMax": 3,
       "summaryFieldKey": "idea_name",
+      "linkedGroup": {
+        "sourceGroupKey": "product_ideas",
+        "sourceLabelKey": "idea_description",
+        "targetFieldKey": "idea_name"
+      },
       "fields": [
         {
           "type": "field",
@@ -26,7 +31,7 @@
           "label": "Idea name",
           "fieldType": "text",
           "required": true,
-          "helpText": "Name this idea (copy from your Chapter 3 worksheet, e.g. 'insulated water bottle for trail runners')."
+          "helpText": "Auto-filled from your Chapter 3 shortlist. Rename it there if you want to change it."
         },
         {
           "type": "field",

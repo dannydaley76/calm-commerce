@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function OnlineStoreFlowFigure() {
   return (
-    <figure className="overflow-hidden rounded-[2rem] bg-white shadow-[0px_24px_48px_rgba(48,50,59,0.06)] ring-1 ring-[#eceaf5]">
+    <figure className="overflow-hidden rounded-[2rem] bg-white shadow-[0px_24px_48px_rgba(11,42,57,0.06)] ring-1 ring-[#eceaf5]">
       <Image
         src="/images/how-an-online-store-works.png"
         alt="Diagram showing how an online store works in three steps: see the offer, buy it, and get the product."
@@ -52,11 +52,11 @@ const calmStartRules = [
 
 export function CalmStartRulesFramework() {
   return (
-    <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.06)] ring-1 ring-[#eceaf5] md:p-8">
+    <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.06)] ring-1 ring-[#eceaf5] md:p-8">
       <div className="max-w-3xl">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">Framework</p>
-        <h3 className="mt-3 font-[Manrope] text-3xl font-extrabold tracking-tight text-[#30323b] md:text-4xl">Calm-Start Rules</h3>
-        <p className="mt-4 text-base leading-7 text-[#5d5f68]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Framework</p>
+        <h3 className="mt-3 font-[Manrope] text-3xl font-extrabold tracking-tight text-ink-900 md:text-4xl">Calm-Start Rules</h3>
+        <p className="mt-4 text-base leading-7 text-ink-500">
           A simple operating system for getting started without panic, noise, or overcomplication.
         </p>
       </div>
@@ -64,9 +64,9 @@ export function CalmStartRulesFramework() {
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {calmStartRules.map((rule) => (
           <div key={rule.title} className="rounded-[1.5rem] bg-[#faf8fe] p-5 ring-1 ring-[#eceaf5]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Rule</p>
-            <h4 className="mt-3 font-[Manrope] text-xl font-bold tracking-tight text-[#30323b]">{rule.title}</h4>
-            <p className="mt-3 text-sm leading-6 text-[#5d5f68]">{rule.body}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Rule</p>
+            <h4 className="mt-3 font-[Manrope] text-xl font-bold tracking-tight text-ink-900">{rule.title}</h4>
+            <p className="mt-3 text-sm leading-6 text-ink-500">{rule.body}</p>
           </div>
         ))}
       </div>
@@ -103,11 +103,11 @@ const founderRuleExamples = [
 
 export function FounderRulesExample() {
   return (
-    <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.06)] ring-1 ring-[#eceaf5] md:p-8">
+    <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.06)] ring-1 ring-[#eceaf5] md:p-8">
       <div className="max-w-3xl">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#006d4a]">Worked example</p>
-        <h3 className="mt-3 font-[Manrope] text-3xl font-extrabold tracking-tight text-[#30323b] md:text-4xl">Example Founder Rules</h3>
-        <p className="mt-4 text-base leading-7 text-[#5d5f68]">
+        <h3 className="mt-3 font-[Manrope] text-3xl font-extrabold tracking-tight text-ink-900 md:text-4xl">Example Founder Rules</h3>
+        <p className="mt-4 text-base leading-7 text-ink-500">
           A useful Founder Rules Sheet gives you practical limits and decision rules you can actually use.
         </p>
       </div>
@@ -116,12 +116,12 @@ export function FounderRulesExample() {
         {founderRuleExamples.map((item) => (
           <div key={item.label} className="grid gap-4 rounded-[1.5rem] bg-[#faf8fe] p-5 ring-1 ring-[#eceaf5] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:items-start">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">{item.label}</p>
-              <p className="mt-3 font-[Manrope] text-xl font-bold tracking-tight text-[#30323b]">{item.value}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">{item.label}</p>
+              <p className="mt-3 font-[Manrope] text-xl font-bold tracking-tight text-ink-900">{item.value}</p>
             </div>
             <div className="rounded-[1.25rem] bg-white px-4 py-4 ring-1 ring-[#e5f4ec]">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#006d4a]">{item.note}</p>
-              <p className="mt-3 text-sm leading-6 text-[#5d5f68]">{item.body}</p>
+              <p className="mt-3 text-sm leading-6 text-ink-500">{item.body}</p>
             </div>
           </div>
         ))}

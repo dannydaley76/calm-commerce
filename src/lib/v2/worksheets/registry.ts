@@ -10,10 +10,8 @@ import storeReadinessChecklist from "./store-readiness-checklist.json";
 import trafficPlanWorksheet from "./traffic-plan-worksheet.json";
 import adTestWorksheet from "./ad-test-worksheet.json";
 import emailRetentionWorksheet from "./email-retention-worksheet.json";
-import weeklyReviewTemplate from "./weekly-review-template.json";
 import iterationDecisionWorksheet from "./iteration-decision-worksheet.json";
 import growthStrategyWorksheet from "./growth-strategy-worksheet.json";
-import weeklyMetrics from "./weekly-metrics.json";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const WORKSHEET_REGISTRY: Record<string, any> = {
@@ -29,8 +27,6 @@ export const WORKSHEET_REGISTRY: Record<string, any> = {
   "traffic-plan-worksheet": trafficPlanWorksheet,
   "ad-test-worksheet": adTestWorksheet,
   "email-retention-worksheet": emailRetentionWorksheet,
-  "weekly-review-template": weeklyReviewTemplate,
   "iteration-decision-worksheet": iterationDecisionWorksheet,
   "growth-strategy-worksheet": growthStrategyWorksheet,
-  "weekly-metrics": weeklyMetrics,
 };
