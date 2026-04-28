@@ -93,7 +93,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-[#0053dc]/20 bg-[#0053dc] px-4 py-3 font-medium !text-white hover:bg-[#0047bc] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl border border-cobalt-600/20 bg-cobalt-600 px-4 py-3 font-medium !text-white hover:bg-[#0047bc] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Signing in…" : "Sign in"}
           </button>
@@ -105,10 +105,10 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-5 flex flex-col gap-2 text-sm">
-          <Link href="/signup" className="text-[#0053dc] hover:underline">
+          <Link href="/signup" className="text-cobalt-600 hover:underline">
             Create account
           </Link>
-          <Link href="/forgot-password" className="text-[#0053dc] hover:underline">
+          <Link href="/forgot-password" className="text-cobalt-600 hover:underline">
             Forgot password?
           </Link>
         </div>

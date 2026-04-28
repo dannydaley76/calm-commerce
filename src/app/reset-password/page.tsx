@@ -64,14 +64,14 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl border border-[#0053dc]/20 bg-[#0053dc] px-4 py-3 font-medium !text-white hover:bg-[#0047bc] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl border border-cobalt-600/20 bg-cobalt-600 px-4 py-3 font-medium !text-white hover:bg-[#0047bc] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? "Updating…" : "Update password"}
           </button>
         </form>
 
         <div className="mt-5 text-sm">
-          <Link href="/login" className="text-[#0053dc] hover:underline">
+          <Link href="/login" className="text-cobalt-600 hover:underline">
             Back to sign in
           </Link>
         </div>

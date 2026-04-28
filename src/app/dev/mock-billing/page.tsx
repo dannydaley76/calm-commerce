@@ -37,11 +37,11 @@ export default function MockBillingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8fe] px-6 py-10 text-[#30323b]">
-      <div className="mx-auto max-w-2xl rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(48,50,59,0.08)] lg:p-10">
+    <main className="min-h-screen bg-[#faf8fe] px-6 py-10 text-ink-900">
+      <div className="mx-auto max-w-2xl rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)] lg:p-10">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5b48d6]">Dev only</p>
         <h1 className="mt-4 font-[Manrope] text-4xl font-extrabold tracking-tight">Mock billing controls</h1>
-        <p className="mt-4 text-sm leading-7 text-[#5d5f68]">
+        <p className="mt-4 text-sm leading-7 text-ink-500">
           Use this local testing page to switch the current learner between preview, active paid, expired, and cancelled states without using Stripe.
         </p>
 
@@ -58,13 +58,13 @@ export default function MockBillingPage() {
           ))}
         </div>
 
-        {message ? <p className="mt-6 text-sm text-[#5d5f68]">{message}</p> : null}
+        {message ? <p className="mt-6 text-sm text-ink-500">{message}</p> : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link href="/" className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b]">
+          <Link href="/" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
             Back to dashboard
           </Link>
-          <Link href="/upgrade" className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b]">
+          <Link href="/upgrade" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
             View upgrade page
           </Link>
         </div>

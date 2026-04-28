@@ -9,15 +9,15 @@ export function AccessStatusBadge({ status, level, compact = false, inverse = fa
   const tone =
     status === "active" && level === "full"
       ? inverse
-        ? "bg-[#eafaf2]/20 text-white"
-        : "bg-[#eafaf2] text-[#0f7b53]"
+        ? "bg-success-100/20 text-white"
+        : "bg-success-100 text-[#0f7b53]"
       : status === "expired" || status === "cancelled"
         ? inverse
-          ? "bg-[#fff1f0]/20 text-white"
-          : "bg-[#fff1f0] text-[#a83836]"
+          ? "bg-error-100/20 text-white"
+          : "bg-error-100 text-error-700"
         : inverse
           ? "bg-white/20 text-white"
-          : "bg-[#f4f3fa] text-[#5b48d6]";
+          : "bg-surface-sunken text-[#5b48d6]";
 
   const label =
     status === "active" && level === "full"

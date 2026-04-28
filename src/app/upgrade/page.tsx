@@ -14,14 +14,14 @@ export default function UpgradePage() {
       title="Upgrade"
       subtitle="Unlock the full learning experience with a paid access plan."
     >
-      <div className="mx-auto max-w-3xl rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(48,50,59,0.08)] lg:p-10">
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5d5f68]">
+      <div className="mx-auto max-w-3xl rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)] lg:p-10">
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-500">
           You currently have preview access. Upgrade to unlock the paid chapters, the full worksheet journey, and the full in-app learning flow.
         </p>
 
         <div className="mt-8 rounded-[1.5rem] bg-[#f7f5ff] p-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5b48d6]">MVP billing model</p>
-          <p className="mt-3 text-base leading-7 text-[#5d5f68]">
+          <p className="mt-3 text-base leading-7 text-ink-500">
             Recurring access billed every 6 months through Stripe.
           </p>
         </div>
@@ -32,7 +32,7 @@ export default function UpgradePage() {
               Continue to payment
             </button>
           </form>
-          <Link href="/" className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-6 py-4 font-semibold text-[#30323b]">
+          <Link href="/" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-6 py-4 font-semibold text-ink-900">
             Back to dashboard
           </Link>
         </div>

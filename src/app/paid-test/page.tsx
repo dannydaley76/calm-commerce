@@ -24,16 +24,16 @@ export default async function PaidTestPage() {
       subtitle="A temporary product surface for verifying preview vs paid vs expired entitlement behavior while the full paid learner flow is still being built."
     >
       {access.canAccessPaidContent ? (
-        <div className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(48,50,59,0.08)] lg:p-10">
+        <div className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)] lg:p-10">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0f7b53]">Paid access active</p>
             <AccessStatusBadge status={access.entitlementStatus} level={access.accessLevel} compact />
           </div>
           <h2 className="mt-4 font-[Manrope] text-4xl font-extrabold tracking-tight">You can see this because your entitlement is active</h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#5d5f68]">
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-500">
             This page exists only as a temporary access-control proving surface. If you can see it, the app currently thinks you have paid access.
           </p>
-          <div className="mt-8 rounded-[1.5rem] bg-[#eefcf5] p-6 text-[#005e3f]">
+          <div className="mt-8 rounded-[1.5rem] bg-success-100 p-6 text-[#005e3f]">
             <p className="font-semibold">Current effective state</p>
             <ul className="mt-3 space-y-2 text-sm leading-6">
               <li>- authenticated: {String(access.authenticated)}</li>
