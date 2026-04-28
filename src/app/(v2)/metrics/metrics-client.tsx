@@ -48,13 +48,32 @@ type LiveStoreRow = {
    Helpers
 ───────────────────────────────────────────────────────────── */
 
-function todayLabel(): string {
-  return new Date().toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+/** Returns today as "YYYY-MM-DD" — the value format for <input type="date"> */
+function todayISO(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+/**
+ * Formats a week_ending string for display in the table.
+ * Handles both "YYYY-MM-DD" (new) and legacy free-text values.
+ */
+function formatWeekEnding(raw: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const d = new Date(raw + "T12:00:00"); // noon avoids timezone flips
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+  return raw; // legacy format — show as stored
+}
+
+/**
+ * Converts any stored week_ending value to "YYYY-MM-DD" for the date input.
+ * Tries parsing; falls back to today.
+ */
+function toISODate(raw: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
+  return todayISO();
 }
 
 function parseNum(val: string | undefined): number | null {
@@ -129,10 +148,10 @@ type CellVariant = "green" | "amber" | "red" | "neutral" | "muted";
 
 function cellCls(variant: CellVariant): string {
   const map: Record<CellVariant, string> = {
-    green: "bg-[#eefcf5] text-[#005e3f] font-semibold",
+    green: "bg-success-100 text-[#005e3f] font-semibold",
     amber: "bg-[#fff8e6] text-[#835700] font-semibold",
-    red: "bg-[#fff1f1] text-[#a83836] font-semibold",
-    neutral: "bg-transparent text-[#003748]",
+    red: "bg-[#fff1f1] text-error-700 font-semibold",
+    neutral: "bg-transparent text-ink-900",
     muted: "bg-transparent text-[#9a9ca8]",
   };
   return map[variant];
@@ -185,7 +204,7 @@ function refundVariant(n: number | null): CellVariant {
 function WowArrow({ dir }: { dir: "up" | "down" | "flat" | null }) {
   if (!dir || dir === "flat") return null;
   return (
-    <span className={`ml-1 text-[10px] ${dir === "up" ? "text-[#005e3f]" : "text-[#a83836]"}`}>
+    <span className={`ml-1 text-[10px] ${dir === "up" ? "text-[#005e3f]" : "text-error-700"}`}>
       {dir === "up" ? "▲" : "▼"}
     </span>
   );
@@ -212,15 +231,15 @@ function SummaryCard({ label, value, sub, variant = "neutral" }: {
   const valueColour: Record<CellVariant, string> = {
     green: "text-[#005e3f]",
     amber: "text-[#835700]",
-    red: "text-[#a83836]",
-    neutral: "text-[#003748]",
+    red: "text-error-700",
+    neutral: "text-ink-900",
     muted: "text-[#9a9ca8]",
   };
   return (
     <div className="rounded-2xl border border-[#e2e6f5] bg-white px-5 py-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b8d99]">{label}</p>
       <p className={`mt-1 font-[Manrope] text-2xl font-bold ${valueColour[variant]}`}>{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-[#5d5f68]">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs text-ink-500">{sub}</p>}
     </div>
   );
 }
@@ -230,18 +249,18 @@ function NoteCard({ label, text, variant }: {
   text: string;
   variant: "green" | "amber" | "neutral";
 }) {
-  const border = { green: "border-[#c3f0da] bg-[#f2fcf7]", amber: "border-[#fde8ad] bg-[#fffbf0]", neutral: "border-[#e2e6f5] bg-[#fafbff]" };
+  const border = { green: "border-[#c3f0da] bg-[#f2fcf7]", amber: "border-[#fde8ad] bg-[#fffbf0]", neutral: "border-[#e2e6f5] bg-surface-sunken" };
   const lc = { green: "text-[#005e3f]", amber: "text-[#835700]", neutral: "text-[#545a95]" };
   return (
     <div className={`rounded-xl border px-4 py-3 ${border[variant]}`}>
       <p className={`mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${lc[variant]}`}>{label}</p>
-      <p className="text-sm leading-6 text-[#003748]">{text}</p>
+      <p className="text-sm leading-6 text-ink-900">{text}</p>
     </div>
   );
 }
 
 const inputBase =
-  "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-[#003748] shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-[#0053dc] focus:ring-1 focus:ring-[#0053dc] disabled:bg-[#f4f4f8] disabled:text-[#9a9ca8]";
+  "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-cobalt-600 focus:ring-1 focus:ring-cobalt-600 disabled:bg-[#f4f4f8] disabled:text-[#9a9ca8]";
 
 /* ─────────────────────────────────────────────────────────────
    Phase selector
@@ -255,8 +274,8 @@ function PhaseSelector({ phase, onChange }: { phase: Phase; onChange: (p: Phase)
         onClick={() => onChange("validation")}
         className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
           phase === "validation"
-            ? "bg-white text-[#003748] shadow-sm"
-            : "text-[#5d5f68] hover:text-[#003748]"
+            ? "bg-white text-ink-900 shadow-sm"
+            : "text-ink-500 hover:text-ink-900"
         }`}
       >
         Marketplace testing
@@ -266,8 +285,8 @@ function PhaseSelector({ phase, onChange }: { phase: Phase; onChange: (p: Phase)
         onClick={() => onChange("live_store")}
         className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
           phase === "live_store"
-            ? "bg-white text-[#003748] shadow-sm"
-            : "text-[#5d5f68] hover:text-[#003748]"
+            ? "bg-white text-ink-900 shadow-sm"
+            : "text-ink-500 hover:text-ink-900"
         }`}
       >
         Own store
@@ -287,7 +306,7 @@ function FindHelp({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-xs font-semibold text-[#0053dc] hover:underline"
+        className="text-xs font-semibold text-cobalt-600 hover:underline"
       >
         {open ? "Hide ↑" : "Where do I find this? ↓"}
       </button>
@@ -320,8 +339,8 @@ function Question({
   return (
     <div className="border-b border-[#eef0f7] pb-6 last:border-0 last:pb-0">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#545a95]">{eyebrow}</p>
-      <p className="mt-2 font-[Manrope] text-base font-semibold text-[#003748]">{question}</p>
-      {context && <p className="mt-1 text-sm text-[#5d5f68]">{context}</p>}
+      <p className="mt-2 font-[Manrope] text-base font-semibold text-ink-900">{question}</p>
+      {context && <p className="mt-1 text-sm text-ink-500">{context}</p>}
       <div className="mt-3">{children}</div>
       {help && <FindHelp>{help}</FindHelp>}
     </div>
@@ -333,7 +352,7 @@ function Question({
 ───────────────────────────────────────────────────────────── */
 
 function ValidationForm({ onSaved }: { onSaved: () => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayLabel() });
+  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayISO() });
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -352,7 +371,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
       });
       if (!res.ok) throw new Error("Save failed");
       setStatus("success");
-      setForm({ week_ending: todayLabel() });
+      setForm({ week_ending: todayISO() });
       timerRef.current = setTimeout(() => { setStatus("idle"); onSaved(); }, 1200);
     } catch {
       setStatus("error");
@@ -365,24 +384,24 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
   return (
     <div className="rounded-[1.5rem] border border-[#d9def2] bg-[#f7f9ff] px-6 py-7">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">Log this week</p>
-        {status === "submitting" && <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0053dc]">Saving…</span>}
-        {status === "success" && <span className="rounded-full bg-[#eefcf5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
-        {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a83836]">Not saved</span>}
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Log this week</p>
+        {status === "submitting" && <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">Saving…</span>}
+        {status === "success" && <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
+        {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
 
       <div className="space-y-6">
         <Question
           eyebrow="Week"
           question="Which week are you logging?"
-          context="Use the last day of the week you're reporting — usually a Sunday."
+          context="Pick the last day of the week you're reporting — usually a Sunday."
         >
           <input
+            type="date"
             className={inputBase}
             value={form.week_ending ?? ""}
             onChange={(e) => set("week_ending", e.target.value)}
             disabled={isSubmitting}
-            placeholder="e.g. Sun 20 Apr 2025"
           />
         </Question>
 
@@ -481,13 +500,113 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
           type="button"
           onClick={() => void handleSubmit()}
           disabled={isSubmitting || !(form.week_ending ?? "").trim()}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0053dc] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-cobalt-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
         >
           {isSubmitting ? "Saving…" : "Save this week"}
         </button>
         {status === "error" && (
-          <span className="text-xs text-[#a83836]">Could not save — please try again.</span>
+          <span className="text-xs text-error-700">Could not save — please try again.</span>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Validation inline edit form
+───────────────────────────────────────────────────────────── */
+
+function ValidationInlineEdit({
+  entry,
+  onSaved,
+  onCancel,
+}: {
+  entry: MetricEntry;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<Record<string, string>>({
+    week_ending: toISODate(entry.week_ending),
+    impressions: entry.data_json.impressions ?? "",
+    listing_clicks: entry.data_json.listing_clicks ?? "",
+    orders: entry.data_json.orders ?? "",
+    profit_per_sale: entry.data_json.profit_per_sale ?? "",
+    noticed: entry.data_json.noticed ?? "",
+  });
+  const [status, setStatus] = useState<SubmitStatus>("idle");
+
+  const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSave = async () => {
+    if (!(form.week_ending ?? "").trim()) return;
+    setStatus("submitting");
+    try {
+      const { week_ending, ...rest } = form;
+      const res = await fetch(`/api/v2/weekly-metrics/${entry.id}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ week_ending, data: rest }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setStatus("success");
+      setTimeout(() => { onSaved(); }, 800);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  const isSaving = status === "submitting";
+
+  return (
+    <div className="rounded-xl border border-[#d9def2] bg-[#f7f9ff] p-5">
+      <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Edit entry</p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Week ending</label>
+          <input type="date" className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSaving} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Impressions</label>
+          <input type="number" className={inputBase} value={form.impressions ?? ""} onChange={(e) => set("impressions", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Listing clicks</label>
+          <input type="number" className={inputBase} value={form.listing_clicks ?? ""} onChange={(e) => set("listing_clicks", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Orders</label>
+          <input type="number" className={inputBase} value={form.orders ?? ""} onChange={(e) => set("orders", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Profit per sale</label>
+          <input className={inputBase} value={form.profit_per_sale ?? ""} onChange={(e) => set("profit_per_sale", e.target.value)} disabled={isSaving} placeholder="e.g. £8.50" />
+        </div>
+        <div className="sm:col-span-2 lg:col-span-3">
+          <label className="block text-xs font-semibold text-ink-500">Noticed this week</label>
+          <textarea className={`${inputBase} min-h-[60px] resize-y`} value={form.noticed ?? ""} onChange={(e) => set("noticed", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={isSaving || !(form.week_ending ?? "").trim()}
+          className="rounded-xl bg-cobalt-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
+        >
+          {isSaving ? "Saving…" : "Save changes"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSaving}
+          className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
+        >
+          Cancel
+        </button>
+        {status === "success" && <span className="text-xs text-[#005e3f]">Saved ✓</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save — try again.</span>}
       </div>
     </div>
   );
@@ -497,23 +616,42 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
    Validation history table
 ───────────────────────────────────────────────────────────── */
 
-function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
+function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onRefresh: () => void }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting" | "error">("idle");
+
   const rows = computeValidation(entries);
+
+  const handleDelete = async (id: string) => {
+    setDeleteStatus("deleting");
+    try {
+      const res = await fetch(`/api/v2/weekly-metrics/${id}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!res.ok) throw new Error();
+      setDeletingId(null);
+      setDeleteStatus("idle");
+      onRefresh();
+    } catch {
+      setDeleteStatus("error");
+      setTimeout(() => setDeleteStatus("idle"), 3000);
+    }
+  };
 
   const allOrders = rows.map((r) => r.orders).filter((n): n is number => n !== null);
   const totalOrders = allOrders.reduce((a, b) => a + b, 0);
   const latestProfitPerSale = rows[0]?.profitPerSale ?? null;
-  const avgClickRate = (() => {
-    const rates = rows.map((r) => r.clickRate).filter((n): n is number => n !== null);
-    if (!rates.length) return null;
-    return rates.reduce((a, b) => a + b, 0) / rates.length;
-  })();
   const avgBuyRate = (() => {
     const rates = rows.map((r) => r.buyRate).filter((n): n is number => n !== null);
     if (!rates.length) return null;
     return rates.reduce((a, b) => a + b, 0) / rates.length;
   })();
+
+  // How many columns total (used for colSpan in expanded rows)
+  const COL_COUNT = 9;
 
   return (
     <div className="space-y-6">
@@ -533,17 +671,17 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
       {/* What the numbers mean */}
       <div className="rounded-2xl border border-[#e2e6f5] bg-white px-6 py-5">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b8d99]">How to read these numbers</p>
-        <div className="grid gap-x-8 gap-y-3 text-xs text-[#5d5f68] sm:grid-cols-3">
+        <div className="grid gap-x-8 gap-y-3 text-xs text-ink-500 sm:grid-cols-3">
           <div>
-            <p className="mb-1 font-semibold text-[#003748]">Click rate (impressions → clicks)</p>
-            <p>How compelling your thumbnail and title are. <span className="text-[#005e3f]">≥5% strong</span> · <span className="text-[#835700]">2–5% ok</span> · <span className="text-[#a83836]">&lt;2% fix the listing</span></p>
+            <p className="mb-1 font-semibold text-ink-900">Click rate (impressions → clicks)</p>
+            <p>How compelling your thumbnail and title are. <span className="text-[#005e3f]">≥5% strong</span> · <span className="text-[#835700]">2–5% ok</span> · <span className="text-error-700">&lt;2% fix the listing</span></p>
           </div>
           <div>
-            <p className="mb-1 font-semibold text-[#003748]">Buy rate (clicks → orders)</p>
-            <p>How well your listing converts once people are in it. <span className="text-[#005e3f]">≥3% strong</span> · <span className="text-[#835700]">1–3% ok</span> · <span className="text-[#a83836]">&lt;1% fix photos/price</span></p>
+            <p className="mb-1 font-semibold text-ink-900">Buy rate (clicks → orders)</p>
+            <p>How well your listing converts once people are in it. <span className="text-[#005e3f]">≥3% strong</span> · <span className="text-[#835700]">1–3% ok</span> · <span className="text-error-700">&lt;1% fix photos/price</span></p>
           </div>
           <div>
-            <p className="mb-1 font-semibold text-[#003748]">Diagnosing low orders</p>
+            <p className="mb-1 font-semibold text-ink-900">Diagnosing low orders</p>
             <p>Low click rate = discoverability problem (titles, tags). Good click rate + low buy rate = listing problem (photos, price, description).</p>
           </div>
         </div>
@@ -553,30 +691,43 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
       <div className="overflow-x-auto rounded-2xl border border-[#e2e6f5] bg-white">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-[#eef0f7] bg-[#fafbff]">
-              {["Week", "Orders", "Profit / sale", "Impressions", "Clicks", "Click rate", "Buy rate", "Notes"].map((h, i) => (
-                <th
-                  key={h}
-                  className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : i === 7 ? "text-center" : "text-right"}`}
-                >
-                  {h}
-                </th>
-              ))}
+            <tr className="border-b border-[#eef0f7] bg-surface-sunken">
+              <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Week</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Orders</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Profit / sale</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Impressions</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Clicks</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Click rate</th>
+              <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Buy rate</th>
+              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Notes</th>
+              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f0f2fa]">
             {rows.map((row, idx) => {
-              const isExpanded = expandedId === row.entry.id;
+              const isNotesExpanded = expandedId === row.entry.id;
+              const isEditing = editingId === row.entry.id;
+              const isConfirmingDelete = deletingId === row.entry.id;
               const hasNotes = !!row.entry.data_json.noticed;
+
+              // Expanded row state: edit > delete confirm > notes (mutually exclusive)
+              const showExpandedRow = isEditing || isConfirmingDelete || isNotesExpanded;
+
               return (
                 <React.Fragment key={row.entry.id}>
-                  <tr className={`transition-colors ${isExpanded ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-[#fafbff]"}`}>
+                  <tr className={`transition-colors ${showExpandedRow ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-surface-sunken"}`}>
+                    {/* Week */}
                     <td className="px-4 py-3 text-left">
                       <div className="flex items-center gap-2">
-                        {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0053dc]">Latest</span>}
-                        <span className="font-[Manrope] text-sm font-semibold text-[#003748]">{row.entry.week_ending}</span>
+                        {idx === 0 && (
+                          <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">Latest</span>
+                        )}
+                        <span className="font-[Manrope] text-sm font-semibold text-ink-900">
+                          {formatWeekEnding(row.entry.week_ending)}
+                        </span>
                       </div>
                     </td>
+                    {/* Data cells */}
                     <Cell variant={wowVariant(row.ordersWow)}>
                       {row.orders !== null ? (<>{row.orders}<WowArrow dir={row.ordersWow} /></>) : <span className="text-[#c8cad4]">—</span>}
                     </Cell>
@@ -587,17 +738,107 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
                     <Cell variant="neutral">{row.clicks !== null ? row.clicks.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={clickRateVariant(row.clickRate)}>{row.clickRate !== null ? `${row.clickRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={buyRateVariant(row.buyRate)}>{row.buyRate !== null ? `${row.buyRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
+                    {/* Notes toggle */}
                     <td className="px-3 py-3 text-center">
                       {hasNotes ? (
-                        <button type="button" onClick={() => setExpandedId(isExpanded ? null : row.entry.id)} className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]">
-                          {isExpanded ? "Hide" : "View"}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(null);
+                            setDeletingId(null);
+                            setExpandedId(isNotesExpanded ? null : row.entry.id);
+                          }}
+                          className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]"
+                        >
+                          {isNotesExpanded ? "Hide" : "View"}
                         </button>
-                      ) : <span className="text-[#c8cad4]">—</span>}
+                      ) : (
+                        <span className="text-[#c8cad4]">—</span>
+                      )}
+                    </td>
+                    {/* Actions */}
+                    <td className="px-3 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedId(null);
+                            setDeletingId(null);
+                            setEditingId(isEditing ? null : row.entry.id);
+                          }}
+                          className={`rounded-lg border px-3 py-1 text-[11px] font-semibold transition ${
+                            isEditing
+                              ? "border-cobalt-600 bg-[#eef4ff] text-cobalt-600"
+                              : "border-[#d9def2] bg-[#f0f2fb] text-[#545a95] hover:bg-[#e4e8f8]"
+                          }`}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedId(null);
+                            setEditingId(null);
+                            setDeletingId(isConfirmingDelete ? null : row.entry.id);
+                          }}
+                          className={`rounded-lg border px-3 py-1 text-[11px] font-semibold transition ${
+                            isConfirmingDelete
+                              ? "border-[#f5c0bf] bg-[#fff1f1] text-error-700"
+                              : "border-[#d9def2] bg-[#f0f2fb] text-[#545a95] hover:border-[#f5c0bf] hover:bg-[#fff1f1] hover:text-error-700"
+                          }`}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                  {isExpanded && (
+
+                  {/* Expanded: edit form */}
+                  {isEditing && (
                     <tr className="bg-[#f7f9ff]">
-                      <td colSpan={8} className="px-6 pb-5 pt-2">
+                      <td colSpan={COL_COUNT} className="px-4 pb-5 pt-2">
+                        <ValidationInlineEdit
+                          entry={row.entry}
+                          onSaved={() => { setEditingId(null); onRefresh(); }}
+                          onCancel={() => setEditingId(null)}
+                        />
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Expanded: delete confirm */}
+                  {isConfirmingDelete && !isEditing && (
+                    <tr className="bg-[#fff8f8]">
+                      <td colSpan={COL_COUNT} className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <p className="text-sm text-ink-500">
+                            Delete the entry for <strong>{formatWeekEnding(row.entry.week_ending)}</strong>? This cannot be undone.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(row.entry.id)}
+                            disabled={deleteStatus === "deleting"}
+                            className="rounded-xl bg-[#c0392b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a93226] disabled:opacity-60"
+                          >
+                            {deleteStatus === "deleting" ? "Deleting…" : "Yes, delete"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setDeletingId(null); setDeleteStatus("idle"); }}
+                            className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
+                          >
+                            Cancel
+                          </button>
+                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete — try again.</span>}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Expanded: notes view */}
+                  {isNotesExpanded && !isEditing && !isConfirmingDelete && (
+                    <tr className="bg-[#f7f9ff]">
+                      <td colSpan={COL_COUNT} className="px-6 pb-5 pt-2">
                         <NoteCard label="Noticed" text={row.entry.data_json.noticed} variant="neutral" />
                       </td>
                     </tr>
@@ -617,7 +858,7 @@ function ValidationHistory({ entries }: { entries: MetricEntry[] }) {
 ───────────────────────────────────────────────────────────── */
 
 function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayLabel() });
+  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayISO() });
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -636,7 +877,7 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
       });
       if (!res.ok) throw new Error("Save failed");
       setStatus("success");
-      setForm({ week_ending: todayLabel() });
+      setForm({ week_ending: todayISO() });
       timerRef.current = setTimeout(() => { setStatus("idle"); onSaved(); }, 1200);
     } catch {
       setStatus("error");
@@ -650,15 +891,15 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
   return (
     <div className="rounded-[1.5rem] border border-[#d9def2] bg-[#f7f9ff] px-6 py-7">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">Log this week</p>
-        {status === "submitting" && <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0053dc]">Saving…</span>}
-        {status === "success" && <span className="rounded-full bg-[#eefcf5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
-        {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a83836]">Not saved</span>}
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Log this week</p>
+        {status === "submitting" && <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">Saving…</span>}
+        {status === "success" && <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
+        {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
 
       <div className="space-y-6">
-        <Question eyebrow="Week" question="Which week are you logging?" context="Use the last day of the week — usually a Sunday.">
-          <input className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSubmitting} placeholder="e.g. Sun 20 Apr 2025" />
+        <Question eyebrow="Week" question="Which week are you logging?" context="Pick the last day of the week — usually a Sunday.">
+          <input type="date" className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSubmitting} />
         </Question>
 
         <Question eyebrow="Revenue" question="What was your total revenue this week?" context="Gross sales before fees and costs — the number your store reports.">
@@ -687,11 +928,11 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
           type="button"
           onClick={() => void handleSubmit()}
           disabled={!canSubmit}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0053dc] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-cobalt-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
         >
           {isSubmitting ? "Saving…" : "Save this week"}
         </button>
-        {status === "error" && <span className="text-xs text-[#a83836]">Could not save — please try again.</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save — please try again.</span>}
       </div>
     </div>
   );
@@ -735,7 +976,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
       <div className="overflow-x-auto rounded-2xl border border-[#e2e6f5] bg-white">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-[#eef0f7] bg-[#fafbff]">
+            <tr className="border-b border-[#eef0f7] bg-surface-sunken">
               {["Week", "Revenue", "Orders", "Traffic", "Conv %", "Ad Spend", "ROAS", "Notes"].map((h, i) => (
                 <th key={h} className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : i === 7 ? "text-center" : "text-right"}`}>{h}</th>
               ))}
@@ -747,11 +988,11 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
               const hasNotes = row.entry.data_json.what_worked || row.entry.data_json.what_to_change || row.entry.data_json.notes;
               return (
                 <React.Fragment key={row.entry.id}>
-                  <tr className={`transition-colors ${isExpanded ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-[#fafbff]"}`}>
+                  <tr className={`transition-colors ${isExpanded ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-surface-sunken"}`}>
                     <td className="px-4 py-3 text-left">
                       <div className="flex items-center gap-2">
-                        {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#0053dc]">Latest</span>}
-                        <span className="font-[Manrope] text-sm font-semibold text-[#003748]">{row.entry.week_ending}</span>
+                        {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">Latest</span>}
+                        <span className="font-[Manrope] text-sm font-semibold text-ink-900">{row.entry.week_ending}</span>
                       </div>
                     </td>
                     <Cell variant={wowVariant(row.revenueWow)}>{row.revenue !== null ? (<>£{row.revenue.toLocaleString("en-GB")}<WowArrow dir={row.revenueWow} /></>) : <span className="text-[#c8cad4]">—</span>}</Cell>
@@ -789,10 +1030,10 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
       {/* Thresholds key */}
       <div className="rounded-2xl border border-[#e2e6f5] bg-white px-6 py-5">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8b8d99]">How thresholds are calculated</p>
-        <div className="grid gap-x-8 gap-y-2 text-xs text-[#5d5f68] sm:grid-cols-2 lg:grid-cols-4">
-          <div><p className="mb-1 font-semibold text-[#003748]">Conversion %</p><p><span className="text-[#005e3f]">≥ 2%</span> · <span className="text-[#835700]">1–2%</span> · <span className="text-[#a83836]">&lt; 1%</span></p></div>
-          <div><p className="mb-1 font-semibold text-[#003748]">ROAS</p><p><span className="text-[#005e3f]">≥ 3×</span> · <span className="text-[#835700]">1–3×</span> · <span className="text-[#a83836]">&lt; 1×</span></p></div>
-          <div><p className="mb-1 font-semibold text-[#003748]">Revenue / Orders / Traffic</p><p><span className="text-[#005e3f]">▲ up week-over-week</span> · <span className="text-[#a83836]">▼ down</span></p></div>
+        <div className="grid gap-x-8 gap-y-2 text-xs text-ink-500 sm:grid-cols-2 lg:grid-cols-4">
+          <div><p className="mb-1 font-semibold text-ink-900">Conversion %</p><p><span className="text-[#005e3f]">≥ 2%</span> · <span className="text-[#835700]">1–2%</span> · <span className="text-error-700">&lt; 1%</span></p></div>
+          <div><p className="mb-1 font-semibold text-ink-900">ROAS</p><p><span className="text-[#005e3f]">≥ 3×</span> · <span className="text-[#835700]">1–3×</span> · <span className="text-error-700">&lt; 1×</span></p></div>
+          <div><p className="mb-1 font-semibold text-ink-900">Revenue / Orders / Traffic</p><p><span className="text-[#005e3f]">▲ up week-over-week</span> · <span className="text-error-700">▼ down</span></p></div>
         </div>
       </div>
 
@@ -824,7 +1065,7 @@ function SeedButton({ onSeeded }: { onSeeded: () => void }) {
       <button type="button" onClick={() => void handleSeed()} disabled={status === "loading" || status === "done"} className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-xs font-semibold text-[#545a95] transition hover:bg-[#f0f2fb] disabled:opacity-50">
         {status === "loading" ? "Seeding…" : status === "done" ? "Done ✓" : "Load 20 weeks of demo data"}
       </button>
-      {status === "error" && <span className="text-xs text-[#a83836]">Seed failed — try again.</span>}
+      {status === "error" && <span className="text-xs text-error-700">Seed failed — try again.</span>}
       <span className="text-xs text-[#b0b3be]">Fills in 20 weeks of realistic example data so you can see how the dashboard looks.</span>
     </div>
   );
@@ -840,22 +1081,22 @@ function PhaseOnboarding({ onChoose }: { onChoose: (p: Phase) => void }) {
       <button
         type="button"
         onClick={() => onChoose("validation")}
-        className="group rounded-[1.5rem] border border-[#d9def2] bg-white p-6 text-left transition hover:border-[#0053dc] hover:shadow-md"
+        className="group rounded-[1.5rem] border border-[#d9def2] bg-white p-6 text-left transition hover:border-cobalt-600 hover:shadow-md"
       >
         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#545a95]">Phase 1</p>
-        <p className="mt-2 font-[Manrope] text-base font-semibold text-[#003748] group-hover:text-[#0053dc]">Testing on a marketplace</p>
-        <p className="mt-2 text-sm leading-6 text-[#5d5f68]">
+        <p className="mt-2 font-[Manrope] text-base font-semibold text-ink-900 group-hover:text-cobalt-600">Testing on a marketplace</p>
+        <p className="mt-2 text-sm leading-6 text-ink-500">
           You have listed a product on Etsy, eBay, Amazon, or similar to validate demand. Track views, clicks, orders, and profit per sale.
         </p>
       </button>
       <button
         type="button"
         onClick={() => onChoose("live_store")}
-        className="group rounded-[1.5rem] border border-[#d9def2] bg-white p-6 text-left transition hover:border-[#0053dc] hover:shadow-md"
+        className="group rounded-[1.5rem] border border-[#d9def2] bg-white p-6 text-left transition hover:border-cobalt-600 hover:shadow-md"
       >
         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#545a95]">Phase 2</p>
-        <p className="mt-2 font-[Manrope] text-base font-semibold text-[#003748] group-hover:text-[#0053dc]">Running my own store</p>
-        <p className="mt-2 text-sm leading-6 text-[#5d5f68]">
+        <p className="mt-2 font-[Manrope] text-base font-semibold text-ink-900 group-hover:text-cobalt-600">Running my own store</p>
+        <p className="mt-2 text-sm leading-6 text-ink-500">
           You have a live store and want to track weekly performance across revenue, traffic, conversion rate, and growth.
         </p>
       </button>
@@ -886,7 +1127,7 @@ export function MetricsClient({ entries, authenticated, isDev = false }: {
   if (!authenticated) {
     return (
       <div className="rounded-2xl border border-[#e2e6f5] bg-white px-8 py-12 text-center">
-        <p className="text-sm text-[#5d5f68]">Sign in to view your weekly metrics.</p>
+        <p className="text-sm text-ink-500">Sign in to view your weekly metrics.</p>
       </div>
     );
   }
@@ -900,8 +1141,8 @@ export function MetricsClient({ entries, authenticated, isDev = false }: {
     return (
       <div className="space-y-6">
         <div>
-          <p className="font-[Manrope] text-lg font-semibold text-[#003748]">Where are you in the journey?</p>
-          <p className="mt-1 text-sm text-[#5d5f68]">This sets which metrics you track. You can switch at any time.</p>
+          <p className="font-[Manrope] text-lg font-semibold text-ink-900">Where are you in the journey?</p>
+          <p className="mt-1 text-sm text-ink-500">This sets which metrics you track. You can switch at any time.</p>
         </div>
         <PhaseOnboarding
           onChoose={(p) => {
@@ -930,7 +1171,7 @@ export function MetricsClient({ entries, authenticated, isDev = false }: {
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#0053dc] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003da8]"
+              className="inline-flex items-center gap-2 rounded-xl bg-cobalt-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003da8]"
             >
               + Log this week
             </button>
@@ -959,13 +1200,13 @@ export function MetricsClient({ entries, authenticated, isDev = false }: {
       {/* ── History ── */}
       {phaseEntries.length === 0 ? (
         <div className="rounded-2xl border border-[#e2e6f5] bg-white px-8 py-10 text-center">
-          <p className="text-sm text-[#5d5f68]">
+          <p className="text-sm text-ink-500">
             No {phase === "validation" ? "marketplace testing" : "own store"} entries yet.
             {!showForm && " Use the button above to log your first week."}
           </p>
         </div>
       ) : phase === "validation" ? (
-        <ValidationHistory entries={phaseEntries} />
+        <ValidationHistory entries={phaseEntries} onRefresh={() => router.refresh()} />
       ) : (
         <LiveStoreHistory entries={phaseEntries} isDev={isDev} onSeedDone={() => router.refresh()} />
       )}
