@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AccessStatusBadge } from "@/components/access-status-badge";
 import { Card, Eyebrow, PageHero, Panel, PrimaryButton, ProgressBar, SecondaryButton, SectionShell } from "@/components/design-system";
 import { LearnerShell } from "@/components/learner-shell";
@@ -120,21 +119,21 @@ export default async function DashboardPage() {
             <div className="flex-1">
               <ProgressBar value={visualProgress} />
             </div>
-            <span className="text-[12px] font-medium text-[#006b5f]">{state.authenticated ? `${visualProgress}% complete` : "Preview mode"}</span>
+            <span className="text-[12px] font-medium text-teal-600">{state.authenticated ? `${visualProgress}% complete` : "Preview mode"}</span>
           </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             <div>
               <Eyebrow>Current chapter</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-[#003748]">3. Set your founder rules</p>
+              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">3. Set your founder rules</p>
             </div>
             <div>
               <Eyebrow>Worksheet status</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-[#003748]">{state.authenticated ? getStatusLabel(state.status) : "Sign in to load"}</p>
+              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">{state.authenticated ? getStatusLabel(state.status) : "Sign in to load"}</p>
             </div>
             <div>
               <Eyebrow>Best next action</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-[#003748]">{primaryCta.label}</p>
+              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">{primaryCta.label}</p>
             </div>
           </div>
         </PageHero>
@@ -142,8 +141,8 @@ export default async function DashboardPage() {
         <div className="grid gap-3 md:grid-cols-3">
           <Card>
             <Eyebrow>Chapter 3</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-[#003748]">Set your founder rules</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">Market validation and archetype definition.</p>
+            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">Set your founder rules</p>
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Market validation and archetype definition.</p>
             <span className="mt-3 inline-block rounded-full bg-[rgba(84,90,149,0.1)] px-[8px] py-[2px] text-[11px] font-medium text-[#545a95]">
               {state.authenticated ? getStatusLabel(state.status) : "Preview"}
             </span>
@@ -151,17 +150,17 @@ export default async function DashboardPage() {
 
           <Card>
             <Eyebrow>Worksheet progress</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-[#003748]">{state.authenticated ? `${Math.round((visualProgress / 100) * 8)} of 8 fields` : "No saved data"}</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">Founder Rules sheet nearly complete.</p>
-            <span className="mt-3 inline-block rounded-full bg-[rgba(0,107,95,0.1)] px-[8px] py-[2px] text-[11px] font-medium text-[#006b5f]">
+            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">{state.authenticated ? `${Math.round((visualProgress / 100) * 8)} of 8 fields` : "No saved data"}</p>
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Founder Rules sheet nearly complete.</p>
+            <span className="mt-3 inline-block rounded-full bg-[rgba(0,107,95,0.1)] px-[8px] py-[2px] text-[11px] font-medium text-teal-600">
               {state.authenticated ? `${visualProgress}% done` : "Preview"}
             </span>
           </Card>
 
           <Card>
             <Eyebrow>Best next action</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-[#003748]">{primaryCta.label}</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">Then view your Lean Canvas to see the operating model.</p>
+            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">{primaryCta.label}</p>
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Then view your Lean Canvas to see the operating model.</p>
           </Card>
         </div>
 
@@ -169,8 +168,8 @@ export default async function DashboardPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <Card className="outline outline-2 outline-[#545a95]">
               <Eyebrow>Chapter {currentChapter.number}</Eyebrow>
-              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-[#003748]">{currentChapter.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">{currentChapter.description}</p>
+              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-ink-900">{currentChapter.title}</h3>
+              <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">{currentChapter.description}</p>
               <div className="mt-3">
                 <ProgressBar value={Math.max(state.progressPercent, 75)} />
               </div>
@@ -181,12 +180,12 @@ export default async function DashboardPage() {
 
             <Card>
               <Eyebrow>Chapter {nextChapter.number}</Eyebrow>
-              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-[#003748]">{nextChapter.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">{nextChapter.description}</p>
+              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-ink-900">{nextChapter.title}</h3>
+              <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">{nextChapter.description}</p>
               <div className="mt-3">
                 <ProgressBar value={0} />
               </div>
-              <span className="mt-3 inline-block rounded-full bg-[rgba(73,99,111,0.1)] px-[8px] py-[2px] text-[10px] font-medium text-[#49636f]">
+              <span className="mt-3 inline-block rounded-full bg-[rgba(73,99,111,0.1)] px-[8px] py-[2px] text-[10px] font-medium text-ink-700">
                 {nextChapter.badge}
               </span>
             </Card>
@@ -194,8 +193,8 @@ export default async function DashboardPage() {
 
           <Panel className="mt-6">
             <Eyebrow>Your lean canvas</Eyebrow>
-            <h3 className="mt-2 font-[Manrope] text-[16px] font-semibold text-[#003748]">Operating model preview</h3>
-            <p className="mt-2 text-[13px] leading-[1.5] text-[#49636f]">Your worksheet answers feed into this evolving business artifact.</p>
+            <h3 className="mt-2 font-[Manrope] text-[16px] font-semibold text-ink-900">Operating model preview</h3>
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Your worksheet answers feed into this evolving business artifact.</p>
 
             <div className="mt-4 grid grid-cols-4 gap-[6px]">
               {[
@@ -212,7 +211,7 @@ export default async function DashboardPage() {
                   key={label}
                   className={[
                     "rounded px-2 py-2 font-[Inter] text-[10px] font-medium uppercase tracking-[0.03em]",
-                    index < 4 ? "bg-[rgba(255,255,255,0.9)] text-[#003748]" : "bg-[rgba(255,255,255,0.6)] text-[#49636f]",
+                    index < 4 ? "bg-[rgba(255,255,255,0.9)] text-ink-900" : "bg-[rgba(255,255,255,0.6)] text-ink-700",
                   ].join(" ")}
                 >
                   {label}
