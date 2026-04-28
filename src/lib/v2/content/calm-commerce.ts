@@ -1832,7 +1832,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       phase: 6,
       phaseLabel: "Measure, Learn, Grow",
       estimatedReadMinutes: 10,
-      worksheetId: "weekly-review-template",
+      worksheetId: null,
       canvasSections: [],
     },
     steps: [
@@ -2192,7 +2192,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       phase: 7,
       phaseLabel: "Ongoing Operations",
       estimatedReadMinutes: 8,
-      worksheetId: "weekly-metrics",
+      worksheetId: null,
       canvasSections: [],
     },
     steps: [

@@ -22,6 +22,15 @@ type WorksheetField = {
   sourceLabelKey?: string;
 };
 
+type LinkedGroupConfig = {
+  /** Key of the driving field-group in another worksheet (read via the flat values map). */
+  sourceGroupKey: string;
+  /** Sub-field within the source group whose value becomes the row label. */
+  sourceLabelKey: string;
+  /** Sub-field in THIS group that should be pre-filled (and locked) with the derived label. */
+  targetFieldKey: string;
+};
+
 type FieldGroup = {
   type: "field-group";
   key: string;
@@ -30,20 +39,41 @@ type FieldGroup = {
   repeatMax: number;
   summaryFieldKey: string;
   fields: WorksheetField[];
+  /** When present, instances are driven 1:1 by another group. Add/remove is disabled,
+   *  and `targetFieldKey` renders as a read-only field populated from the source. */
+  linkedGroup?: LinkedGroupConfig;
 };
 
 type DefinitionItem = WorksheetField | FieldGroup;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WorksheetDefinition = {
   worksheet: { id: string };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fields: any[];
 };
 
 type LearnerStateResponse = {
   auth?: boolean;
   worksheetResponses?: Record<string, string>;
+  responsesByWorksheet?: Record<string, Record<string, string>>;
 };
+
+/** Build this worksheet's flat values from the nested server response.
+ *  - Current worksheet's fields authoritative (wins on any collision).
+ *  - Other worksheets' fields merged in for cross-worksheet lookups
+ *    (field-group keys are globally unique across worksheets, so this is safe). */
+function buildValuesForWorksheet(
+  responsesByWorksheet: Record<string, Record<string, string>> | undefined,
+  worksheetId: string | null,
+): Record<string, string> {
+  if (!responsesByWorksheet) return {};
+  const merged: Record<string, string> = {};
+  for (const [wsId, fields] of Object.entries(responsesByWorksheet)) {
+    if (wsId !== worksheetId) Object.assign(merged, fields);
+  }
+  if (worksheetId) Object.assign(merged, responsesByWorksheet[worksheetId] ?? {});
+  return merged;
+}
 
 type InstanceRow = Record<string, string>;
 
@@ -65,8 +95,18 @@ function parseGroupValue(raw: string, repeatMin: number): InstanceRow[] {
   return Array.from({ length: repeatMin }, () => ({}));
 }
 
-function emptyInstances(n: number): InstanceRow[] {
-  return Array.from({ length: n }, () => ({}));
+/** Parse another group's stored JSON from the flat values map. Returns [] on empty/invalid. */
+function parseLinkedSource(
+  allValues: Record<string, string>,
+  sourceGroupKey: string,
+): InstanceRow[] {
+  try {
+    const parsed = JSON.parse(allValues[sourceGroupKey] ?? "");
+    if (Array.isArray(parsed)) return parsed as InstanceRow[];
+  } catch {
+    // fall through
+  }
+  return [];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -82,12 +122,29 @@ function countCompletion(
 
   for (const item of orderedItems) {
     if (isFieldGroup(item)) {
-      // Each required slot (repeatMin) is one unit; filled when summaryFieldKey is non-empty
-      const instances = parseGroupValue(values[item.key] ?? "", item.repeatMin);
-      totalCount += item.repeatMin;
-      filledCount += instances
-        .slice(0, item.repeatMin)
-        .filter((row) => (row[item.summaryFieldKey] ?? "").trim().length > 0).length;
+      if (item.linkedGroup) {
+        // Linked groups: one slot per source row (clamped to repeatMax).
+        // A slot is "filled" when the user has entered something in any non-target field.
+        const sourceRows = parseLinkedSource(values, item.linkedGroup.sourceGroupKey);
+        const visibleCount = Math.min(sourceRows.length, item.repeatMax);
+        const stored = parseGroupValue(values[item.key] ?? "", 0);
+        totalCount += visibleCount;
+        for (let i = 0; i < visibleCount; i++) {
+          const row = stored[i] ?? {};
+          const hasContent = Object.entries(row).some(
+            ([k, v]) =>
+              k !== item.linkedGroup!.targetFieldKey && (v ?? "").trim().length > 0,
+          );
+          if (hasContent) filledCount += 1;
+        }
+      } else {
+        // Each required slot (repeatMin) is one unit; filled when summaryFieldKey is non-empty
+        const instances = parseGroupValue(values[item.key] ?? "", item.repeatMin);
+        totalCount += item.repeatMin;
+        filledCount += instances
+          .slice(0, item.repeatMin)
+          .filter((row) => (row[item.summaryFieldKey] ?? "").trim().length > 0).length;
+      }
     } else {
       totalCount += 1;
       if ((values[item.key] ?? "").trim().length > 0) filledCount += 1;
@@ -137,7 +194,11 @@ export function InlineWorksheetCard({
         if (!res.ok) throw new Error("Failed to load");
         const data = (await res.json()) as LearnerStateResponse;
         if (!active) return;
-        setValues(data.worksheetResponses ?? {});
+        // Prefer worksheet-scoped responses; fall back to legacy flat map if server hasn't been updated.
+        const values = data.responsesByWorksheet
+          ? buildValuesForWorksheet(data.responsesByWorksheet, worksheetId)
+          : (data.worksheetResponses ?? {});
+        setValues(values);
         setStatus(data.auth ? "idle" : "error");
       } catch {
         if (!active) return;
@@ -146,7 +207,7 @@ export function InlineWorksheetCard({
     };
     void load();
     return () => { active = false; };
-  }, []);
+  }, [worksheetId]);
 
   /* ── Debounced auto-save ── */
   // Only save fields that belong to this worksheet (the keys in orderedItems)
@@ -202,7 +263,7 @@ export function InlineWorksheetCard({
     <div className="mt-8 rounded-[1.5rem] border border-[#d9def2] bg-[#f7f9ff] p-6">
       {/* Header */}
       <div className="mb-5 flex items-center justify-between gap-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
           Worksheet — capture your answer
         </p>
         <StatusBadge status={status} filledCount={filledCount} totalCount={totalCount} />
@@ -232,16 +293,6 @@ export function InlineWorksheetCard({
           ),
         )}
       </div>
-
-      {/* Footer */}
-      <div className="mt-6 border-t border-[#e2e6f5] pt-4">
-        <a
-          href={`/chapter/${chapterSlug}/worksheet`}
-          className="text-sm font-semibold text-[#0053dc] transition hover:text-[#003da8]"
-        >
-          View full worksheet →
-        </a>
-      </div>
     </div>
   );
 }
@@ -263,6 +314,20 @@ function FieldGroupRenderer({
   disabled: boolean;
   allValues: Record<string, string>;
 }) {
+  /* ── Linked-group branch: driven 1:1 by another group ── */
+  if (group.linkedGroup) {
+    return (
+      <LinkedGroupRenderer
+        group={group}
+        linkedGroup={group.linkedGroup}
+        rawValue={rawValue}
+        onChange={onChange}
+        disabled={disabled}
+        allValues={allValues}
+      />
+    );
+  }
+
   const instances = parseGroupValue(rawValue, group.repeatMin);
 
   const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
@@ -295,13 +360,13 @@ function FieldGroupRenderer({
           <div key={index} className="rounded-2xl border border-[#e2e6f5] bg-white p-5">
             {/* Instance header */}
             <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="font-[Manrope] text-sm font-bold text-[#003748]">{instanceLabel}</p>
+              <p className="font-[Manrope] text-sm font-bold text-ink-900">{instanceLabel}</p>
               {instances.length > group.repeatMin && (
                 <button
                   type="button"
                   onClick={() => removeInstance(index)}
                   disabled={disabled}
-                  className="text-xs font-semibold text-[#a83836] transition hover:text-[#7a1f1e] disabled:opacity-40"
+                  className="text-xs font-semibold text-error-700 transition hover:text-[#7a1f1e] disabled:opacity-40"
                 >
                   Remove
                 </button>
@@ -331,12 +396,108 @@ function FieldGroupRenderer({
           type="button"
           onClick={addInstance}
           disabled={disabled}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#bfc4d9] bg-white py-3 text-sm font-semibold text-[#0053dc] transition hover:border-[#0053dc] hover:bg-[#f0f5ff] disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#bfc4d9] bg-white py-3 text-sm font-semibold text-cobalt-600 transition hover:border-cobalt-600 hover:bg-[#f0f5ff] disabled:opacity-40"
         >
           <span>+</span>
           <span>Add another {group.label.toLowerCase()}</span>
         </button>
       )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Linked field group renderer
+   Rows are driven 1:1 by another group (from allValues). User can edit
+   all sub-fields except `targetFieldKey`, which is derived read-only from
+   the source. Add/remove UI is disabled.
+───────────────────────────────────────────────────────────── */
+
+function LinkedGroupRenderer({
+  group,
+  linkedGroup,
+  rawValue,
+  onChange,
+  disabled,
+  allValues,
+}: {
+  group: FieldGroup;
+  linkedGroup: LinkedGroupConfig;
+  rawValue: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+  allValues: Record<string, string>;
+}) {
+  const sourceRows = parseLinkedSource(allValues, linkedGroup.sourceGroupKey);
+  const visibleSource = sourceRows.slice(0, group.repeatMax);
+  const stored = parseGroupValue(rawValue, 0);
+
+  // Empty state when the upstream group has nothing yet
+  if (visibleSource.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-ink-100 bg-surface-sunken px-5 py-6 text-sm leading-6 text-ink-500">
+        <p className="font-semibold text-ink-900">
+          Add your product ideas in Chapter 3 first.
+        </p>
+        <p className="mt-1">
+          Each idea you list there will appear here with its own economics breakdown — no need
+          to retype anything.
+        </p>
+      </div>
+    );
+  }
+
+  const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
+    // Size the stored array to cover any visible slot the user edits, without shrinking
+    // existing data (preserves entries if the source temporarily loses rows).
+    const targetLength = Math.max(stored.length, visibleSource.length, index + 1);
+    const next: InstanceRow[] = Array.from({ length: targetLength }, (_, i) => ({
+      ...(stored[i] ?? {}),
+    }));
+    next[index] = { ...(next[index] ?? {}), [fieldKey]: fieldValue };
+    onChange(JSON.stringify(next));
+  };
+
+  return (
+    <div className="space-y-4">
+      {visibleSource.map((sourceRow, index) => {
+        const derivedLabel =
+          (sourceRow[linkedGroup.sourceLabelKey] ?? "").trim() || `Idea ${index + 1}`;
+        const storedRow = stored[index] ?? {};
+        const shortLabel =
+          derivedLabel.length > 40 ? `${derivedLabel.slice(0, 40)}…` : derivedLabel;
+        const instanceLabel = `${group.label} ${index + 1}: ${shortLabel}`;
+
+        return (
+          <div key={index} className="rounded-2xl border border-[#e2e6f5] bg-white p-5">
+            <div className="mb-4 flex items-center gap-3">
+              <p className="font-[Manrope] text-sm font-bold text-ink-900">{instanceLabel}</p>
+              <span className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-cobalt-600">
+                From Chapter 3
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {group.fields.map((field) => {
+                const isTarget = field.key === linkedGroup.targetFieldKey;
+                const fieldValue = isTarget
+                  ? derivedLabel
+                  : (storedRow[field.key] ?? "");
+                return (
+                  <FieldRenderer
+                    key={field.key}
+                    field={field}
+                    value={fieldValue}
+                    onChange={(val) => updateInstance(index, field.key, val)}
+                    disabled={disabled || isTarget}
+                    allValues={allValues}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -359,7 +520,7 @@ function FieldRenderer({
   allValues?: Record<string, string>;
 }) {
   const inputBase =
-    "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-[#003748] shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-[#0053dc] focus:ring-1 focus:ring-[#0053dc] disabled:bg-[#f4f4f8] disabled:text-[#9a9ca8]";
+    "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-cobalt-600 focus:ring-1 focus:ring-cobalt-600 disabled:bg-[#f4f4f8] disabled:text-[#9a9ca8]";
 
   /* ── Cross-worksheet select: build options from another worksheet's field-group ── */
   if (field.fieldType === "cross-worksheet-select") {
@@ -385,11 +546,11 @@ function FieldRenderer({
     return (
       <div>
         <label className="block">
-          <span className="block font-[Manrope] text-sm font-semibold text-[#003748]">
+          <span className="block font-[Manrope] text-sm font-semibold text-ink-900">
             {field.label}
           </span>
           {field.helpText && (
-            <span className="mt-0.5 block text-xs leading-5 text-[#5d5f68]">{field.helpText}</span>
+            <span className="mt-0.5 block text-xs leading-5 text-ink-500">{field.helpText}</span>
           )}
           {hasOptions ? (
             <select
@@ -406,7 +567,7 @@ function FieldRenderer({
               ))}
             </select>
           ) : (
-            <div className="mt-2 rounded-xl border border-dashed border-[#d7d9e6] bg-[#f8f8fb] px-4 py-3 text-sm text-[#5d5f68]">
+            <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
               Complete the Chapter 3 worksheet first — your shortlisted ideas will appear here as options.
             </div>
           )}
@@ -418,11 +579,11 @@ function FieldRenderer({
   return (
     <div>
       <label className="block">
-        <span className="block font-[Manrope] text-sm font-semibold text-[#003748]">
+        <span className="block font-[Manrope] text-sm font-semibold text-ink-900">
           {field.label}
         </span>
         {field.helpText && (
-          <span className="mt-0.5 block text-xs leading-5 text-[#5d5f68]">{field.helpText}</span>
+          <span className="mt-0.5 block text-xs leading-5 text-ink-500">{field.helpText}</span>
         )}
 
         {field.fieldType === "textarea" ? (
@@ -451,12 +612,12 @@ function FieldRenderer({
           <div className="mt-2 flex items-start gap-2.5">
             <input
               type="checkbox"
-              className="mt-0.5 h-4 w-4 rounded border-[#e2e4ea] text-[#0053dc] focus:ring-[#0053dc]"
+              className="mt-0.5 h-4 w-4 rounded border-[#e2e4ea] text-cobalt-600 focus:ring-cobalt-600"
               checked={value === "true"}
               onChange={(e) => onChange(e.target.checked ? "true" : "")}
               disabled={disabled}
             />
-            <span className="text-sm leading-6 text-[#5d5f68]">Yes, I commit to this.</span>
+            <span className="text-sm leading-6 text-ink-500">Yes, I commit to this.</span>
           </div>
         ) : (
           <input
@@ -488,21 +649,21 @@ function StatusBadge({
 }) {
   if (status === "loading") {
     return (
-      <span className="shrink-0 rounded-full bg-[#f0f1f7] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#5d5f68]">
+      <span className="shrink-0 rounded-full bg-[#f0f1f7] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
         Loading…
       </span>
     );
   }
   if (status === "saving") {
     return (
-      <span className="shrink-0 rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0053dc]">
+      <span className="shrink-0 rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">
         Saving…
       </span>
     );
   }
   if (status === "saved") {
     return (
-      <span className="shrink-0 rounded-full bg-[#eefcf5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">
+      <span className="shrink-0 rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">
         Saved ✓
       </span>
     );
@@ -510,21 +671,21 @@ function StatusBadge({
   if (status === "error") {
     const remaining = totalCount - filledCount;
     return (
-      <span className="shrink-0 rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a83836]">
+      <span className="shrink-0 rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">
         {remaining > 0 ? `Not saved — ${remaining} to complete` : "Not saved"}
       </span>
     );
   }
   if (filledCount === totalCount) {
     return (
-      <span className="shrink-0 rounded-full bg-[#eefcf5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">
+      <span className="shrink-0 rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">
         Complete ✓
       </span>
     );
   }
   const remaining = totalCount - filledCount;
   return (
-    <span className="shrink-0 rounded-full bg-[#f4f3fa] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#5d5f68]">
+    <span className="shrink-0 rounded-full bg-surface-sunken px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
       {remaining} {remaining === 1 ? "field" : "fields"} to fill
     </span>
   );

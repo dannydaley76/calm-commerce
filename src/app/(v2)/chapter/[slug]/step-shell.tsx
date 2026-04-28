@@ -36,41 +36,41 @@ export function StepShell({
   const progressPercent = Math.round(((currentIndex + 1) / totalSteps) * 100);
 
   return (
-    <div className="min-h-screen bg-[#f4faff] px-6 py-8 text-[#003748] lg:px-8 lg:py-10">
+    <div className="min-h-screen bg-surface-canvas px-6 py-8 text-ink-900 lg:px-8 lg:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.04)] lg:p-8">
+        <header className="mb-8 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)] lg:p-8">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="rounded-full bg-[#f4f3fa] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">
+            <span className="rounded-full bg-surface-sunken px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">
               Chapter {chapterNumber}
             </span>
-            <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">
+            <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
               Step {currentIndex + 1} of {totalSteps}
             </span>
             {stepKindLabel ? (
-              <span className="rounded-full bg-[#eefcf5] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#005e3f]">
+              <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#005e3f]">
                 {stepKindLabel}
               </span>
             ) : null}
           </div>
           <h1 className="mt-4 font-[Manrope] text-3xl font-extrabold tracking-tight lg:text-4xl">{chapterTitle}</h1>
-          {currentStep.summary ? <p className="mt-3 max-w-3xl text-base leading-7 text-[#5d5f68]">{currentStep.summary}</p> : null}
+          {currentStep.summary ? <p className="mt-3 max-w-3xl text-base leading-7 text-ink-500">{currentStep.summary}</p> : null}
           <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-[#e8e7f1]">
-            <div className="h-full rounded-full bg-[#0053dc]" style={{ width: `${progressPercent}%` }}></div>
+            <div className="h-full rounded-full bg-cobalt-600" style={{ width: `${progressPercent}%` }}></div>
           </div>
         </header>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.04)] lg:p-8">{children}</section>
+          <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)] lg:p-8">{children}</section>
 
           <aside className="space-y-5">
-            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(48,50,59,0.04)]">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Current step</p>
+            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Current step</p>
               <h2 className="mt-3 font-[Manrope] text-2xl font-bold tracking-tight">{currentStep.title}</h2>
-              {currentStep.goal ? <p className="mt-3 text-sm leading-6 text-[#5d5f68]">{currentStep.goal}</p> : null}
+              {currentStep.goal ? <p className="mt-3 text-sm leading-6 text-ink-500">{currentStep.goal}</p> : null}
             </div>
 
-            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(48,50,59,0.04)]">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Chapter map</p>
+            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Chapter map</p>
               <div className="mt-4 space-y-3">
                 {allSteps.map((step, index) => {
                   const isCurrent = step.id === currentStep.id;
@@ -80,16 +80,16 @@ export function StepShell({
                       key={step.id}
                       href={`?step=${step.id}`}
                       className={`block rounded-2xl px-4 py-3 transition ${
-                        isCurrent ? "bg-[#eef4ff] ring-1 ring-[#0053dc]/20" : isComplete ? "bg-[#eefcf5]" : "bg-[#f8f8fb]"
+                        isCurrent ? "bg-[#eef4ff] ring-1 ring-cobalt-600/20" : isComplete ? "bg-success-100" : "bg-surface-sunken"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#5d5f68]">Step {index + 1}</span>
-                        <span className={`text-xs font-semibold ${isCurrent ? "text-[#0053dc]" : isComplete ? "text-[#005e3f]" : "text-[#5d5f68]"}`}>
+                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-ink-500">Step {index + 1}</span>
+                        <span className={`text-xs font-semibold ${isCurrent ? "text-cobalt-600" : isComplete ? "text-[#005e3f]" : "text-ink-500"}`}>
                           {isCurrent ? "Current" : isComplete ? "Seen" : "Next"}
                         </span>
                       </div>
-                      <p className="mt-2 font-[Manrope] text-base font-bold tracking-tight text-[#30323b]">{step.title}</p>
+                      <p className="mt-2 font-[Manrope] text-base font-bold tracking-tight text-ink-900">{step.title}</p>
                     </Link>
                   );
                 })}
@@ -97,9 +97,9 @@ export function StepShell({
             </div>
 
             {currentStep.sourceSections?.length ? (
-              <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(48,50,59,0.04)]">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">Source</p>
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-[#5d5f68]">
+              <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Source</p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-ink-500">
                   {currentStep.sourceSections.map((section) => (
                     <li key={section}>• {section}</li>
                   ))}
@@ -113,18 +113,18 @@ export function StepShell({
           <footer className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               {previousStepId ? (
-                <Link href={`?step=${previousStepId}`} className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b]">
+                <Link href={`?step=${previousStepId}`} className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
                   Back
                 </Link>
               ) : (
-                <Link href="/program" className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b]">
+                <Link href="/program" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
                   Back to program
                 </Link>
               )}
             </div>
             <div>
               {nextStepId ? (
-                <Link href={`?step=${nextStepId}`} className="inline-flex items-center justify-center rounded-xl bg-[#0053dc] px-5 py-3 font-semibold !text-white">
+                <Link href={`?step=${nextStepId}`} className="inline-flex items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white">
                   Next
                 </Link>
               ) : (

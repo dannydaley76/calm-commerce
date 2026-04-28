@@ -28,6 +28,7 @@ type LearnerStateResponse = {
   auth?: boolean;
   learnerId?: string;
   worksheetResponses?: Record<string, string>;
+  responsesByWorksheet?: Record<string, Record<string, string>>;
   progress?: {
     status?: "not_started" | "in_progress" | "completed";
     worksheet_completion_percent?: number;
@@ -124,9 +125,12 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
         if (!res.ok) throw new Error("Failed to load learner state");
         const data = (await res.json()) as LearnerStateResponse;
         if (!active) return;
-        // Scope to only the fields this worksheet owns (all keys across FIELD_GROUPS)
+        // Prefer worksheet-scoped responses (no field_key collisions across worksheets);
+        // fall back to the legacy flat map if the server hasn't been updated yet.
         const allKeys = FIELD_GROUPS.flatMap((g) => [...g.keys]);
-        const allResponses = data.worksheetResponses ?? {};
+        const worksheetId = worksheetModel.worksheet.id;
+        const allResponses =
+          data.responsesByWorksheet?.[worksheetId] ?? data.worksheetResponses ?? {};
         const loadedValues = Object.fromEntries(
           Object.entries(allResponses).filter(([key]) => allKeys.includes(key as never)),
         );
@@ -144,7 +148,7 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
     return () => {
       active = false;
     };
-  }, []);
+  }, [worksheetModel.worksheet.id]);
 
   const completionPercent = useMemo(() => {
     const completed = requiredKeys.filter((key) => (values[key] ?? "").trim().length > 0).length;
@@ -189,7 +193,9 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
         throw new Error(refreshed.error || "Saved, but could not refresh worksheet state.");
       }
 
-      const canonicalResponses = refreshed.worksheetResponses ?? nextValues;
+      const worksheetId = worksheetModel.worksheet.id;
+      const canonicalResponses =
+        refreshed.responsesByWorksheet?.[worksheetId] ?? refreshed.worksheetResponses ?? nextValues;
       const percent = refreshed.computed?.worksheetCompletionPercent ?? refreshed.progress?.worksheet_completion_percent ?? data.worksheetCompletionPercent ?? null;
 
       setValues(canonicalResponses);
@@ -230,12 +236,12 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
       <div
         className={`mb-4 rounded-2xl p-4 text-sm ${
           status === "saved"
-            ? "bg-[#eefcf5] text-[#005e3f]"
+            ? "bg-success-100 text-[#005e3f]"
             : status === "saving"
               ? "bg-[#eef4ff] text-[#0049c2]"
               : status === "error"
-                ? "bg-[#fff1f1] text-[#a83836]"
-                : "bg-[#f4f3fa] text-[#5d5f68]"
+                ? "bg-[#fff1f1] text-error-700"
+                : "bg-surface-sunken text-ink-500"
         }`}
       >
         <div className="flex items-center justify-between gap-4">
@@ -249,17 +255,17 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
           </span>
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#e1e2ed]">
-          <div className="h-full rounded-full bg-[#0053dc] transition-all" style={{ width: `${effectiveCompletionPercent}%` }}></div>
+          <div className="h-full rounded-full bg-cobalt-600 transition-all" style={{ width: `${effectiveCompletionPercent}%` }}></div>
         </div>
-        <p className="mt-3 text-sm leading-6 text-[#5d5f68]">
+        <p className="mt-3 text-sm leading-6 text-ink-500">
           {completedRequiredCount} of {requiredKeys.length} required sections completed.
           {isCompleted
             ? " Your Founder Rules are now complete and ready to feed into the Lean Canvas."
             : " Finish the remaining sections to turn this worksheet into a usable operating ruleset."}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.12em]">
-          <span className="rounded-full bg-white px-3 py-1 text-[#30323b]">{completionStateLabel}</span>
-          {hasLoadedSavedData ? <span className="rounded-full bg-white px-3 py-1 text-[#30323b]">Saved data loaded</span> : null}
+          <span className="rounded-full bg-white px-3 py-1 text-ink-900">{completionStateLabel}</span>
+          {hasLoadedSavedData ? <span className="rounded-full bg-white px-3 py-1 text-ink-900">Saved data loaded</span> : null}
           {isCompleted ? <span className="rounded-full bg-[#6ffbbe] px-3 py-1 text-[#005e3f]">Founder Rules Sheet complete</span> : null}
         </div>
         {status === "saved" ? (
@@ -270,12 +276,12 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
         ) : null}
       </div>
 
-      <div className="space-y-5 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.04)]">
+      <div className="space-y-5 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
         {FIELD_GROUPS.map((group) => (
-          <section key={group.title} className="rounded-[1.5rem] bg-[#fbfcff] p-5 ring-1 ring-[#eef1f7]">
+          <section key={group.title} className="rounded-[1.5rem] bg-surface-sunken p-5 ring-1 ring-ink-100">
             <div className="mb-5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">{group.title}</p>
-              <p className="mt-2 text-sm leading-6 text-[#5d5f68]">{group.description}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">{group.title}</p>
+              <p className="mt-2 text-sm leading-6 text-ink-500">{group.description}</p>
             </div>
             <div className="space-y-5">
               {group.keys.map((key) => {
@@ -285,10 +291,10 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
                   <label key={field.id} className="block">
                     <div className="mb-2 flex items-start justify-between gap-3">
                       <span className="block font-[Manrope] text-lg font-bold">{field.label}</span>
-                      {field.required ? <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">Required</span> : null}
+                      {field.required ? <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Required</span> : null}
                     </div>
                     {field.helpText ? (
-                      <span className="mb-3 block text-sm text-[#5d5f68]">
+                      <span className="mb-3 block text-sm text-ink-500">
                         {field.helpText}
                         {field.key === "money_cap_per_month" ? ` Use your preferred currency (${currencyCode}).` : ""}
                       </span>
@@ -296,7 +302,7 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
                     {field.type === "textarea" ? (
                       <div>
                         <textarea
-                          className="min-h-32 w-full rounded-xl bg-[#f4f3fa] p-4 outline-none"
+                          className="min-h-32 w-full rounded-xl bg-surface-sunken p-4 outline-none"
                           placeholder={`Enter ${field.label.toLowerCase()}...`}
                           value={values[field.key] ?? ""}
                           onChange={(e) => onChange(field.key, e.target.value)}
@@ -309,14 +315,14 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
                       </div>
                     ) : (
                       <div>
-                        <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5d5f68]">
+                        <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-500">
                           <span>Expected unit</span>
                           {getFieldUnit(field.key, currencySymbol) ? (
-                            <span className="rounded-full bg-[#eef4ff] px-2 py-1 text-[#0053dc]">{getFieldUnit(field.key, currencySymbol)}</span>
+                            <span className="rounded-full bg-[#eef4ff] px-2 py-1 text-cobalt-600">{getFieldUnit(field.key, currencySymbol)}</span>
                           ) : null}
                         </div>
                         <input
-                          className="w-full rounded-xl bg-[#f4f3fa] p-4 outline-none"
+                          className="w-full rounded-xl bg-surface-sunken p-4 outline-none"
                           placeholder={getFieldPlaceholder(field.key, currencySymbol) ?? `Enter ${field.label.toLowerCase()}...`}
                           value={values[field.key] ?? ""}
                           onChange={(e) => onChange(field.key, e.target.value)}
@@ -333,20 +339,20 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
         <div className="flex flex-col gap-4 pt-4 sm:flex-row">
           <button
             onClick={onSaveDraft}
-            className="flex-1 rounded-xl bg-[#003748] px-5 py-4 font-semibold text-white"
+            className="flex-1 rounded-xl bg-ink-900 px-5 py-4 font-semibold text-white"
           >
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save Draft"}
           </button>
-          <button onClick={onComplete} className="flex-[1.5] rounded-xl bg-[#0053dc] px-5 py-4 font-semibold !text-white">
+          <button onClick={onComplete} className="flex-[1.5] rounded-xl bg-cobalt-600 px-5 py-4 font-semibold !text-white">
             {isCompleted ? "Keep worksheet complete" : "Complete Worksheet"}
           </button>
         </div>
-        <p className="text-sm leading-6 text-[#5d5f68]">
+        <p className="text-sm leading-6 text-ink-500">
           Save Draft stores your progress. Complete Worksheet confirms the Founder Rules Sheet is ready to drive the Lean Canvas.
         </p>
 
         {isCompleted ? (
-          <div className="rounded-2xl bg-[#eefcf5] p-5 text-[#005e3f]">
+          <div className="rounded-2xl bg-success-100 p-5 text-[#005e3f]">
             <p className="font-[Manrope] text-lg font-bold">Founder Rules Sheet completed</p>
             <p className="mt-2 text-sm leading-6">
               You now have a practical set of operating rules for time, money, and decision discipline. The best next step is to view the Lean Canvas so you can see how these rules now appear as part of your emerging business operating model.
@@ -369,8 +375,8 @@ export function WorksheetClient({ worksheetModel, currencyCode, currencySymbol }
       {toast ? (
         <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 sm:left-auto sm:right-6 sm:w-full sm:translate-x-0">
           <div
-            className={`rounded-2xl px-4 py-3 text-sm font-medium shadow-[0px_16px_32px_rgba(48,50,59,0.16)] ${
-              toast.type === "success" ? "bg-[#005e3f] !text-white" : "bg-[#a83836] !text-white"
+            className={`rounded-2xl px-4 py-3 text-sm font-medium shadow-[0px_16px_32px_rgba(11,42,57,0.16)] ${
+              toast.type === "success" ? "bg-[#005e3f] !text-white" : "bg-error-700 !text-white"
             }`}
           >
             {toast.message}

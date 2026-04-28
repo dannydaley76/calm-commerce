@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { LearnerShell } from "@/components/learner-shell";
 import { Card, Eyebrow, PageHero, Panel, SecondaryButton, SectionShell } from "@/components/design-system";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
@@ -18,13 +18,6 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
 
   const worksheetDefinition = WORKSHEET_REGISTRY[chapter.worksheetId] ?? null;
   if (!worksheetDefinition) return notFound();
-
-  // Chapter 17 uses a recurring metrics log — the entry form lives in the steps reader
-  if (chapter.worksheetId === "weekly-metrics") {
-    const metricsStep = chapterEntry.steps.find((s) => s.inlineWorksheetFieldKeys?.length);
-    const stepId = metricsStep?.id;
-    redirect(`/chapter/${slug}/steps${stepId ? `?step=${stepId}` : ""}`);
-  }
 
   // Chapter 4 has a bespoke, hand-crafted worksheet page
   const isFounderRules = slug === "set-your-founder-rules";
@@ -63,19 +56,19 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <Eyebrow>What this work does</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">
+              <p className="mt-3 text-sm leading-7 text-ink-900">
                 Turns Chapter {chapter.number} from reading into decisions you can act on.
               </p>
             </Card>
             <Card>
               <Eyebrow>How to approach it</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">
+              <p className="mt-3 text-sm leading-7 text-ink-900">
                 Be specific and honest. Answers that reflect your actual situation are more useful than answers that sound good.
               </p>
             </Card>
             <Card>
               <Eyebrow>Saving your work</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">
+              <p className="mt-3 text-sm leading-7 text-ink-900">
                 Your answers save automatically as you type. Return here any time to review or update them.
               </p>
             </Card>

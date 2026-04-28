@@ -1,55 +1,62 @@
 import Link from "next/link";
-import { Card, Eyebrow, PageHero, Panel, PrimaryButton, ProgressBar, SecondaryButton, SectionShell } from "@/components/design-system";
+import { Eyebrow, PageHero, Panel, PrimaryButton, ProgressBar, SecondaryButton } from "@/components/design-system";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { getCurrencyMeta } from "@/lib/profile/currency";
+import { calmCommerceChapterContent } from "@/lib/v2/content";
+import {
+  CanvasCard,
+  CanvasTabs,
+  CanvasTabPanel,
+  CanvasHeroOperatingAction,
+  InlineEditCard,
+  BusinessModelCard,
+  getSectionState,
+} from "@/components/lean-canvas";
+import type { SubField, CardVariant } from "@/components/lean-canvas";
+
+/* ─────────────────────────────────────────────────────────────────────
+   Operating canvas (Chapter 4) — static definitions
+   ───────────────────────────────────────────────────────────────────── */
 
 const OPERATING_SECTIONS = [
-  { title: "Time budget", key: "time_budget_hours_per_week" },
-  { title: "Money cap", key: "money_cap_per_month" },
-  { title: "Experiment duration", key: "minimum_experiment_duration" },
-  { title: "Success metrics", key: "success_metrics" },
-  { title: "Continue criteria", key: "continue_criteria" },
-  { title: "Escalation criteria", key: "escalation_criteria" },
-  { title: "Kill criteria", key: "kill_criteria" },
-  { title: "Red-line rules", key: "red_line_rules" },
+  { title: "Time budget",           key: "time_budget_hours_per_week" },
+  { title: "Money cap",             key: "money_cap_per_month" },
+  { title: "Experiment duration",   key: "minimum_experiment_duration" },
+  { title: "Success metrics",       key: "success_metrics" },
+  { title: "Continue criteria",     key: "continue_criteria" },
+  { title: "Escalation criteria",   key: "escalation_criteria" },
+  { title: "Kill criteria",         key: "kill_criteria" },
+  { title: "Red-line rules",        key: "red_line_rules" },
 ] as const;
 
-const PLACEHOLDER_SECTIONS = [
-  {
-    title: "Problem",
-    futureSource: "Future customer-pain and problem-discovery work",
-  },
-  {
-    title: "Customer segments",
-    futureSource: "Future audience and customer-definition work",
-  },
-  {
-    title: "Unique value proposition",
-    futureSource: "Future positioning and offer-clarity work",
-  },
-  {
-    title: "Solution",
-    futureSource: "Future product-shaping and offer-design work",
-  },
-  {
-    title: "Channels",
-    futureSource: "Future acquisition and distribution planning",
-  },
-  {
-    title: "Revenue streams",
-    futureSource: "Future offer, pricing, and monetisation work",
-  },
-  {
-    title: "Cost structure",
-    futureSource: "Future cost planning and operating-model work",
-  },
-  {
-    title: "Unfair advantage",
-    futureSource: "Future defensibility and differentiation work",
-  },
-] as const;
+/**
+ * Maps each Business model section ID to its CSS grid area and internal
+ * density variant.  Grid placement and card density are decoupled: the area
+ * class controls where the card sits in the 12-col template-areas grid, and
+ * the variant controls padding / body clamping / CTA layout.
+ */
+const SECTION_CONFIG: Record<string, { area: string; variant: CardVariant }> = {
+  problem:           { area: "prob", variant: "tall" },
+  uvp:               { area: "uvp",  variant: "tall" },
+  customer_segments: { area: "cseg", variant: "tall" },
+  channels:          { area: "chan", variant: "tall" },
+  solution:          { area: "sol",  variant: "compact" },
+  unfair_advantage:  { area: "uadv", variant: "compact" },
+  cost_structure:    { area: "cost", variant: "footer-wide" },
+  revenue_streams:   { area: "rev",  variant: "footer-wide" },
+};
+
+/**
+ * Scalar fields that support inline editing directly on the canvas.
+ * Long-form fields are excluded — they route to the full Chapter 4 worksheet.
+ */
+const INLINE_EDITABLE_KEYS = new Set([
+  "time_budget_hours_per_week",
+  "money_cap_per_month",
+  "minimum_experiment_duration",
+] as const);
 
 const OPERATING_GROUPS = [
   {
@@ -69,8 +76,123 @@ const OPERATING_GROUPS = [
   },
 ] as const;
 
-type ResponseMap = Record<string, string>;
+/* ─────────────────────────────────────────────────────────────────────
+   Lean canvas sections (Chapters 2–13) — static definitions
+   ───────────────────────────────────────────────────────────────────── */
 
+type LeanCanvasFieldDef = { key: string; label: string };
+
+type LeanCanvasSectionDef = {
+  id: string;
+  title: string;
+  description: string;
+  chapterLabel: string;
+  chapterHref: string;
+  fields: LeanCanvasFieldDef[];
+};
+
+const LEAN_CANVAS_SECTIONS: LeanCanvasSectionDef[] = [
+  {
+    id: "problem",
+    title: "Problem",
+    description: "The real problem your customer has that your product solves.",
+    chapterLabel: "Chapter 7: Pick Your Customer",
+    chapterHref: "/chapter/pick-your-customer/worksheet",
+    fields: [
+      { key: "core_problem",       label: "Core problem" },
+      { key: "what_they_value_most", label: "What they value most" },
+    ],
+  },
+  {
+    id: "customer_segments",
+    title: "Customer segments",
+    description: "Who you are selling to, and where to find them.",
+    chapterLabel: "Chapter 7: Pick Your Customer",
+    chapterHref: "/chapter/pick-your-customer/worksheet",
+    fields: [
+      { key: "customer_description", label: "Niche customer" },
+      { key: "where_they_gather",    label: "Where they gather" },
+      { key: "what_builds_trust",    label: "What builds trust" },
+    ],
+  },
+  {
+    id: "uvp",
+    title: "Unique value proposition",
+    description: "Why your customer should buy from you instead of the alternative.",
+    chapterLabel: "Chapter 8: Shape Your Offer",
+    chapterHref: "/chapter/shape-your-offer/worksheet",
+    fields: [
+      { key: "positioning_statement", label: "Positioning statement" },
+      { key: "key_differentiator",    label: "Key differentiator" },
+    ],
+  },
+  {
+    id: "solution",
+    title: "Solution",
+    description: "The product or offer you are taking to market.",
+    chapterLabel: "Chapters 5, 8–9",
+    chapterHref: "/chapter/shape-your-offer/worksheet",
+    fields: [
+      { key: "chosen_idea",              label: "Chosen product idea" },
+      { key: "offer_summary",            label: "Offer summary" },
+      { key: "minimum_viable_version",   label: "Minimum viable version" },
+      { key: "product_title",            label: "Listing title" },
+    ],
+  },
+  {
+    id: "channels",
+    title: "Channels",
+    description: "How customers discover and buy from you.",
+    chapterLabel: "Chapters 11–12",
+    chapterHref: "/chapter/free-traffic/worksheet",
+    fields: [
+      { key: "free_channels_chosen", label: "Free channels" },
+      { key: "ad_platform",          label: "Paid channel" },
+      { key: "first_week_actions",   label: "First week actions" },
+    ],
+  },
+  {
+    id: "revenue_streams",
+    title: "Revenue streams",
+    description: "How you make money now and build customer lifetime value.",
+    chapterLabel: "Chapters 8 & 13",
+    chapterHref: "/chapter/email-and-repeat-customers/worksheet",
+    fields: [
+      { key: "final_price",              label: "Selling price" },
+      { key: "margin_after_all_costs",   label: "Margin per sale" },
+      { key: "repeat_purchase_strategy", label: "Repeat purchase strategy" },
+      { key: "email_collection_method",  label: "Email collection" },
+    ],
+  },
+  {
+    id: "cost_structure",
+    title: "Cost structure",
+    description: "The fixed and variable costs your business model depends on.",
+    chapterLabel: "Chapters 2 & 5",
+    chapterHref: "/chapter/choose-how-youll-sell/worksheet",
+    fields: [
+      { key: "sourcing_model",          label: "Sourcing model" },
+      { key: "estimated_startup_cost",  label: "Startup cost estimate" },
+    ],
+  },
+  {
+    id: "unfair_advantage",
+    title: "Unfair advantage",
+    description: "What makes this offer genuinely hard for a competitor to copy.",
+    chapterLabel: "Chapters 7–8",
+    chapterHref: "/chapter/shape-your-offer/worksheet",
+    fields: [
+      { key: "key_differentiator", label: "Differentiator" },
+      { key: "what_builds_trust",  label: "Trust signals" },
+    ],
+  },
+];
+
+/* ─────────────────────────────────────────────────────────────────────
+   Types
+   ───────────────────────────────────────────────────────────────────── */
+
+type ResponseMap = Record<string, string>;
 type OperatingSectionKey = (typeof OPERATING_SECTIONS)[number]["key"];
 
 type CanvasInsight = {
@@ -79,6 +201,26 @@ type CanvasInsight = {
   tone: "good" | "warn" | "neutral";
 };
 
+type FieldData = { key: string; label: string; value: string | undefined; filled: boolean };
+type CanvasSectionData = LeanCanvasSectionDef & {
+  fieldData: FieldData[];
+  hasSomeData: boolean;
+  filledCount: number;
+};
+
+type UnitEconomicsRow = {
+  idea_name?: string;
+  product_cost?: string;
+  shipping_to_customer?: string;
+  platform_fees?: string;
+  selling_price?: string;
+  margin_per_unit?: string;
+};
+
+/* ─────────────────────────────────────────────────────────────────────
+   Text helpers (unchanged from original)
+   ───────────────────────────────────────────────────────────────────── */
+
 function normalizeText(value: string | undefined) {
   return (value ?? "").trim();
 }
@@ -86,59 +228,92 @@ function normalizeText(value: string | undefined) {
 function toBulletList(value: string | undefined) {
   const text = normalizeText(value);
   if (!text) return [] as string[];
-
   const pieces = text
-    .split(/\n+|•|\u2022|;+/)
+    .split(/\n+|•|•|;+/)
     .map((item) => item.replace(/^[-*\d.)\s]+/, "").trim())
     .filter(Boolean);
-
   return pieces.length > 1 ? pieces : [];
 }
 
 function formatValue(value: string | undefined) {
   const text = normalizeText(value);
   if (!text) return null;
-
   const bullets = toBulletList(text);
   if (bullets.length > 1) {
     return { kind: "bullets" as const, bullets, text };
   }
-
   return { kind: "text" as const, text };
 }
 
-function getSectionStatusLabel(key: OperatingSectionKey, value: string | undefined) {
-  if (normalizeText(value)) return "Set";
-
-  if (key === "success_metrics") return "Needed for judging progress";
-  if (key === "continue_criteria") return "Needed for staying the course";
-  if (key === "escalation_criteria") return "Needed for investing more";
-  if (key === "kill_criteria") return "Needed for stopping weak ideas";
-  if (key === "red_line_rules") return "Needed for protecting boundaries";
-  return "Pending";
-}
 
 function getSectionEmptyState(key: OperatingSectionKey) {
-  if (key === "time_budget_hours_per_week") return "Your realistic weekly time limit is not defined yet.";
-  if (key === "money_cap_per_month") return "Your safe monthly spend cap is not defined yet.";
+  if (key === "time_budget_hours_per_week")  return "Your realistic weekly time limit is not defined yet.";
+  if (key === "money_cap_per_month")         return "Your safe monthly spend cap is not defined yet.";
   if (key === "minimum_experiment_duration") return "You have not set the minimum time you will give a test before judging it.";
-  if (key === "success_metrics") return "You have not yet defined the signals that would count as genuine progress.";
-  if (key === "continue_criteria") return "You have not yet defined what evidence is strong enough to justify continuing.";
-  if (key === "escalation_criteria") return "You have not yet defined what result would justify investing more time or money.";
-  if (key === "kill_criteria") return "You have not yet defined the result that would tell you to stop.";
+  if (key === "success_metrics")             return "You have not yet defined the signals that would count as genuine progress.";
+  if (key === "continue_criteria")           return "You have not yet defined what evidence is strong enough to justify continuing.";
+  if (key === "escalation_criteria")         return "You have not yet defined what result would justify investing more time or money.";
+  if (key === "kill_criteria")               return "You have not yet defined the result that would tell you to stop.";
   return "You have not yet defined the rules you refuse to break under pressure.";
 }
 
+function getOperatingFilledCount(responses: ResponseMap) {
+  return OPERATING_SECTIONS.filter((s) => normalizeText(responses[s.key])).length;
+}
+
 function getCompletionSummary(filledCount: number) {
-  if (filledCount === 0) return "No operating rules captured yet.";
-  if (filledCount < 3) return "The canvas has started, but it is still too thin to guide real decisions.";
+  if (filledCount === 0)                      return "No operating rules captured yet.";
+  if (filledCount < 3)                        return "The canvas has started, but it is still too thin to guide real decisions.";
   if (filledCount < OPERATING_SECTIONS.length) return "The canvas is partially useful, but some decision rules are still missing.";
   return "The operating canvas is complete enough to guide your next stage of decision-making.";
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+   Insight builders
+   ───────────────────────────────────────────────────────────────────── */
+
+/**
+ * Normalises a duration value so appending " week(s)" is always safe.
+ *
+ * Rules
+ * ─────
+ * • Strip trailing "weeks?" / "wks?" (case-insensitive) if present.
+ * • Parse the remainder as a number and re-append the correct singular or
+ *   plural suffix, preventing the "4 weeks weeks" double-unit bug.
+ * • If the value contains a non-week unit (e.g. "2 months") or is
+ *   non-numeric freeform text, return it unchanged so we don't mangle it.
+ */
+function formatExperimentDuration(raw: string): string {
+  const stripped = raw.trim().replace(/\s*(weeks?|wks?)\s*$/i, "").trim();
+  const n = parseFloat(stripped);
+  if (!isNaN(n) && String(n) === stripped) {
+    // Bare number (with or without a trailing "weeks" that was stripped)
+    return `${stripped} ${n === 1 ? "week" : "weeks"}`;
+  }
+  if (stripped !== raw.trim()) {
+    // Had a "weeks" suffix but the remainder isn't a clean number —
+    // e.g. "a few weeks". Return the stripped version (no double suffix).
+    return stripped || raw.trim();
+  }
+  // Contains its own unit ("2 months") or freeform text — leave untouched.
+  return raw.trim();
+}
+
+/**
+ * Template helper: `verb + lower-cased value` → one decision clause.
+ * Returns null when value is empty so callers can filter cleanly.
+ */
+function decisionClause(verb: string, value: string): string | null {
+  const v = normalizeText(value);
+  if (!v) return null;
+  // Lower-case the first character for smooth mid-sentence flow.
+  const lowered = v.charAt(0).toLowerCase() + v.slice(1);
+  return `${verb} ${lowered}`;
+}
+
 function buildOperatingSummary(responses: ResponseMap, currencySymbol: string) {
-  const timeBudget = normalizeText(responses.time_budget_hours_per_week);
-  const moneyCap = normalizeText(responses.money_cap_per_month);
+  const timeBudget         = normalizeText(responses.time_budget_hours_per_week);
+  const moneyCap           = normalizeText(responses.money_cap_per_month);
   const experimentDuration = normalizeText(responses.minimum_experiment_duration);
 
   const normalizedMoneyCap = moneyCap
@@ -146,294 +321,619 @@ function buildOperatingSummary(responses: ResponseMap, currencySymbol: string) {
     : "";
 
   const parts = [
-    timeBudget ? `work within ${timeBudget} hrs/week` : null,
-    moneyCap ? `keep spend within ${normalizedMoneyCap} ${currencySymbol}/month` : null,
-    experimentDuration ? `judge experiments over at least ${experimentDuration} weeks` : null,
+    timeBudget         ? `work within ${timeBudget} hrs/week` : null,
+    moneyCap           ? `keep spend within ${normalizedMoneyCap} ${currencySymbol}/month` : null,
+    experimentDuration ? `judge experiments for at least ${formatExperimentDuration(experimentDuration)}` : null,
   ].filter(Boolean);
 
-  if (parts.length === 0) {
-    return "You have not yet defined the basic operating constraints for this idea.";
-  }
-
+  if (parts.length === 0) return "You have not yet defined the basic operating constraints for this idea.";
   return `Right now, your operating rule is to ${parts.join(", ")}.`;
 }
 
 function buildDecisionSummary(responses: ResponseMap) {
-  const successMetrics = normalizeText(responses.success_metrics);
-  const continueCriteria = normalizeText(responses.continue_criteria);
-  const escalationCriteria = normalizeText(responses.escalation_criteria);
-  const killCriteria = normalizeText(responses.kill_criteria);
+  const clauses = [
+    decisionClause("watch for",     responses.success_metrics),
+    decisionClause("continue if",   responses.continue_criteria),
+    decisionClause("escalate when", responses.escalation_criteria),
+    decisionClause("stop when",     responses.kill_criteria),
+  ].filter((c): c is string => c !== null);
 
-  const fragments = [
-    successMetrics ? `watch ${successMetrics}` : null,
-    continueCriteria ? `continue when ${continueCriteria}` : null,
-    escalationCriteria ? `invest more when ${escalationCriteria}` : null,
-    killCriteria ? `stop when ${killCriteria}` : null,
-  ].filter(Boolean);
-
-  if (fragments.length === 0) {
+  if (clauses.length === 0) {
     return "You have not yet defined enough decision signals to make this canvas genuinely actionable.";
   }
-
-  return `Your current decision model is to ${fragments.join(", ")}.`;
+  return `Your decision model: ${clauses.join("; ")}.`;
 }
 
 function buildRiskSummary(responses: ResponseMap) {
-  const redLines = normalizeText(responses.red_line_rules);
+  const redLines   = normalizeText(responses.red_line_rules);
   const killCriteria = normalizeText(responses.kill_criteria);
-
-  if (!redLines && !killCriteria) {
-    return "You have not yet defined the boundaries that stop emotion or sunk-cost thinking from taking over.";
-  }
-
-  if (redLines && killCriteria) {
-    return `You have both hard stop signals and explicit non-negotiables, which makes the operating model more disciplined under pressure.`;
-  }
-
-  if (redLines) {
-    return "You have defined non-negotiables, but your stop signals could still be clearer.";
-  }
-
+  if (!redLines && !killCriteria) return "You have not yet defined the boundaries that stop emotion or sunk-cost thinking from taking over.";
+  if (redLines && killCriteria)   return "You have both hard stop signals and explicit non-negotiables, which makes the operating model more disciplined under pressure.";
+  if (redLines) return "You have defined non-negotiables, but your stop signals could still be clearer.";
   return "You have defined a stop condition, but your non-negotiables could still be clearer.";
 }
 
 function buildCanvasInsights(responses: ResponseMap, currencySymbol: string): CanvasInsight[] {
-  const filledCount = getFilledCount(responses);
-  const insights: CanvasInsight[] = [];
-
-  insights.push({
-    title: "Operating summary",
-    body: buildOperatingSummary(responses, currencySymbol),
-    tone: filledCount >= 3 ? "good" : "neutral",
-  });
-
-  insights.push({
-    title: "Decision summary",
-    body: buildDecisionSummary(responses),
-    tone: normalizeText(responses.success_metrics) && normalizeText(responses.kill_criteria) ? "good" : "warn",
-  });
-
-  insights.push({
-    title: "Risk posture",
-    body: buildRiskSummary(responses),
-    tone: normalizeText(responses.red_line_rules) ? "good" : "warn",
-  });
-
-  return insights;
+  const filledCount = getOperatingFilledCount(responses);
+  return [
+    {
+      title: "Operating summary",
+      body:  buildOperatingSummary(responses, currencySymbol),
+      tone:  filledCount >= 3 ? "good" : "neutral",
+    },
+    {
+      title: "Decision summary",
+      body:  buildDecisionSummary(responses),
+      tone:  normalizeText(responses.success_metrics) && normalizeText(responses.kill_criteria) ? "good" : "warn",
+    },
+    {
+      title: "Risk posture",
+      body:  buildRiskSummary(responses),
+      tone:  normalizeText(responses.red_line_rules) ? "good" : "warn",
+    },
+  ];
 }
 
-async function getCanvasData(): Promise<{ authenticated: boolean; responses: ResponseMap; currencyCode: string }> {
+/* ─────────────────────────────────────────────────────────────────────
+   Field-group parsing
+   ───────────────────────────────────────────────────────────────────── */
+
+function parseFieldGroup<T extends Record<string, string>>(raw: string | undefined): T[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed as T[];
+  } catch {
+    return [];
+  }
+}
+
+function getChosenIdeaEconomics(responses: ResponseMap): UnitEconomicsRow | null {
+  const instances = parseFieldGroup<UnitEconomicsRow>(responses.idea_economics);
+  if (!instances.length) return null;
+  const chosenIdea = normalizeText(responses.chosen_idea);
+  const match      = chosenIdea ? instances.find((e) => normalizeText(e.idea_name) === chosenIdea) : undefined;
+  const row        = match ?? instances[0];
+  return row && Object.keys(row).length > 0 ? row : null;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Lean canvas section building
+   ───────────────────────────────────────────────────────────────────── */
+
+function buildLeanCanvasSections(responses: ResponseMap): CanvasSectionData[] {
+  return LEAN_CANVAS_SECTIONS.map((def) => {
+    const fieldData  = def.fields.map((f) => ({
+      ...f,
+      value:  responses[f.key],
+      filled: !!normalizeText(responses[f.key]),
+    }));
+    const filledCount = fieldData.filter((f) => f.filled).length;
+    return { ...def, fieldData, filledCount, hasSomeData: filledCount > 0 };
+  });
+}
+
+function getLeanCanvasFilledSectionCount(sections: CanvasSectionData[]) {
+  return sections.filter((s) => s.hasSomeData).length;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Field → step index (deep-linking)
+   ───────────────────────────────────────────────────────────────────── */
+
+type FieldStepInfo = {
+  chapterSlug: string;
+  stepId: string;
+  chapterNumber: number;
+  stepTitle: string;
+};
+
+function buildFieldStepIndex(): Record<string, FieldStepInfo> {
+  const index: Record<string, FieldStepInfo> = {};
+  for (const [slug, entry] of Object.entries(calmCommerceChapterContent)) {
+    const chapterNumber = entry.chapter.number;
+    for (const step of entry.steps) {
+      const keys = step.inlineWorksheetFieldKeys;
+      if (!keys?.length) continue;
+      for (const key of keys) {
+        if (!index[key]) {
+          index[key] = { chapterSlug: slug, stepId: step.id, chapterNumber, stepTitle: step.title };
+        }
+      }
+    }
+  }
+  return index;
+}
+
+/** Returns the best available deep-link for a canvas section. */
+function getSectionEditHref(
+  fields: readonly { key: string }[],
+  fallbackHref: string,
+  fieldStepIndex: Record<string, FieldStepInfo>,
+): string {
+  for (const f of fields) {
+    const info = fieldStepIndex[f.key];
+    if (info) return `/chapter/${info.chapterSlug}/steps?step=${info.stepId}`;
+  }
+  return fallbackHref;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Data fetching
+   ───────────────────────────────────────────────────────────────────── */
+
+async function getCanvasData(): Promise<{
+  authenticated: boolean;
+  responses: ResponseMap;
+  currencyCode: string;
+}> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
-
-    if (!user || !projectId) {
-      return { authenticated: false, responses: {}, currencyCode: "GBP" };
-    }
-
+    if (!user || !projectId) return { authenticated: false, responses: {}, currencyCode: "GBP" };
     const { data } = await supabase
       .from("worksheet_responses")
       .select("field_key, value_json")
-      .eq("project_id", projectId)
-      .eq("worksheet_id", "founder-rules-sheet");
-
+      .eq("project_id", projectId);
     const responses = Object.fromEntries(
-      (data ?? []).map((row) => [row.field_key, typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? "")]),
+      (data ?? []).map((row) => [
+        row.field_key,
+        typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? ""),
+      ]),
     );
-
     return { authenticated: true, responses, currencyCode: "GBP" };
   } catch {
     return { authenticated: false, responses: {}, currencyCode: "GBP" };
   }
 }
 
-function getFilledCount(responses: ResponseMap) {
-  return OPERATING_SECTIONS.filter((section) => (responses[section.key] ?? "").trim().length > 0).length;
-}
-
 function getAccessBadge(status: string | null, level: string | null) {
-  if (status === "active" && level === "full") return { label: "Paid access active", tone: "bg-[#eafaf2] text-[#0f7b53]" };
-  if (status === "expired" || status === "cancelled") return { label: "Access inactive", tone: "bg-[#fff1f0] text-[#a83836]" };
-  return { label: "Preview access", tone: "bg-[#f4f3fa] text-[#5b48d6]" };
+  if (status === "active" && level === "full") return { label: "Paid access active", pillState: "paid" };
+  if (status === "expired" || status === "cancelled") return { label: "Access inactive", pillState: "not-started" };
+  return { label: "Preview access", pillState: "in-progress" };
 }
 
-export default async function LeanCanvasPage() {
-  const [{ authenticated, responses, currencyCode }, access] = await Promise.all([getCanvasData(), getAccessStateForCurrentUser()]);
-  const filledCount = getFilledCount(responses);
-  const accessBadge = getAccessBadge(access.entitlementStatus, access.accessLevel);
-  const currency = getCurrencyMeta(currencyCode);
-  const insights = buildCanvasInsights(responses, currency.symbol);
+/* ─────────────────────────────────────────────────────────────────────
+   Shared sub-components (server-side, inline)
+   ───────────────────────────────────────────────────────────────────── */
+
+/** Formats a field value into bullet list or paragraph JSX. */
+function FieldValue({ value }: { value: string | undefined }) {
+  const formatted = formatValue(value);
+  if (!formatted) return null;
+  if (formatted.kind === "bullets") {
+    return (
+      <ul className="space-y-1 text-sm leading-6 text-ink-900">
+        {formatted.bullets.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span className="mt-[0.55rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cobalt-600" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return <p className="text-sm leading-6 text-ink-900">{formatted.text}</p>;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Page
+   ───────────────────────────────────────────────────────────────────── */
+
+export default async function LeanCanvasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const [{ authenticated, responses, currencyCode }, access, { tab }] = await Promise.all([
+    getCanvasData(),
+    getAccessStateForCurrentUser(),
+    searchParams,
+  ]);
+
+  const initialTab: "operating" | "business" = tab === "business" ? "business" : "operating";
+
+  /* Aggregated counts */
+  const operatingFilledCount = getOperatingFilledCount(responses);
+  const accessBadge          = getAccessBadge(access.entitlementStatus, access.accessLevel);
+  const currency             = getCurrencyMeta(currencyCode);
+  const insights             = buildCanvasInsights(responses, currency.symbol);
+  const canvasSections       = buildLeanCanvasSections(responses);
+  const canvasFilledCount    = getLeanCanvasFilledSectionCount(canvasSections);
+  const chosenIdeaEconomics  = getChosenIdeaEconomics(responses);
+  const chosenIdea           = normalizeText(responses.chosen_idea);
+  const fieldStepIndex       = buildFieldStepIndex();
+
+  /* Combined canvas progress (both layers together) */
+  const TOTAL_SECTION_COUNT = OPERATING_SECTIONS.length + LEAN_CANVAS_SECTIONS.length; // 16
+  const totalFilledCount    = operatingFilledCount + canvasFilledCount;
+  const totalPercent        = (totalFilledCount / TOTAL_SECTION_COUNT) * 100;
+
+  /* Tab definitions for <CanvasTabs> */
+  const tabs = [
+    {
+      id:          "operating",
+      label:       "Operating layer",
+      filledCount: operatingFilledCount,
+      totalCount:  OPERATING_SECTIONS.length,
+    },
+    {
+      id:          "business",
+      label:       "Business model layer",
+      filledCount: canvasFilledCount,
+      totalCount:  LEAN_CANVAS_SECTIONS.length,
+    },
+  ];
 
   return (
     <LearnerShell
       items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
+        { href: "/",           label: "Dashboard" },
+        { href: "/program",    label: "Program" },
         { href: "/lean-canvas", label: "Lean Canvas", active: true },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
+        { href: "/metrics",    label: "Metrics" },
+        { href: "/account",    label: "Account" },
       ]}
       title="Lean Canvas"
-      subtitle="A first MVP business canvas derived from your current worksheet answers."
+      subtitle={
+        initialTab === "operating"
+          ? "How you'll run the business — your founder rules from Chapter 4."
+          : "What you'll sell — your offer taking shape across Chapters 2–13."
+      }
+      contentWidth="1180px"
     >
       <div className="space-y-8">
-        <PageHero label="Lean Canvas" title="A clearer operating model from your worksheet" description="This page turns your Founder Rules worksheet into a clearer decision artifact. It should feel more useful than the raw worksheet, while still staying honest about what has and has not been defined yet.">
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-[10px] font-medium ${accessBadge.tone}`}>{accessBadge.label}</span>
-            <span className="rounded-full bg-[rgba(84,90,149,0.1)] px-[10px] py-[3px] text-[11px] font-medium text-[#545a95]">{filledCount}/{OPERATING_SECTIONS.length} sections filled</span>
+        {/* ── Page hero ── */}
+        <PageHero
+          label="Lean Canvas"
+          title={initialTab === "operating" ? "Operating rules" : "Business model"}
+          description={
+            initialTab === "operating"
+              ? "The founder rules from Chapter 4 — your time, money, and decision limits. These keep the business survivable while you learn."
+              : "How the product and offer take shape — pulled from the worksheets across Chapters 2–13. This view is anchored on your chosen idea from Chapter 5."
+          }
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="cc-status-pill" data-state={accessBadge.pillState}>
+              {accessBadge.label}
+            </span>
           </div>
-          <div className="mt-4 max-w-[360px]">
-            <ProgressBar value={(filledCount / OPERATING_SECTIONS.length) * 100} />
+
+          {/* Canvas-level progress — one bar covering both layers */}
+          <div className="mt-4">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <p className="text-[11px] font-medium text-ink-700">
+                Canvas progress: {totalFilledCount} of {TOTAL_SECTION_COUNT} sections complete
+              </p>
+              <p className="text-[10px] text-ink-500">
+                Operating {operatingFilledCount}/{OPERATING_SECTIONS.length} · Business {canvasFilledCount}/{LEAN_CANVAS_SECTIONS.length}
+              </p>
+            </div>
+            <ProgressBar value={totalPercent} />
           </div>
+
+          {/* Edit shortcut — only visible when the Operating tab is active */}
+          <CanvasHeroOperatingAction initialTab={initialTab} />
         </PageHero>
 
-        <SectionShell>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+        {/* ── Tab navigation + panels ── */}
+        <CanvasTabs tabs={tabs} initialTab={initialTab} paramName="tab">
+
+          {/* ═══ Operating layer ════════════════════════════════════════ */}
+          <CanvasTabPanel id="operating">
+            <section className="space-y-6">
+              <div>
+                <h3 className="font-[Manrope] text-2xl font-bold tracking-tight">Operating canvas</h3>
+                <p className="mt-2 text-sm text-ink-500">
+                  Your business operating constraints and decision rules from Chapter 4.
+                </p>
+              </div>
+
+              {operatingFilledCount === 0 ? (
+                /* ── Empty-canvas CTA ── */
+                <div className="rounded-[1.75rem] bg-surface-sunken p-6">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Start here</p>
+                  <h3 className="mt-3 font-[Manrope] text-2xl font-bold tracking-tight">
+                    Complete Founder Rules before using the canvas
+                  </h3>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-ink-500">
+                    The Lean Canvas becomes genuinely useful once you have defined your time limits, money limits,
+                    success signals, and stop rules. Until then, this page is just showing the shape of what will
+                    be generated later.
+                  </p>
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href="/chapter/set-your-founder-rules/worksheet"
+                      className="inline-flex items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white"
+                    >
+                      Go to Founder Rules Sheet
+                    </Link>
+                    <Link
+                      href="/program"
+                      className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900"
+                    >
+                      Back to Program
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* ── Insights strip ── */}
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    {insights.map((insight) => (
+                      <div
+                        key={insight.title}
+                        className={`rounded-[1.5rem] p-5 ${
+                          insight.tone === "good"
+                            ? "bg-surface-raised text-ink-900"
+                            : insight.tone === "warn"
+                              ? "bg-amber-100 text-[#7a4b00]"
+                              : "bg-surface-sunken text-ink-900"
+                        }`}
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em]">{insight.title}</p>
+                        <p className="mt-3 text-sm leading-7">{insight.body}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Grouped operating cards ── */}
+                  <div className="space-y-6">
+                    {OPERATING_GROUPS.map((group) => (
+                      <div
+                        key={group.title}
+                        className="rounded-[1.75rem] bg-surface-sunken p-6"
+                      >
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+                          {group.title}
+                        </p>
+                        <p className="mt-2 mb-4 text-sm text-ink-500">{group.description}</p>
+
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                          {group.keys.map((key) => {
+                            const section  = OPERATING_SECTIONS.find((s) => s.key === key)!;
+                            const rawValue = responses[section.key];
+                            const filled   = !!normalizeText(rawValue);
+
+                            /* Try a step-level deep link; fall back to the full worksheet */
+                            const stepInfo = fieldStepIndex[section.key];
+                            const editHref = stepInfo
+                              ? `/chapter/${stepInfo.chapterSlug}/steps?step=${stepInfo.stepId}`
+                              : "/chapter/set-your-founder-rules/worksheet";
+
+                            const opState = getSectionState({
+                              filledCount: filled ? 1 : 0,
+                              totalCount:  1,
+                              editHref,
+                              sourceLabel: "Chapter 4: Founder Rules",
+                            });
+
+                            /* ── Scalar fields → inline edit ── */
+                            if (INLINE_EDITABLE_KEYS.has(section.key as "time_budget_hours_per_week" | "money_cap_per_month" | "minimum_experiment_duration")) {
+                              const isMoneyField = section.key === "money_cap_per_month";
+                              const isDurationField = section.key === "minimum_experiment_duration";
+                              return (
+                                <InlineEditCard
+                                  key={section.key}
+                                  title={section.title}
+                                  description={getSectionEmptyState(section.key)}
+                                  initialState={opState}
+                                  initialValue={rawValue ?? ""}
+                                  fieldKey={section.key}
+                                  fieldConfig={{
+                                    inputType: "number",
+                                    unitPrefix: isMoneyField ? currency.symbol : undefined,
+                                    unitSuffix: isMoneyField
+                                      ? `${currency.code} / month`
+                                      : isDurationField
+                                        ? "weeks"
+                                        : "hrs / week",
+                                    placeholder: "0",
+                                  }}
+                                />
+                              );
+                            }
+
+                            /* ── Long-form fields → route to worksheet ── */
+                            return (
+                              <CanvasCard
+                                key={section.key}
+                                title={section.title}
+                                description={filled ? undefined : getSectionEmptyState(section.key)}
+                                state={opState}
+                                actionLabel="Edit"
+                              >
+                                {filled && <FieldValue value={rawValue} />}
+                              </CanvasCard>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+          </CanvasTabPanel>
+
+          {/* ═══ Business model layer ═══════════════════════════════════ */}
+          <CanvasTabPanel id="business">
+            <section className="space-y-6">
+              <div>
+                <h3 className="font-[Manrope] text-2xl font-bold tracking-tight">Business model canvas</h3>
+                <p className="mt-2 text-sm text-ink-500">
+                  These sections are populated from worksheets across Chapters 2–13. Each card links directly
+                  to the specific step if you need to fill or update it.
+                </p>
+              </div>
+
+              {/* ── Idea-scope banner ── */}
+              <div
+                className={`rounded-[1.25rem] p-5 ring-1 ${
+                  chosenIdea
+                    ? "bg-surface-raised ring-[rgba(212,222,227,0.4)]"
+                    : "bg-amber-100 ring-amber-100"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.18em] ${
+                      chosenIdea ? "text-cobalt-600" : "text-[#7a4b00]"
+                    }`}>
+                      {chosenIdea ? "Anchored on idea" : "No chosen idea yet"}
+                    </p>
+                    <p className={`mt-2 text-sm leading-6 ${
+                      chosenIdea ? "text-ink-900" : "text-[#7a4b00]"
+                    }`}>
+                      {chosenIdea ? (
+                        <>This business model view is built around <strong>{chosenIdea}</strong>. Change your chosen idea in Chapter 5 and this canvas will update.</>
+                      ) : (
+                        <>Several sections of the business model depend on picking a specific idea. Until you choose one in Chapter 5, parts of this canvas will stay empty or generic.</>
+                      )}
+                    </p>
+                  </div>
+                  <Link
+                    href={
+                      fieldStepIndex.chosen_idea
+                        ? `/chapter/${fieldStepIndex.chosen_idea.chapterSlug}/steps?step=${fieldStepIndex.chosen_idea.stepId}`
+                        : "/program"
+                    }
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-xs font-semibold ${
+                      chosenIdea
+                        ? "bg-white text-cobalt-600 ring-1 ring-[rgba(212,222,227,0.4)]"
+                        : "bg-white text-[#7a4b00] ring-1 ring-amber-100"
+                    }`}
+                  >
+                    {chosenIdea ? "Change chosen idea" : "Pick a chosen idea"} →
+                  </Link>
+                </div>
+              </div>
+
+              {/* canvas-grid: inherits the 1180px width from LearnerShell's contentWidth prop */}
+              <div className="canvas-grid">
+                {canvasSections.map((section) => {
+                  const isCostStructure = section.id === "cost_structure";
+                  const hasEconomics    = isCostStructure && chosenIdeaEconomics !== null;
+
+                  /* Area + variant from the section config map */
+                  const cfg = SECTION_CONFIG[section.id] ?? { area: "prob", variant: "tall" as CardVariant };
+
+                  const editHref = getSectionEditHref(
+                    section.fields,
+                    section.chapterHref,
+                    fieldStepIndex,
+                  );
+
+                  const sectionState = getSectionState({
+                    filledCount: section.filledCount,
+                    totalCount:  section.fields.length,
+                    editHref,
+                    sourceLabel: section.chapterLabel,
+                  });
+
+                  const subFields: SubField[] = section.fieldData.map((f) => ({
+                    label: f.label,
+                    value: f.filled ? (f.value ?? null) : null,
+                  }));
+
+                  /* Cost structure gets unit-economics block as children */
+                  const costEconomicsBlock =
+                    isCostStructure && chosenIdeaEconomics ? (
+                      <div className="rounded-[0.75rem] bg-surface-sunken p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5b48d6]">
+                          {chosenIdeaEconomics.idea_name
+                            ? `Unit costs — ${
+                                chosenIdeaEconomics.idea_name.length > 30
+                                  ? chosenIdeaEconomics.idea_name.slice(0, 30) + "…"
+                                  : chosenIdeaEconomics.idea_name
+                              }`
+                            : "Unit costs"}
+                        </p>
+                        <dl className="mt-2 space-y-1">
+                          {(
+                            [
+                              { key: "product_cost",         label: "Product cost" },
+                              { key: "shipping_to_customer", label: "Shipping" },
+                              { key: "platform_fees",        label: "Platform fees" },
+                              { key: "margin_per_unit",      label: "Margin / unit" },
+                            ] as const
+                          )
+                            .filter(({ key }) =>
+                              normalizeText(
+                                (chosenIdeaEconomics as Record<string, string | undefined>)[key],
+                              ),
+                            )
+                            .map(({ key, label }) => (
+                              <div key={key} className="flex items-baseline justify-between gap-2">
+                                <dt className="text-xs text-ink-500">{label}</dt>
+                                <dd className="text-xs font-semibold text-ink-900">
+                                  {(chosenIdeaEconomics as Record<string, string | undefined>)[key]}
+                                </dd>
+                              </div>
+                            ))}
+                        </dl>
+                      </div>
+                    ) : null;
+
+                  return (
+                    <BusinessModelCard
+                      key={section.id}
+                      sectionId={section.id}
+                      title={section.title}
+                      description={section.description}
+                      state={sectionState}
+                      subFields={section.hasSomeData || hasEconomics ? subFields : undefined}
+                      variant={cfg.variant}
+                      className={`area-${cfg.area}`}
+                    >
+                      {costEconomicsBlock}
+                    </BusinessModelCard>
+                  );
+                })}
+              </div>{/* canvas-grid */}
+            </section>
+          </CanvasTabPanel>
+
+        </CanvasTabs>
+
+        {/* ── About this page ── */}
+        <details className="group rounded-[1.75rem] bg-surface-sunken p-6">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-ink-900">
+            <span>About this page</span>
+            <span className="text-xs text-ink-300 group-open:hidden">Open</span>
+            <span className="hidden text-xs text-ink-300 group-open:inline">Close</span>
+          </summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.5rem] bg-surface-raised border border-ink-100 shadow-card p-6">
               <Eyebrow>Current payoff</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">{getCompletionSummary(filledCount)}</p>
-            </Card>
-            <Card>
+              <p className="mt-3 text-sm leading-7 text-ink-900">{getCompletionSummary(operatingFilledCount)}</p>
+            </div>
+            <div className="rounded-[1.5rem] bg-surface-raised border border-ink-100 shadow-card p-6">
               <Eyebrow>What this helps with</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">Use it to judge whether the current idea fits your real limits, signals, and stop rules.</p>
-            </Card>
-            <Card>
-              <Eyebrow>What comes later</Eyebrow>
-              <p className="mt-3 text-sm leading-7 text-[#003748]">As more worksheets are added, this can grow into a fuller business-model view without inventing things early.</p>
-            </Card>
+              <p className="mt-3 text-sm leading-7 text-ink-900">
+                Use it to judge whether the current idea fits your real limits, signals, and stop rules — and to see how your business model is taking shape.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-surface-raised border border-ink-100 shadow-card p-6">
+              <Eyebrow>How it fills in</Eyebrow>
+              <p className="mt-3 text-sm leading-7 text-ink-900">
+                Each chapter&apos;s worksheet contributes to a different section. The canvas grows as you complete each chapter.
+              </p>
+            </div>
           </div>
-          {!authenticated ? (
-            <Panel className="mt-6 bg-[#fff7ed]">
+          {!authenticated && (
+            <Panel className="mt-6 bg-amber-100">
               <Eyebrow>Nothing to show yet</Eyebrow>
               <p className="mt-3 text-sm leading-7 text-[#7a4b00]">
                 Your Lean Canvas becomes useful after you complete the Founder Rules Sheet. Right now there is no saved worksheet data to turn into an operating model.
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <PrimaryButton href="/chapter/set-your-founder-rules/worksheet">Complete Founder Rules Sheet</PrimaryButton>
-                <SecondaryButton href="/chapter/set-your-founder-rules">Back to Chapter 3</SecondaryButton>
+                <SecondaryButton href="/chapter/set-your-founder-rules">Back to Chapter 4</SecondaryButton>
               </div>
             </Panel>
-          ) : (
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <PrimaryButton href="/chapter/set-your-founder-rules/worksheet">Edit Founder Rules Sheet</PrimaryButton>
-              <SecondaryButton href="/chapter/set-your-founder-rules">Back to Chapter 3</SecondaryButton>
-            </div>
           )}
-        </SectionShell>
-
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <h3 className="font-[Manrope] text-2xl font-bold tracking-tight">Current operating canvas</h3>
-              <p className="mt-2 text-sm text-[#5d5f68]">This is the current business operating layer generated from your Founder Rules worksheet.</p>
-            </div>
-          </div>
-
-          {filledCount === 0 ? (
-            <div className="rounded-[1.75rem] bg-[#fbfcff] p-6 ring-1 ring-[#eef1f7]">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">Start here</p>
-              <h3 className="mt-3 font-[Manrope] text-2xl font-bold tracking-tight">Complete Founder Rules before using the canvas</h3>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5d5f68]">
-                The Lean Canvas becomes genuinely useful once you have defined your time limits, money limits, success signals, and stop rules. Until then, this page is just showing the shape of what will be generated later.
-              </p>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Link href="/chapter/set-your-founder-rules/worksheet" className="inline-flex items-center justify-center rounded-xl bg-[#0053dc] px-5 py-3 font-semibold !text-white">
-                  Go to Founder Rules Sheet
-                </Link>
-                <Link href="/program" className="inline-flex items-center justify-center rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b]">
-                  Back to Program
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-6 grid gap-4 lg:grid-cols-3">
-                {insights.map((insight) => (
-                  <div
-                    key={insight.title}
-                    className={`rounded-[1.5rem] p-5 ${
-                      insight.tone === "good"
-                        ? "bg-[#eefcf5] text-[#0f5132]"
-                        : insight.tone === "warn"
-                          ? "bg-[#fff8ef] text-[#7a4b00]"
-                          : "bg-[#f4f3fa] text-[#30323b]"
-                    }`}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em]">{insight.title}</p>
-                    <p className="mt-3 text-sm leading-7">{insight.body}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-6">
-                {OPERATING_GROUPS.map((group) => (
-                  <div key={group.title} className="rounded-[1.75rem] bg-white p-6 shadow-[0px_8px_24px_rgba(48,50,59,0.06)]">
-                    <div className="mb-4 flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">{group.title}</p>
-                        <p className="mt-2 text-sm text-[#5d5f68]">{group.description}</p>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                      {group.keys.map((key) => {
-                        const section = OPERATING_SECTIONS.find((item) => item.key === key)!;
-                        const value = responses[section.key];
-                        const formatted = formatValue(value);
-                        const statusLabel = getSectionStatusLabel(section.key, value);
-                        const filled = !!normalizeText(value);
-                        return (
-                          <div key={section.key} className="rounded-[1.25rem] bg-[#f8f8fb] p-5">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">{section.title}</p>
-                                {section.key === "money_cap_per_month" ? (
-                                  <p className="mt-2 text-xs text-[#5d5f68]">Shown in {currency.code}</p>
-                                ) : null}
-                              </div>
-                              <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${filled ? "bg-[#eefcf5] text-[#0f7b53]" : "bg-[#f4f3fa] text-[#5d5f68]"}`}>{statusLabel}</span>
-                            </div>
-                            {formatted?.kind === "bullets" ? (
-                              <ul className="mt-4 space-y-2 text-sm leading-7 text-[#30323b]">
-                                {formatted.bullets.map((item) => (
-                                  <li key={item} className="flex gap-2">
-                                    <span className="mt-[0.6rem] h-1.5 w-1.5 rounded-full bg-[#0053dc]"></span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : formatted?.kind === "text" ? (
-                              <p className="mt-4 text-sm leading-7 text-[#30323b]">{formatted.text}</p>
-                            ) : (
-                              <p className="mt-4 text-sm leading-7 text-[#5d5f68]">{getSectionEmptyState(section.key)}</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
-            <div>
-              <h3 className="font-[Manrope] text-2xl font-bold tracking-tight">Classic Lean Canvas sections still to fill later</h3>
-              <p className="mt-2 text-sm text-[#5d5f68]">
-                These are intentionally shown as future sections so the learner can see what the fuller business model view will eventually include.
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {PLACEHOLDER_SECTIONS.map((section) => (
-              <div key={section.title} className="rounded-[1.5rem] border border-dashed border-[#d7d9e6] bg-[#fafbff] p-6">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5d5f68]">{section.title}</p>
-                <p className="mt-4 text-sm leading-7 text-[#5d5f68]">This section will be unlocked by {section.futureSource.toLowerCase()}, so nothing is being invented here yet.</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        </details>
       </div>
     </LearnerShell>
   );

@@ -9,7 +9,13 @@ export async function GET() {
     console.log("[learner-state:GET]", { hasUser: !!user, learnerId, projectId });
 
     if (!user || !learnerId || !projectId) {
-      return NextResponse.json({ auth: false, worksheetResponses: {}, progress: null, resume: null });
+      return NextResponse.json({
+        auth: false,
+        worksheetResponses: {},
+        responsesByWorksheet: {},
+        progress: null,
+        resume: null,
+      });
     }
 
     const [{ data: responses, error: responsesError }, { data: resume, error: resumeError }] = await Promise.all([
@@ -21,9 +27,20 @@ export async function GET() {
     if (responsesError) throw responsesError;
     if (resumeError) throw resumeError;
 
-    // Flat map: field_key → value (responses are unique per worksheet+field, so field_key collision
-    // across worksheets is unlikely, but we key by field_key for backwards compatibility with the
-    // component's flat state model)
+    // Nested map: worksheet_id → field_key → value. This is the authoritative shape —
+    // clients should reach for this since it doesn't collide when two worksheets share a
+    // field_key (e.g. `decision`, `test_duration`, `what_to_change`).
+    const responsesByWorksheet: Record<string, Record<string, string>> = {};
+    for (const row of responses ?? []) {
+      const value =
+        typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? "");
+      const bucket = (responsesByWorksheet[row.worksheet_id] ??= {});
+      bucket[row.field_key] = value;
+    }
+
+    // Legacy flat map: field_key → value. Kept for backwards compatibility during the
+    // transition; colliding keys across worksheets will arbitrarily overwrite, so new code
+    // should prefer responsesByWorksheet.
     const worksheetResponses = Object.fromEntries(
       (responses ?? []).map((row) => [
         row.field_key,
@@ -36,6 +53,7 @@ export async function GET() {
       learnerId,
       projectId,
       worksheetResponses,
+      responsesByWorksheet,
       resume,
     });
   } catch (error) {

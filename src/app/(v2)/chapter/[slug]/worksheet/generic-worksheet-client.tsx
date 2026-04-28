@@ -148,11 +148,25 @@ export function GenericWorksheetClient({
       try {
         const res = await fetch("/api/v2/learner-state", { cache: "no-store", credentials: "same-origin" });
         if (!res.ok) throw new Error("Failed to load");
-        const data = (await res.json()) as { auth?: boolean; worksheetResponses?: Record<string, string> };
+        const data = (await res.json()) as {
+          auth?: boolean;
+          worksheetResponses?: Record<string, string>;
+          responsesByWorksheet?: Record<string, Record<string, string>>;
+        };
         if (!active) return;
-        const all = data.worksheetResponses ?? {};
-        // Scope to this worksheet's fields + any cross-worksheet source group keys
-        setValues(Object.fromEntries(Object.entries(all).filter(([key]) => keysToLoad.includes(key))));
+        // Build scoped values: current worksheet's fields are authoritative; other worksheets'
+        // fields are merged in for cross-worksheet source lookups (safe because field-group keys
+        // are globally unique). Falls back to legacy flat map if server hasn't been updated.
+        let merged: Record<string, string> = {};
+        if (data.responsesByWorksheet) {
+          for (const [wsId, fields] of Object.entries(data.responsesByWorksheet)) {
+            if (wsId !== worksheetId) Object.assign(merged, fields);
+          }
+          Object.assign(merged, data.responsesByWorksheet[worksheetId] ?? {});
+        } else {
+          merged = data.worksheetResponses ?? {};
+        }
+        setValues(Object.fromEntries(Object.entries(merged).filter(([key]) => keysToLoad.includes(key))));
         setStatus(data.auth ? "idle" : "error");
       } catch {
         if (!active) return;
@@ -215,12 +229,12 @@ export function GenericWorksheetClient({
       <div
         className={`rounded-2xl p-4 text-sm ${
           status === "error"
-            ? "bg-[#fff1f1] text-[#a83836]"
+            ? "bg-[#fff1f1] text-error-700"
             : status === "saving"
               ? "bg-[#eef4ff] text-[#0049c2]"
               : status === "saved"
-                ? "bg-[#eefcf5] text-[#005e3f]"
-                : "bg-[#f4f3fa] text-[#5d5f68]"
+                ? "bg-success-100 text-[#005e3f]"
+                : "bg-surface-sunken text-ink-500"
         }`}
       >
         <div className="flex items-center justify-between gap-4">
@@ -239,7 +253,7 @@ export function GenericWorksheetClient({
         </div>
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#e1e2ed]">
           <div
-            className="h-full rounded-full bg-[#0053dc] transition-all"
+            className="h-full rounded-full bg-cobalt-600 transition-all"
             style={{ width: `${completionPercent || Math.round((filledAll / Math.max(totalAll, 1)) * 100)}%` }}
           />
         </div>
@@ -249,7 +263,7 @@ export function GenericWorksheetClient({
       </div>
 
       {/* Fields */}
-      <div className="space-y-5 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(48,50,59,0.04)]">
+      <div className="space-y-5 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
         {items.map((item) =>
           isFieldGroup(item) ? (
             <FieldGroupSection
@@ -275,7 +289,7 @@ export function GenericWorksheetClient({
         <div className="border-t border-[#e8e7f1] pt-5">
           <a
             href={`/chapter/${chapterSlug}`}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#d7d9e6] bg-white px-5 py-3 font-semibold text-[#30323b] transition hover:bg-[#f8f8fb]"
+            className="inline-flex items-center gap-2 rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900 transition hover:bg-surface-sunken"
           >
             ← Back to Chapter {chapterNumber}
           </a>
@@ -284,7 +298,7 @@ export function GenericWorksheetClient({
 
       {/* Completion callout */}
       {isComplete && (
-        <div className="rounded-2xl bg-[#eefcf5] p-5 text-[#005e3f]">
+        <div className="rounded-2xl bg-success-100 p-5 text-[#005e3f]">
           <p className="font-[Manrope] text-lg font-bold">Worksheet complete</p>
           <p className="mt-2 text-sm leading-6">
             Your answers are saved. You can return here at any time to update them as your thinking evolves.
@@ -344,8 +358,8 @@ function FieldGroupSection({
   };
 
   return (
-    <div className="rounded-[1.5rem] bg-[#fbfcff] p-5 ring-1 ring-[#eef1f7]">
-      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0053dc]">{group.label}</p>
+    <div className="rounded-[1.5rem] bg-surface-sunken p-5 ring-1 ring-ink-100">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">{group.label}</p>
       <div className="mt-4 space-y-4">
         {instances.map((row, index) => {
           const summaryValue = (row[group.summaryFieldKey] ?? "").trim();
@@ -356,13 +370,13 @@ function FieldGroupSection({
           return (
             <div key={index} className="rounded-2xl border border-[#e2e6f5] bg-white p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="font-[Manrope] text-sm font-bold text-[#003748]">{instanceLabel}</p>
+                <p className="font-[Manrope] text-sm font-bold text-ink-900">{instanceLabel}</p>
                 {instances.length > group.repeatMin && (
                   <button
                     type="button"
                     onClick={() => removeInstance(index)}
                     disabled={disabled}
-                    className="text-xs font-semibold text-[#a83836] transition hover:text-[#7a1f1e] disabled:opacity-40"
+                    className="text-xs font-semibold text-error-700 transition hover:text-[#7a1f1e] disabled:opacity-40"
                   >
                     Remove
                   </button>
@@ -389,7 +403,7 @@ function FieldGroupSection({
             type="button"
             onClick={addInstance}
             disabled={disabled}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#bfc4d9] bg-white py-3 text-sm font-semibold text-[#0053dc] transition hover:border-[#0053dc] hover:bg-[#f0f5ff] disabled:opacity-40"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#bfc4d9] bg-white py-3 text-sm font-semibold text-cobalt-600 transition hover:border-cobalt-600 hover:bg-[#f0f5ff] disabled:opacity-40"
           >
             <span>+</span>
             <span>Add another {group.label.toLowerCase()}</span>
@@ -418,7 +432,7 @@ function FieldSection({
   allValues?: Record<string, string>;
 }) {
   const inputBase =
-    "mt-2 block w-full rounded-xl border border-[#e2e4ea] bg-[#f4f3fa] px-4 py-3 text-sm text-[#003748] outline-none transition placeholder:text-[#b0b3be] focus:border-[#0053dc] focus:bg-white focus:ring-1 focus:ring-[#0053dc] disabled:opacity-60";
+    "mt-2 block w-full rounded-xl border border-[#e2e4ea] bg-surface-sunken px-4 py-3 text-sm text-ink-900 outline-none transition placeholder:text-[#b0b3be] focus:border-cobalt-600 focus:bg-white focus:ring-1 focus:ring-cobalt-600 disabled:opacity-60";
 
   /* ── Cross-worksheet select ── */
   if (field.fieldType === "cross-worksheet-select") {
@@ -444,15 +458,15 @@ function FieldSection({
     return (
       <div>
         <div className="mb-1 flex items-start justify-between gap-3">
-          <label className="font-[Manrope] text-base font-bold text-[#003748]">{field.label}</label>
+          <label className="font-[Manrope] text-base font-bold text-ink-900">{field.label}</label>
           {field.required && (
-            <span className="shrink-0 rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0053dc]">
+            <span className="shrink-0 rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">
               Required
             </span>
           )}
         </div>
         {field.helpText && (
-          <p className="mb-2 text-sm leading-6 text-[#5d5f68]">{field.helpText}</p>
+          <p className="mb-2 text-sm leading-6 text-ink-500">{field.helpText}</p>
         )}
         {hasOptions ? (
           <select
@@ -469,7 +483,7 @@ function FieldSection({
             ))}
           </select>
         ) : (
-          <div className="mt-2 rounded-xl border border-dashed border-[#d7d9e6] bg-[#f8f8fb] px-4 py-3 text-sm text-[#5d5f68]">
+          <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
             Complete the Chapter 3 worksheet first — your shortlisted ideas will appear here as options.
           </div>
         )}
@@ -480,15 +494,15 @@ function FieldSection({
   return (
     <div>
       <div className="mb-1 flex items-start justify-between gap-3">
-        <label className="font-[Manrope] text-base font-bold text-[#003748]">{field.label}</label>
+        <label className="font-[Manrope] text-base font-bold text-ink-900">{field.label}</label>
         {field.required && (
-          <span className="shrink-0 rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0053dc]">
+          <span className="shrink-0 rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">
             Required
           </span>
         )}
       </div>
       {field.helpText && (
-        <p className="mb-2 text-sm leading-6 text-[#5d5f68]">{field.helpText}</p>
+        <p className="mb-2 text-sm leading-6 text-ink-500">{field.helpText}</p>
       )}
 
       {field.fieldType === "textarea" ? (
@@ -517,12 +531,12 @@ function FieldSection({
         <label className="mt-2 flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
-            className="mt-0.5 h-4 w-4 rounded border-[#e2e4ea] text-[#0053dc] focus:ring-[#0053dc]"
+            className="mt-0.5 h-4 w-4 rounded border-[#e2e4ea] text-cobalt-600 focus:ring-cobalt-600"
             checked={value === "true"}
             onChange={(e) => onChange(e.target.checked ? "true" : "")}
             disabled={disabled}
           />
-          <span className="text-sm leading-6 text-[#5d5f68]">Yes, I confirm this.</span>
+          <span className="text-sm leading-6 text-ink-500">Yes, I confirm this.</span>
         </label>
       ) : (
         <input

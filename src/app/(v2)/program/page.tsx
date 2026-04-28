@@ -43,9 +43,9 @@ function getStatusLabel(status: ChapterStatus) {
 }
 
 function getStatusColour(status: ChapterStatus) {
-  if (status === "completed") return "bg-[#eefcf5] text-[#005e3f]";
-  if (status === "in_progress") return "bg-[#eef4ff] text-[#0053dc]";
-  return "bg-[#f4f3fa] text-[#5d5f68]";
+  if (status === "completed") return "bg-success-100 text-[#005e3f]";
+  if (status === "in_progress") return "bg-[#eef4ff] text-cobalt-600";
+  return "bg-surface-sunken text-ink-500";
 }
 
 export default async function ProgramPage() {
@@ -89,7 +89,7 @@ export default async function ProgramPage() {
       ) : null}
 
       {!authenticated ? (
-        <div className="mb-8 rounded-[1.5rem] bg-[#fff7ed] p-5 ring-1 ring-[#f4d7a8]">
+        <div className="mb-8 rounded-[1.5rem] bg-amber-100 p-5 ring-1 ring-[#f4d7a8]">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9a5a00]">Signed-out mode</p>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[#7a4b00]">
             You can browse the program here, but learner progress appears after sign-in.
@@ -116,10 +116,10 @@ export default async function ProgramPage() {
             <Link
               key={chapter.chapter.slug}
               href={`/chapter/${chapter.chapter.slug}/steps`}
-              className="group flex items-start gap-5 rounded-[1.5rem] bg-white p-5 shadow-[0px_4px_16px_rgba(48,50,59,0.06)] ring-1 ring-[#e8e7f1] transition hover:ring-[#0053dc]/30 lg:p-6"
+              className="group flex items-start gap-5 rounded-[1.5rem] bg-white p-5 shadow-[0px_4px_16px_rgba(11,42,57,0.06)] ring-1 ring-[#e8e7f1] transition hover:ring-cobalt-600/30 lg:p-6"
             >
               {/* Chapter number */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4f3fa] font-[Manrope] text-sm font-extrabold text-[#5d5f68]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-sunken font-[Manrope] text-sm font-extrabold text-ink-500">
                 {chapter.chapter.number}
               </div>
 
@@ -127,10 +127,10 @@ export default async function ProgramPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#5d5f68]">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
                       Phase {chapter.chapter.phase} · {chapter.chapter.phaseLabel}
                     </p>
-                    <h3 className="mt-1 font-[Manrope] text-base font-bold tracking-tight text-[#30323b] group-hover:text-[#0053dc]">
+                    <h3 className="mt-1 font-[Manrope] text-base font-bold tracking-tight text-ink-900 group-hover:text-cobalt-600">
                       {chapter.chapter.title}
                     </h3>
                   </div>
@@ -141,7 +141,7 @@ export default async function ProgramPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-[#5d5f68]">
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-500">
                   <span>{chapter.chapter.estimatedReadMinutes} min read</span>
                   <span>{chapter.steps.length} steps</span>
                   {hasWorksheet && <span>Worksheet included</span>}
@@ -151,11 +151,11 @@ export default async function ProgramPage() {
                   <div className="mt-3">
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8e7f1]">
                       <div
-                        className="h-full rounded-full bg-[#0053dc] transition-all"
+                        className="h-full rounded-full bg-cobalt-600 transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="mt-1.5 text-xs text-[#5d5f68]">{pct}% worksheet complete</p>
+                    <p className="mt-1.5 text-xs text-ink-500">{pct}% worksheet complete</p>
                   </div>
                 ) : null}
               </div>

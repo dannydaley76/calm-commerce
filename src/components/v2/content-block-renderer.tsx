@@ -7,15 +7,15 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       return block.level === 2 ? (
         <h2 className="font-[Manrope] text-3xl font-extrabold tracking-tight">{block.content}</h2>
       ) : (
-        <h3 className="font-[Manrope] text-2xl font-bold tracking-tight text-[#30323b]">{block.content}</h3>
+        <h3 className="font-[Manrope] text-2xl font-bold tracking-tight text-ink-900">{block.content}</h3>
       );
 
     case "paragraph":
-      return <p className="text-lg leading-8 text-[#5d5f68]">{block.content}</p>;
+      return <p className="text-lg leading-8 text-ink-500">{block.content}</p>;
 
     case "bullets":
       return (
-        <ul className="list-disc space-y-3 pl-6 text-lg leading-8 text-[#5d5f68] marker:text-[#0053dc]">
+        <ul className="list-disc space-y-3 pl-6 text-lg leading-8 text-ink-500 marker:text-cobalt-600">
           {block.items.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -24,7 +24,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
 
     case "numbered":
       return (
-        <ol className="list-decimal space-y-3 pl-6 text-lg leading-8 text-[#5d5f68] marker:text-[#0053dc]">
+        <ol className="list-decimal space-y-3 pl-6 text-lg leading-8 text-ink-500 marker:text-cobalt-600">
           {block.items.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -34,8 +34,8 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
     case "table":
       return (
         <div className="overflow-x-auto rounded-[1.5rem] border border-[#e2e4ea] bg-white">
-          <table className="min-w-full text-left text-sm text-[#30323b]">
-            <thead className="bg-[#f4f3fa] text-[#5d5f68]">
+          <table className="min-w-full text-left text-sm text-ink-900">
+            <thead className="bg-surface-sunken text-ink-500">
               <tr>
                 {block.headers.map((header) => (
                   <th key={header} className="px-4 py-3 font-semibold">
@@ -48,7 +48,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
               {block.rows.map((row, index) => (
                 <tr key={`${row.join("-")}-${index}`} className="border-t border-[#ececf2]">
                   {row.map((cell, cellIndex) => (
-                    <td key={`${cell}-${cellIndex}`} className="px-4 py-3 align-top text-[#5d5f68]">
+                    <td key={`${cell}-${cellIndex}`} className="px-4 py-3 align-top text-ink-500">
                       {cell}
                     </td>
                   ))}
@@ -60,11 +60,11 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       );
 
     case "quote":
-      return <blockquote className="rounded-[1.5rem] bg-[#f4f3fa] p-6 text-lg leading-8 text-[#4d5160]">“{block.content}”</blockquote>;
+      return <blockquote className="rounded-[1.5rem] bg-surface-sunken p-6 text-lg leading-8 text-[#4d5160]">“{block.content}”</blockquote>;
 
     case "callout":
       return (
-        <div className={`rounded-[1.5rem] p-6 ${block.style === "insight" ? "bg-[#eefcf5] text-[#005e3f]" : "bg-[#fff7eb] text-[#8a4b00]"}`}>
+        <div className={`rounded-[1.5rem] p-6 ${block.style === "insight" ? "bg-success-100 text-[#005e3f]" : "bg-[#fff7eb] text-[#8a4b00]"}`}>
           {block.title ? <p className="text-[10px] font-bold uppercase tracking-[0.18em]">{block.title}</p> : null}
           <p className="mt-3 text-base leading-7">{block.content}</p>
         </div>
@@ -72,7 +72,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
 
     case "tooltip":
       return (
-        <span className="inline cursor-help border-b border-dotted border-[#0053dc] text-[#30323b]" title={block.definition}>
+        <span className="inline cursor-help border-b border-dotted border-cobalt-600 text-ink-900" title={block.definition}>
           {block.term}
         </span>
       );
@@ -81,7 +81,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       return (
         <figure className="my-8 rounded-[1.5rem] border border-[#e2e4ea] bg-[#f8f9fb] p-6 text-center">
           <div className="mb-2 text-3xl text-[#b0b3be]">◌</div>
-          <figcaption className="text-sm text-[#5d5f68]">{block.alt ?? "Image placeholder"}</figcaption>
+          <figcaption className="text-sm text-ink-500">{block.alt ?? "Image placeholder"}</figcaption>
         </figure>
       );
 

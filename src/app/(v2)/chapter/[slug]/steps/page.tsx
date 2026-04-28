@@ -5,7 +5,6 @@ import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
 import { ContentBlockRenderer } from "@/components/v2/content-block-renderer";
 import { InlineWorksheetCard } from "@/components/v2/inline-worksheet-card";
-import { WeeklyMetricsCard } from "@/components/v2/weekly-metrics-card";
 import { WORKSHEET_REGISTRY as WORKSHEET_DEFINITIONS } from "@/lib/v2/worksheets/registry";
 
 async function syncStepState(stepId: string, chapterSlug: string, chapterId: string) {
@@ -96,21 +95,13 @@ export default async function ChapterStepsPage({
             <ContentBlockRenderer key={`${currentStep.id}-${block.type}-${index}`} block={block} />
           ))}
           {currentStep.inlineWorksheetFieldKeys?.length ? (
-            chapter.chapter.worksheetId === "weekly-metrics" ? (
-              <WeeklyMetricsCard
-                chapterSlug={slug}
-                chapterId={chapter.chapter.id}
-                worksheetDefinition={WORKSHEET_DEFINITIONS["weekly-metrics"] ?? null}
-              />
-            ) : (
-              <InlineWorksheetCard
-                chapterSlug={slug}
-                chapterId={chapter.chapter.id}
-                worksheetId={chapter.chapter.worksheetId}
-                fieldKeys={currentStep.inlineWorksheetFieldKeys}
-                worksheetDefinition={chapter.chapter.worksheetId ? (WORKSHEET_DEFINITIONS[chapter.chapter.worksheetId] ?? null) : null}
-              />
-            )
+            <InlineWorksheetCard
+              chapterSlug={slug}
+              chapterId={chapter.chapter.id}
+              worksheetId={chapter.chapter.worksheetId}
+              fieldKeys={currentStep.inlineWorksheetFieldKeys}
+              worksheetDefinition={chapter.chapter.worksheetId ? (WORKSHEET_DEFINITIONS[chapter.chapter.worksheetId] ?? null) : null}
+            />
           ) : null}
         </div>
       </StepShell>

@@ -1,34 +1,117 @@
 @import "tailwindcss";
 
+/*
+ * Load the Tailwind v4 config (v3-compatible format).
+ * This is what actually generates bg-cobalt-600, text-ink-900, etc.
+ * The @theme block below handles only font configuration.
+ */
+@config "../../tailwind.config.ts";
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens — Calm Commerce OS  v2
+   ─────────────────────────────────────────────────────────────
+   Surface scale
+     surface-canvas  the app shell / page background
+     surface-raised  cards, modals, menus (white)
+     surface-sunken  recessed panels, grouped sections
+
+   Ink scale (neutral type + border)
+     ink-900  primary headings and body copy
+     ink-700  secondary / supporting text
+     ink-500  tertiary / placeholder text
+     ink-300  disabled / metadata
+     ink-100  borders, dividers, subtle rings
+
+   Cobalt (primary interactive — blue)
+   Teal   (success / completion — green-blue)
+   Amber  (warning / attention)
+   Error  (destructive)
+   Accent (purple — unchanged from v1)
+   ───────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #f4faff;
-  --surface: #e6f2ff;
-  --foreground: #003748;
-  --muted: #49636f;
-  --border: rgba(122, 186, 215, 0.2);
-  --accent: #545a95;
+  /* Surfaces */
+  --surface-canvas: #EAF1F5;
+  --surface-raised: #FFFFFF;
+  --surface-sunken: #DDE6EC;
+
+  /* Ink */
+  --ink-900: #0B2A39;
+  --ink-700: #1F4456;
+  --ink-500: #4A6B7A;
+  --ink-300: #8AA2AE;
+  --ink-100: #D4DEE3;
+
+  /* Cobalt */
+  --cobalt-600: #0049CF;
+  --cobalt-100: #D4E0FA;
+
+  /* Teal (completion / success) */
+  --teal-600:    #00756A;
+  --success-100: #CFEAD9;
+
+  /* Amber (warning) */
+  --amber-700: #7a4b00;
+  --amber-100: #FBE7C7;
+
+  /* Error */
+  --error-700: #A83836;
+  --error-100: #FFF1F0;
+
+  /* Accent / purple — unchanged */
+  --accent:       #545a95;
   --accent-hover: #484e88;
-  --link-hover: #484e88;
-  --focus-ring: #545a95;
-  --success: #006b5f;
+
+  /* ── Canvas Card design tokens (cc-* namespace) ────────────────── */
+  --cc-card-bg:      var(--surface-raised);   /* #FFFFFF */
+  --cc-card-border:  var(--ink-100);          /* #D4DEE3 */
+  --cc-title:        var(--cobalt-600);       /* #0049CF */
+
+  /* Chapter chip — pale cobalt so it reads clearly on a white card */
+  --cc-chip-bg:      #d9edff;                /* pale cobalt */
+  --cc-chip-fg:      #003748;                /* deep cobalt = ink-900 */
+
+  --cc-body:         var(--ink-900);          /* #0B2A39 */
+  --cc-label:        var(--cobalt-600);       /* #0049CF */
+  --cc-link:         var(--cobalt-600);       /* #0049CF */
+
+  /* ── Status-pill colour tokens ──────────────────────────────────
+     Single source of truth for every pill state.
+     Components set data-state on .cc-status-pill; CSS handles colour.
+     ─────────────────────────────────────────────────────────────── */
+  --cc-pill-not-bg:  #eef2f7;  --cc-pill-not-fg:  #50627a;  /* not started  */
+  --cc-pill-in-bg:   #fff1d6;  --cc-pill-in-fg:   #8a5300;  /* in progress  */
+  --cc-pill-cmp-bg:  #cfead9;  --cc-pill-cmp-fg:  #137f4b;  /* complete     */
+  --cc-pill-paid-bg: #dde6ff;  --cc-pill-paid-fg: #1d3fb0;  /* paid access  */
+
+  /* ── Legacy aliases (backward-compat for any code using var(--*)) ── */
+  --background: var(--surface-canvas);
+  --surface:    var(--cobalt-100);
+  --foreground: var(--ink-900);
+  --muted:      var(--ink-700);
+  --border:     var(--ink-100);
+  --link-hover: var(--accent-hover);
+  --focus-ring: var(--cobalt-600);
+  --success:    var(--teal-600);
 }
 
+/*
+ * @theme inline — fonts only.
+ * Colours are registered in tailwind.config.ts (loaded via @config above),
+ * which is the path that actually generates bg-cobalt-600, text-ink-900 etc.
+ * Keeping colours here would add a second CSS-variable indirection layer
+ * that prevents Tailwind from generating concrete utility rules.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-foreground: var(--foreground);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-success: var(--success);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-outfit);
-  --font-sora: var(--font-sora);
-  --font-manrope: var(--font-manrope);
+  --font-sans:         var(--font-geist-sans);
+  --font-mono:         var(--font-geist-mono);
+  --font-heading:      var(--font-outfit);
+  --font-sora:         var(--font-sora);
+  --font-manrope:      var(--font-manrope);
   --font-plus-jakarta: var(--font-plus-jakarta);
 }
+
+/* ── Reset ──────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -38,8 +121,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--surface-canvas);
+  color: var(--ink-900);
   font-family: var(--font-manrope), var(--font-geist-sans), Inter, system-ui, -apple-system, sans-serif;
   color-scheme: light;
 }
@@ -55,7 +138,7 @@ a {
 }
 
 a:hover {
-  color: var(--link-hover);
+  color: var(--accent-hover);
   opacity: 1;
 }
 
@@ -71,6 +154,384 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--cobalt-600);
   outline-offset: 2px;
 }
+
+/* ── Utilities ──────────────────────────────────────────────── */
+
+@layer utilities {
+  /**
+   * .shadow-card — the standard elevation for top-level cards.
+   * Uses ink-900 RGB (11, 42, 57) so the shadow always reads as
+   * a tinted drop rather than a neutral grey.
+   */
+  .shadow-card {
+    box-shadow:
+      0 1px 2px  rgba(11, 42, 57, 0.06),
+      0 4px 12px rgba(11, 42, 57, 0.06);
+  }
+
+  .shadow-card-hover {
+    box-shadow:
+      0 2px 4px  rgba(11, 42, 57, 0.08),
+      0 8px 24px rgba(11, 42, 57, 0.10);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Business Model Canvas — clean-slate rebuild (v4)
+   ═══════════════════════════════════════════════════════════════
+
+   Grid: 12-column template-areas at xl (≥ 1180 px), 6-col at lg,
+   2-col at md, 1-col at sm.
+
+   Card: .canvas-card is a 4-row CSS grid (cc-* class namespace):
+     row 1: .cc-header  — title | status-pill | indicator
+     row 2: .cc-chip-row — chapter chip (full-width own row)
+     row 3: .cc-body    — 1fr, line-clamped per data-variant
+     row 4: .cc-show-more — conditional expand toggle (auto, 0 when absent)
+     row 5: .cc-footer  — flex-wrap CTAs
+
+   The chapter chip is isolated on row 2 so it NEVER competes for
+   width with the status-pill or indicator.  This fixes the "C.."
+   truncation that was caused by putting all three in one flex row.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Canvas grid — explicit @media for every breakpoint
+   ═══════════════════════════════════════════════════════════════
+
+   WHY explicit blocks:
+   The xl template (12-col areas) was previously the default rule
+   (no @media guard).  At narrower viewports the overrides changed
+   grid-template-columns but not grid-template-areas, leaving the
+   12-col area names active against 6 or 2 column tracks → broken.
+
+   Fix: every breakpoint owns its complete grid definition including
+   area assignments so the cascade is unambiguous.
+
+   Base rule is a safe 1-col fallback.  Each breakpoint's .area-*
+   assignments are repeated inside the block so they win cleanly
+   over any previously set grid-area values.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── base: 1-col safety net for very narrow or unmatched viewports ── */
+.canvas-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  grid-auto-rows: minmax(180px, auto);
+}
+/* Default: every card spans the full single column */
+.area-prob, .area-uvp, .area-cseg, .area-sol,
+.area-uadv, .area-chan, .area-cost, .area-rev {
+  grid-column: 1 / -1;
+}
+
+/* ── sm: 375–767 px, 1-col, source order ── */
+@media (min-width: 640px) and (max-width: 767px) {
+  .canvas-grid { grid-template-columns: 1fr; }
+}
+
+/* ── md: 768–1023 px, 2-col, canonical reading order ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .canvas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "prob prob"
+      "sol  uadv"
+      "uvp  uvp"
+      "cseg cseg"
+      "chan chan"
+      "cost cost"
+      "rev  rev";
+  }
+  /* Re-declare inside block so these override the base grid-column: 1/-1 */
+  .area-prob { grid-area: prob; }
+  .area-sol  { grid-area: sol;  }
+  .area-uadv { grid-area: uadv; }
+  .area-uvp  { grid-area: uvp;  }
+  .area-cseg { grid-area: cseg; }
+  .area-chan  { grid-area: chan; }
+  .area-cost { grid-area: cost; }
+  .area-rev  { grid-area: rev;  }
+}
+
+/* ── lg: 1024–1179 px, 6-col ── */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .canvas-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-areas:
+      "prob prob uvp  uvp  cseg cseg"
+      "prob prob uvp  uvp  cseg cseg"
+      "sol  sol  uadv uadv chan chan"
+      "cost cost cost rev  rev  rev";
+  }
+  .area-prob { grid-area: prob; }
+  .area-uvp  { grid-area: uvp;  }
+  .area-cseg { grid-area: cseg; }
+  .area-sol  { grid-area: sol;  }
+  .area-uadv { grid-area: uadv; }
+  .area-chan  { grid-area: chan; }
+  .area-cost { grid-area: cost; }
+  .area-rev  { grid-area: rev;  }
+}
+
+/* ── xl: ≥ 1180 px, 12-col weighted template ── */
+@media (min-width: 1180px) {
+  .canvas-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-rows: minmax(180px, auto);
+    grid-template-areas:
+      "prob prob prob uvp  uvp  uvp  uvp  uvp  uvp  cseg cseg cseg"
+      "prob prob prob uvp  uvp  uvp  uvp  uvp  uvp  cseg cseg cseg"
+      "prob prob prob sol  sol  sol  sol  sol  sol  chan chan chan"
+      "uadv uadv uadv uadv uadv uadv uadv uadv uadv chan chan chan"
+      "cost cost cost cost cost cost rev  rev  rev  rev  rev  rev";
+  }
+  .area-prob { grid-area: prob; }
+  .area-uvp  { grid-area: uvp;  }
+  .area-cseg { grid-area: cseg; }
+  .area-sol  { grid-area: sol;  }
+  .area-uadv { grid-area: uadv; }
+  .area-chan  { grid-area: chan; }
+  .area-cost { grid-area: cost; }
+  .area-rev  { grid-area: rev;  }
+}
+
+/* ══ Canvas Card ══════════════════════════════════════════════════
+   .canvas-card itself is the 4-row grid.  Direct children are:
+     .cc-header, .cc-chip-row, .cc-body, .cc-show-more, .cc-footer.
+   A stretched <a>/<button> sits at position:absolute; z-index:0
+   and is NOT a grid item (absolute elements don't participate in
+   the grid), so all 5 semantic children fill rows 1–5.
+   ════════════════════════════════════════════════════════════════ */
+
+.canvas-card {
+  /* 4-row grid (show-more collapses to 0 height when absent) */
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 12px;
+  padding: 16px;
+  min-width: 0;
+
+  /* Positioning context for the stretched link */
+  position: relative;
+
+  /* Appearance */
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
+  border-radius: 12px;
+
+  /* Container query anchor for CTA collapse */
+  container-type: inline-size;
+  container-name: canvas-card;
+
+  /* Hover elevation (matches motion-safe hover in JSX) */
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+/* Complete state: 4px left-accent stripe via ::before (both tabs) */
+.canvas-card.is-complete::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+  background: var(--cc-pill-cmp-fg);  /* same green as the complete pill text */
+}
+
+/* ── Row 1: header ───────────────────────────────────────────────
+   flex row: title grows, status-pill and indicator are fixed-width.
+   Title has overflow-wrap:anywhere so long names wrap gracefully
+   without pushing the pill or glyph off the card.
+   ─────────────────────────────────────────────────────────────── */
+.cc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.cc-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cc-title);
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.cc-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+/* Status pill — layout only; colour driven by data-state */
+.cc-status-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.cc-status-pill[data-state="not-started"] { background: var(--cc-pill-not-bg); color: var(--cc-pill-not-fg); }
+.cc-status-pill[data-state="in-progress"]  { background: var(--cc-pill-in-bg);  color: var(--cc-pill-in-fg);  }
+.cc-status-pill[data-state="complete"]     { background: var(--cc-pill-cmp-bg); color: var(--cc-pill-cmp-fg); }
+.cc-status-pill[data-state="paid"]         { background: var(--cc-pill-paid-bg); color: var(--cc-pill-paid-fg); }
+.cc-indicator {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ── Row 2: chapter chip ─────────────────────────────────────────
+   Own row — full card width — never shares space with the header.
+   This is the fix for the "C.." truncation.
+   ─────────────────────────────────────────────────────────────── */
+.cc-chip-row { min-width: 0; }
+.cc-chapter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--cc-chip-bg);
+  color: var(--cc-chip-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Row 3: body ─────────────────────────────────────────────────
+   1fr so the body expands, pushing the footer to the card bottom.
+   width:100% is CRITICAL — without it the body shrinks to fit its
+   content column rather than filling the card.
+   Line-clamp defaults: 12 lines (compact: 5, tall: 18, footer-wide: none).
+   ─────────────────────────────────────────────────────────────── */
+.cc-body {
+  min-width: 0;
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--cc-body);
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  /* Default clamp */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 12;
+  overflow: hidden;
+}
+
+.canvas-card[data-variant="tall"]    .cc-body { -webkit-line-clamp: 18; }
+.canvas-card[data-variant="compact"] .cc-body { -webkit-line-clamp: 5;  }
+
+/* footer-wide: no clamp; body fills the card width */
+.canvas-card[data-variant="footer-wide"] .cc-body {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* Expanded state: remove clamp entirely */
+.canvas-card[data-expanded="true"] .cc-body {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+/* footer-wide: dl renders as two-column label/value grid */
+.cc-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+.cc-dl dt {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cc-label);
+}
+.cc-dl dd { margin: 0; font-size: 14px; color: var(--cc-body); }
+
+/* ── Row 4: show-more toggle ─────────────────────────────────────
+   Only rendered when body overflows. Row collapses to 0 when absent.
+   z-index:20 so clicks land on the button, not the stretched link.
+   ─────────────────────────────────────────────────────────────── */
+.cc-show-more {
+  position: relative;
+  z-index: 20;
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cc-link);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.cc-show-more:hover { text-decoration: underline; }
+.cc-chevron { transition: transform 150ms ease; }
+.cc-chevron.is-up { transform: rotate(180deg); }
+
+/* ── Row 5: footer ───────────────────────────────────────────────
+   flex-wrap so multiple CTAs never overflow the card.
+   Container queries collapse secondary buttons at narrow widths.
+   ─────────────────────────────────────────────────────────────── */
+.cc-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.cc-footer .btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* CTA container-query collapse */
+@container canvas-card (max-width: 320px) {
+  .cc-footer .btn-secondary .btn-label { display: none; }
+  .cc-footer .btn-secondary { padding: 6px 8px; }
+}
+@container canvas-card (max-width: 260px) {
+  .cc-footer { flex-direction: column; align-items: stretch; }
+  .cc-footer .btn { width: 100%; justify-content: center; }
+}
+
+/* ══ Stable skipped state ════════════════════════════════════════
+   data-skipped="true" compresses internals; grid-area stays so
+   no reflow occurs when toggling between active and skipped.
+   ════════════════════════════════════════════════════════════════ */
+.canvas-card[data-skipped="true"] .cc-chapter-chip {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+.canvas-card[data-skipped="true"] .cc-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.canvas-card[data-skipped="true"] .cc-show-more { display: none; }
+.canvas-card[data-skipped="true"] .cc-footer .btn-secondary { display: none; }

@@ -3,73 +3,43 @@
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { CanvasCard } from './CanvasCard';
-import { SourceChip } from './SourceChip';
 import { canvasPreferences } from './CanvasPreferences';
 import type { CanvasSectionState } from './types';
-import type { SubField } from './CanvasCard';
+import type { SubField, CardVariant } from './CanvasCard';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
 export interface BusinessModelCardProps {
-  /** Stable section ID — used as the skip-state key. */
   sectionId: string;
   title: string;
   description?: string;
   state: CanvasSectionState;
-  /** All sub-fields, filled or not (null → "Not yet"). */
   subFields?: SubField[];
-  /** Extra content (e.g. unit economics block for Cost Structure). */
   children?: React.ReactNode;
+  variant?: CardVariant;
+  /** Extra classes including the grid-area class (e.g. "area-prob"). */
   className?: string;
 }
 
-/* ── Shared card-shell classes ────────────────────────────────────── */
-/*
- * All four states (empty, skipped, partial, complete) share one card
- * surface: bg-surface-raised (white) with a 1px ink-100 border.
- *
- * State is signalled by the lozenge + glyph inside the card, never by
- * changing the card background — that's what was causing SourceChip to
- * disappear (chip = surface-sunken on a surface-sunken card = invisible).
- */
+/* ── Shared card shell ────────────────────────────────────────────── */
 
 const CARD_SHELL =
-  'flex flex-col rounded-[1.5rem] bg-surface-raised border border-ink-100 ' +
-  'shadow-card min-h-[280px] transition-[box-shadow] duration-150';
-
-/* ── Skip glyph ───────────────────────────────────────────────────── */
-
-function SkipGlyph({ className = '' }: { className?: string }) {
-  return (
-    <span
-      className={`select-none text-lg leading-none shrink-0 text-ink-300 ${className}`}
-      aria-label="Skipped"
-      role="img"
-      title="Skipped"
-    >
-      ⊘
-    </span>
-  );
-}
+  'canvas-card';  /* CSS handles bg, border, grid layout */
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
 /**
- * BusinessModelCard — wraps CanvasCard with a "Skip for now" affordance on
- * empty sections, and a "Bring this back" affordance on skipped sections.
+ * BusinessModelCard — wraps CanvasCard with "Skip for now" / "Bring this back".
  *
- * Four states
- * ──────────
- * empty    → card is a <div> with a real "Start →" anchor + "Skip for now"
- *            button on a separate row below the footer grid.
- * skipped  → same white card, ⊘ glyph, italic body, "Bring this back" button.
- * partial  → delegates to CanvasCard.
- * complete → delegates to CanvasCard.
+ * States:
+ *   empty    → article card with a real "Start →" anchor + "Skip for now" button
+ *   skipped  → article card with data-skipped="true"; CSS compresses internals
+ *   partial  → delegates to CanvasCard
+ *   complete → delegates to CanvasCard
  *
- * Skip persistence
- * ────────────────
- * Uses `canvasPreferences` (currently localStorage, swappable via
- * CanvasPreferences.ts). Initial state is read lazily on the client.
+ * data-skipped="true" is set on the root element so CSS selectors can compress
+ * the chapter chip, body, and hide the secondary CTA without any grid reflow
+ * (the grid-area stays assigned, only internals change).
  */
 export function BusinessModelCard({
   sectionId,
@@ -78,6 +48,7 @@ export function BusinessModelCard({
   state,
   subFields,
   children,
+  variant = 'tall',
   className = '',
 }: BusinessModelCardProps) {
   const { status, editHref, sourceLabel } = state;
@@ -91,127 +62,125 @@ export function BusinessModelCard({
 
   const handleSkip = useCallback(() => {
     canvasPreferences.setSkipped(sectionId, true);
-    setSkippedIds((prev) => new Set([...(prev ?? []), sectionId]));
+    setSkippedIds((prev) => new Set([...prev, sectionId]));
   }, [sectionId]);
 
   const handleBringBack = useCallback(() => {
     canvasPreferences.setSkipped(sectionId, false);
     setSkippedIds((prev) => {
-      if (!prev) return prev;
       const next = new Set(prev);
       next.delete(sectionId);
       return next;
     });
   }, [sectionId]);
 
+  /* Format source label (colon → middle dot) */
+  const chipLabel = formatSourceLabel(sourceLabel);
+
   /* ── Skipped state ──────────────────────────────────────────────── */
 
   if (isSkipped) {
     return (
-      <div className={`${CARD_SHELL} ${className}`}>
-        <div className="flex flex-col gap-4 p-5 md:p-6 min-h-[280px]">
-
-          {/* HEADER */}
-          <div className="grid gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-cobalt-600 leading-tight">
-              {title}
-            </p>
-            <div className="flex items-center justify-between gap-2">
-              {/* Skipped lozenge */}
-              <span className="inline-flex h-6 items-center rounded-full bg-surface-sunken px-2.5 text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap text-ink-500">
-                Skipped
-              </span>
-              <SkipGlyph />
-            </div>
+      <article
+        data-skipped="true"
+        data-variant={variant}
+        className={`${CARD_SHELL} variant-${variant} ${className}`}
+      >
+        {/* Row 1: header */}
+        <header className="cc-header">
+          <h3 className="cc-title">{title}</h3>
+          <div className="cc-header-meta">
+            <span className="cc-status-pill" data-state="not-started">
+              Skipped
+            </span>
+            <span className="cc-indicator select-none text-ink-300" aria-hidden="true">⊘</span>
           </div>
+        </header>
 
-          {/* BODY */}
-          <div className="flex-1">
-            <p className="text-sm italic leading-6 text-ink-500">
-              Skipped for now. Fill it in when you&apos;re ready.
-            </p>
-          </div>
-
-          {/* FOOTER */}
-          <div className="mt-auto">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-              <SourceChip label={sourceLabel} />
-              <button
-                type="button"
-                onClick={handleBringBack}
-                className="inline-flex min-w-[96px] items-center justify-center whitespace-nowrap rounded-lg border border-ink-100 bg-surface-raised px-3 py-1.5 text-xs font-semibold text-cobalt-600 hover:bg-surface-sunken hover:border-cobalt-500 transition-colors duration-150"
-              >
-                Bring this back
-              </button>
-            </div>
-          </div>
-
+        {/* Row 2: chip */}
+        <div className="cc-chip-row">
+          <span className="cc-chapter-chip">
+            <span aria-hidden="true">📘</span>
+            {chipLabel}
+          </span>
         </div>
-      </div>
+
+        {/* Row 3: body */}
+        <div className="cc-body">
+          <p className="text-sm italic leading-relaxed text-ink-500">
+            Skipped for now. Fill it in when you&apos;re ready.
+          </p>
+        </div>
+
+        {/* Row 4: no toggle */}
+
+        {/* Row 5: footer */}
+        <footer className="cc-footer">
+          <button
+            type="button"
+            onClick={handleBringBack}
+            className="btn inline-flex items-center justify-center rounded-lg border border-ink-100 bg-surface-raised px-3 py-1.5 text-xs font-semibold text-cobalt-600 hover:bg-surface-sunken hover:border-cobalt-500 transition-colors duration-150"
+          >
+            <span className="btn-label">Bring this back</span>
+          </button>
+        </footer>
+      </article>
     );
   }
 
-  /* ── Empty state — real interactive elements inside a div card ──── */
+  /* ── Empty state — card is a div with real interactive CTAs ─────── */
 
   if (status === 'empty') {
     return (
-      <div className={`${CARD_SHELL} ${className}`}>
-        <div className="flex flex-col gap-4 p-5 md:p-6 min-h-[280px]">
-
-          {/* HEADER */}
-          <div className="grid gap-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-cobalt-600 leading-tight">
-              {title}
-            </p>
-            <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex h-6 items-center rounded-full bg-surface-sunken px-2.5 text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap text-ink-500">
-                Not started
-              </span>
-              {/* ○ glyph (empty = ink-300) */}
-              <span
-                className="select-none text-lg leading-none shrink-0 text-ink-300"
-                aria-hidden="true"
-                title="Empty"
-              >
-                ○
-              </span>
-            </div>
+      <article
+        data-variant={variant}
+        className={`${CARD_SHELL} variant-${variant} ${className}`}
+      >
+        {/* Row 1: header */}
+        <header className="cc-header">
+          <h3 className="cc-title">{title}</h3>
+          <div className="cc-header-meta">
+            <span className="cc-status-pill" data-state="not-started">
+              Not started
+            </span>
+            <span className="cc-indicator select-none text-ink-300" aria-hidden="true">○</span>
           </div>
+        </header>
 
-          {/* BODY */}
-          <div className="flex-1">
-            {description && (
-              <p className="text-sm italic leading-6 text-ink-500">{description}</p>
-            )}
-          </div>
-
-          {/* FOOTER — chip + "Start →" on one row, "Skip for now" on next */}
-          <div className="mt-auto">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-              <SourceChip label={sourceLabel} />
-              {/* Primary action: internal navigation link */}
-              <Link
-                href={editHref}
-                className="inline-flex min-w-[96px] items-center justify-center whitespace-nowrap rounded-lg bg-cobalt-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_1px_2px_rgba(11,42,57,0.08)] hover:bg-cobalt-700 transition-colors duration-150"
-              >
-                Start →
-              </Link>
-            </div>
-
-            {/* Secondary action — separate row, left-aligned */}
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={handleSkip}
-                className="text-xs text-ink-500 underline underline-offset-4 hover:text-ink-900 transition-colors duration-150"
-              >
-                Skip for now
-              </button>
-            </div>
-          </div>
-
+        {/* Row 2: chip */}
+        <div className="cc-chip-row">
+          <span className="cc-chapter-chip">
+            <span aria-hidden="true">📘</span>
+            {chipLabel}
+          </span>
         </div>
-      </div>
+
+        {/* Row 3: body */}
+        <div className="cc-body">
+          {description && (
+            <p className="text-sm italic leading-relaxed text-ink-500">{description}</p>
+          )}
+        </div>
+
+        {/* Row 4: no toggle */}
+
+        {/* Row 5: footer — real anchor + skip button */}
+        <footer className="cc-footer">
+          <Link
+            href={editHref}
+            className="btn inline-flex items-center justify-center rounded-lg bg-cobalt-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cobalt-700 transition-colors duration-150"
+          >
+            Start →
+          </Link>
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="btn btn-secondary inline-flex items-center text-xs text-ink-500 underline underline-offset-4 hover:text-ink-900 transition-colors duration-150"
+          >
+            <span className="btn-label">Skip for now</span>
+          </button>
+        </footer>
+      </article>
     );
   }
 
@@ -223,9 +192,17 @@ export function BusinessModelCard({
       description={description}
       state={state}
       subFields={subFields}
+      variant={variant}
       className={className}
     >
       {children}
     </CanvasCard>
   );
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+
+function formatSourceLabel(label: string): string {
+  const idx = label.indexOf(': ');
+  return idx !== -1 ? `${label.slice(0, idx)} · ${label.slice(idx + 2)}` : label;
 }
