@@ -117,7 +117,6 @@ export function InlineEditCard({
     setInputValue(currentValue);
     setError(null);
     setIsEditing(true);
-    // autoFocus on the input is set via ref inside a layout effect
   }, [currentValue]);
 
   const handleCancel = useCallback(() => {
