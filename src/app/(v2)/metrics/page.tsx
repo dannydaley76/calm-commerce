@@ -31,8 +31,44 @@ async function getMetrics(): Promise<{ authenticated: boolean; entries: MetricEn
   }
 }
 
+async function markChapter17DashboardViewed() {
+  try {
+    const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
+
+    if (!user || !projectId) return;
+
+    await supabase.from("chapter_progress").upsert(
+      {
+        project_id: projectId,
+        chapter_id: "chapter-17",
+        status: "completed",
+        last_location_type: "completion",
+        last_location_key: "dashboard_view",
+        worksheet_completion_percent: 100,
+        completed_at: new Date().toISOString(),
+      },
+      { onConflict: "project_id,chapter_id" },
+    );
+
+    await supabase.from("project_resume_state").upsert(
+      {
+        project_id: projectId,
+        chapter_id: "chapter-17",
+        last_location_type: "completion",
+        last_location_key: "dashboard_view",
+        resume_path: "/metrics",
+      },
+      { onConflict: "project_id" },
+    );
+  } catch {
+    // Dashboard progress sync is non-blocking; the metrics page should still render.
+  }
+}
+
 export default async function MetricsPage() {
   const { authenticated, entries } = await getMetrics();
+  if (authenticated) await markChapter17DashboardViewed();
+
   const isDev = process.env.NODE_ENV !== "production";
 
   const breadcrumbs = [
