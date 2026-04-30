@@ -604,8 +604,8 @@ export default async function LeanCanvasPage({
       title="Lean Canvas"
       subtitle={
         initialTab === "operating"
-          ? "How you'll run the business — your founder rules from Chapter 4."
-          : "What you'll sell — your offer taking shape across Chapters 2–13."
+          ? "How you'll run the business: your founder rules from Chapter 4."
+          : "What you'll sell: your offer taking shape across Chapters 2–13."
       }
       contentWidth="1180px"
     >
@@ -616,8 +616,8 @@ export default async function LeanCanvasPage({
           title={initialTab === "operating" ? "Operating rules" : "Business model"}
           description={
             initialTab === "operating"
-              ? "The founder rules from Chapter 4 — your time, money, and decision limits. These keep the business survivable while you learn."
-              : "How the product and offer take shape — pulled from the worksheets across Chapters 2–13. This view is anchored on your chosen idea from Chapter 5."
+              ? "The founder rules from Chapter 4: your time, money, and decision limits. These keep the business survivable while you learn."
+              : "How the product and offer take shape, pulled from the worksheets across Chapters 2–13. This view is anchored on your chosen idea from Chapter 5."
           }
         >
           <div className="flex flex-wrap items-center gap-3">
@@ -871,7 +871,7 @@ export default async function LeanCanvasPage({
                       <div className="rounded-[0.75rem] bg-surface-sunken p-3">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5b48d6]">
                           {chosenIdeaEconomics.idea_name
-                            ? `Unit costs — ${
+                            ? `Unit costs: ${
                                 chosenIdeaEconomics.idea_name.length > 30
                                   ? chosenIdeaEconomics.idea_name.slice(0, 30) + "…"
                                   : chosenIdeaEconomics.idea_name
@@ -940,7 +940,7 @@ export default async function LeanCanvasPage({
             <div className="rounded-[1.5rem] bg-surface-raised border border-ink-100 shadow-card p-6">
               <Eyebrow>What this helps with</Eyebrow>
               <p className="mt-3 text-sm leading-7 text-ink-900">
-                Use it to judge whether the current idea fits your real limits, signals, and stop rules — and to see how your business model is taking shape.
+                Use it to judge whether the current idea fits your real limits, signals, and stop rules, and to see how your business model is taking shape.
               </p>
             </div>
             <div className="rounded-[1.5rem] bg-surface-raised border border-ink-100 shadow-card p-6">

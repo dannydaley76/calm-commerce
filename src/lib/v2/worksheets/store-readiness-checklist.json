@@ -90,7 +90,7 @@
       "label": "Store URL",
       "fieldType": "text",
       "required": false,
-      "helpText": "Your live store address (optional — add it when you are ready to share)."
+      "helpText": "Your live store address (optional: add it when you are ready to share)."
     }
   ]
 }

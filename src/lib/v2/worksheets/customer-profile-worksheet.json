@@ -46,7 +46,7 @@
       "fieldType": "single-select",
       "required": false,
       "helpText": "What is the primary driver behind your customer's buying decision?",
-      "options": ["Price — best deal", "Convenience — easiest solution", "Quality and durability", "Uniqueness or personalisation", "Problem solved completely"]
+      "options": ["Price: best deal", "Convenience: easiest solution", "Quality and durability", "Uniqueness or personalisation", "Problem solved completely"]
     },
     {
       "type": "field",

@@ -57,7 +57,7 @@
       "fieldType": "single-select",
       "required": false,
       "helpText": "Fill this in after the test period.",
-      "options": ["Sold — strong demand", "Interest but no sale", "Views but no engagement", "Very few views", "Still running"]
+      "options": ["Sold: strong demand", "Interest but no sale", "Views but no engagement", "Very few views", "Still running"]
     },
     {
       "type": "field",
@@ -85,7 +85,7 @@
       "fieldType": "single-select",
       "required": true,
       "helpText": "Based on the test results and your Founder Rules from Chapter 4.",
-      "options": ["Proceed — build the store", "Iterate and retest — adjust listing or price", "Pivot — try a different product"]
+      "options": ["Proceed: build the store", "Iterate and retest: adjust listing or price", "Pivot: try a different product"]
     }
   ]
 }

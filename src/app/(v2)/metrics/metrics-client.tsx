@@ -379,7 +379,7 @@ function LiveStoreInlineEdit({
           Cancel
         </button>
         {status === "success" && <span className="text-xs text-[#005e3f]">Saved ✓</span>}
-        {status === "error" && <span className="text-xs text-error-700">Could not save — try again.</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save. Try again.</span>}
       </div>
     </div>
   );
@@ -517,7 +517,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
         <Question
           eyebrow="Week"
           question="Which week are you logging?"
-          context="Pick the last day of the week you're reporting — usually a Sunday."
+          context="Pick the last day of the week you're reporting, usually a Sunday."
         >
           <input
             type="date"
@@ -531,13 +531,13 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
         <Question
           eyebrow="Visibility"
           question="How many times did your listing appear in search results?"
-          context="This tells you whether the marketplace is surfacing your product at all. If this number is low, the issue is discoverability — titles, tags, and category."
+          context="This tells you whether the marketplace is surfacing your product at all. If this number is low, the issue is discoverability: titles, tags, and category."
           help={
             <>
               <strong>Etsy:</strong> Stats → scroll down to your listing impressions.<br />
               <strong>eBay:</strong> Seller Hub → Performance → Traffic → Impressions.<br />
               <strong>Amazon:</strong> Reports → Business Reports → By ASIN → Sessions.<br />
-              <strong>Vinted / Depop:</strong> Check individual listing views — not all platforms separate impressions from views yet, and that is fine.
+              <strong>Vinted / Depop:</strong> Check individual listing views. Not all platforms separate impressions from views yet, and that is fine.
             </>
           }
         >
@@ -559,7 +559,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
             <>
               <strong>Etsy:</strong> Stats → Views (this is clicks to your listing page, not page views of your shop).<br />
               <strong>eBay:</strong> Seller Hub → Performance → Traffic → Clicks.<br />
-              <strong>Amazon:</strong> Same Business Report — Sessions count unique clicks to your product page.<br />
+              <strong>Amazon:</strong> Same Business Report. Sessions count unique clicks to your product page.<br />
               If your platform only shows one number (not both impressions and clicks), enter what you have and leave the other blank.
             </>
           }
@@ -577,7 +577,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
         <Question
           eyebrow="Sales"
           question="How many orders did you get?"
-          context="The most honest signal at this stage. Even one sale in week one is worth logging — it proves the idea converts."
+          context="The most honest signal at this stage. Even one sale in week one is worth logging because it proves the idea converts."
         >
           <input
             type="number"
@@ -592,7 +592,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
         <Question
           eyebrow="Economics"
           question="What did you make per sale, roughly?"
-          context="Not revenue — actual profit. Take your selling price, subtract what you paid for the product, subtract the marketplace fee (shown in your payout breakdown), and subtract postage. The number left is what you actually kept."
+          context="Not revenue. Actual profit. Take your selling price, subtract what you paid for the product, subtract the marketplace fee (shown in your payout breakdown), and subtract postage. The number left is what you actually kept."
         >
           <input
             className={inputBase}
@@ -606,7 +606,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
         <Question
           eyebrow="Reflection"
           question="What's the one thing you noticed this week?"
-          context="Anything — a photo that seemed to work, a question a buyer asked, a price change that made a difference. The pattern emerges over weeks."
+          context="Anything: a photo that seemed to work, a question a buyer asked, a price change that made a difference. The pattern emerges over weeks."
         >
           <textarea
             className={`${inputBase} min-h-[80px] resize-y`}
@@ -628,7 +628,7 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
           {isSubmitting ? "Saving…" : "Save this week"}
         </button>
         {status === "error" && (
-          <span className="text-xs text-error-700">Could not save — please try again.</span>
+          <span className="text-xs text-error-700">Could not save. Please try again.</span>
         )}
       </div>
     </div>
@@ -729,7 +729,7 @@ function ValidationInlineEdit({
           Cancel
         </button>
         {status === "success" && <span className="text-xs text-[#005e3f]">Saved ✓</span>}
-        {status === "error" && <span className="text-xs text-error-700">Could not save — try again.</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save. Try again.</span>}
       </div>
     </div>
   );
@@ -962,7 +962,7 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
                           >
                             Cancel
                           </button>
-                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete — try again.</span>}
+                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete. Try again.</span>}
                         </div>
                       </td>
                     </tr>
@@ -1031,11 +1031,11 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
       </div>
 
       <div className="space-y-6">
-        <Question eyebrow="Week" question="Which week are you logging?" context="Pick the last day of the week — usually a Sunday.">
+        <Question eyebrow="Week" question="Which week are you logging?" context="Pick the last day of the week, usually a Sunday.">
           <input type="date" className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSubmitting} />
         </Question>
 
-        <Question eyebrow="Revenue" question="What was your total revenue this week?" context="Gross sales before fees and costs — the number your store reports.">
+        <Question eyebrow="Revenue" question="What was your total revenue this week?" context="Gross sales before fees and costs: the number your store reports.">
           <input className={inputBase} value={form.revenue ?? ""} onChange={(e) => set("revenue", e.target.value)} disabled={isSubmitting} placeholder="e.g. £420" />
         </Question>
 
@@ -1043,7 +1043,7 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
           <input type="number" className={inputBase} value={form.orders ?? ""} onChange={(e) => set("orders", e.target.value)} disabled={isSubmitting} placeholder="e.g. 18" />
         </Question>
 
-        <Question eyebrow="Traffic" question="How many visitors came to your store?" context="Unique sessions or visitors — find this in your store analytics or Google Analytics.">
+        <Question eyebrow="Traffic" question="How many visitors came to your store?" context="Unique sessions or visitors. Find this in your store analytics or Google Analytics.">
           <input type="number" className={inputBase} value={form.traffic ?? ""} onChange={(e) => set("traffic", e.target.value)} disabled={isSubmitting} placeholder="e.g. 840" />
         </Question>
 
@@ -1052,7 +1052,7 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
         </Question>
 
         <Question eyebrow="Reflection" question="What would you do differently next week?" context="One specific, actionable change. The most useful column in the whole log.">
-          <textarea className={`${inputBase} min-h-[80px] resize-y`} value={form.what_to_change ?? ""} onChange={(e) => set("what_to_change", e.target.value)} disabled={isSubmitting} placeholder="e.g. Test a different hero image — current one isn't converting…" />
+          <textarea className={`${inputBase} min-h-[80px] resize-y`} value={form.what_to_change ?? ""} onChange={(e) => set("what_to_change", e.target.value)} disabled={isSubmitting} placeholder="e.g. Test a different hero image. Current one isn't converting…" />
         </Question>
       </div>
 
@@ -1065,7 +1065,7 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
         >
           {isSubmitting ? "Saving…" : "Save this week"}
         </button>
-        {status === "error" && <span className="text-xs text-error-700">Could not save — please try again.</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save. Please try again.</span>}
       </div>
     </div>
   );
@@ -1261,7 +1261,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                           >
                             Cancel
                           </button>
-                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete — try again.</span>}
+                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete. Try again.</span>}
                         </div>
                       </td>
                     </tr>
@@ -1324,7 +1324,7 @@ function SeedButton({ onSeeded }: { onSeeded: () => void }) {
       <button type="button" onClick={() => void handleSeed()} disabled={status === "loading" || status === "done"} className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-xs font-semibold text-[#545a95] transition hover:bg-[#f0f2fb] disabled:opacity-50">
         {status === "loading" ? "Seeding…" : status === "done" ? "Done ✓" : "Load 20 weeks of demo data"}
       </button>
-      {status === "error" && <span className="text-xs text-error-700">Seed failed — try again.</span>}
+      {status === "error" && <span className="text-xs text-error-700">Seed failed. Try again.</span>}
       <span className="text-xs text-[#b0b3be]">Fills in 20 weeks of realistic example data so you can see how the dashboard looks.</span>
     </div>
   );

@@ -484,7 +484,7 @@ function FieldSection({
           </select>
         ) : (
           <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
-            Complete the Chapter 3 worksheet first — your shortlisted ideas will appear here as options.
+            Complete the Chapter 3 worksheet first. Your shortlisted ideas will appear here as options.
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
     "id": "product-listing-worksheet",
     "chapterId": "chapter-9",
     "title": "Product Listing Worksheet",
-    "description": "Build your listing. Title, description, objection handling, and photo plan — all in one place.",
+    "description": "Build your listing. Title, description, objection handling, and photo plan: all in one place.",
     "mode": "single",
     "completionRule": {
       "kind": "requiredFieldsComplete",

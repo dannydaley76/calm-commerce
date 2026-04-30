@@ -103,7 +103,7 @@
       "fieldType": "single-select",
       "required": false,
       "helpText": "Based on the results and your Founder Rules.",
-      "options": ["Continue — CPA is within target", "Iterate — adjust creative or audience", "Stop — not profitable enough to continue"]
+      "options": ["Continue: CPA is within target", "Iterate: adjust creative or audience", "Stop: not profitable enough to continue"]
     },
     {
       "type": "field",

@@ -90,7 +90,7 @@
           "fieldType": "single-select",
           "required": false,
           "helpText": "How many SKUs would you need to stock at launch?",
-          "options": ["1 SKU — simple", "2–5 SKUs — manageable", "6–15 SKUs — complex", "16+ SKUs — very complex"]
+          "options": ["1 SKU: simple", "2–5 SKUs: manageable", "6–15 SKUs: complex", "16+ SKUs: very complex"]
         },
         {
           "type": "field",
@@ -100,7 +100,7 @@
           "fieldType": "single-select",
           "required": true,
           "helpText": "Based on the numbers, does this idea pass the economics test?",
-          "options": ["Yes — proceed", "Marginal — possible with adjustments", "No — eliminate"]
+          "options": ["Yes: proceed", "Marginal: possible with adjustments", "No: eliminate"]
         }
       ]
     },

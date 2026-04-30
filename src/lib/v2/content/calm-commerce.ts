@@ -41,7 +41,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             alt: "Spectrum of the five sourcing models from quickest/cheapest to most investment and control.",
             src: null,
           },
-          { type: "heading", level: 3, content: "1. Reselling — the fastest way to start" },
+          { type: "heading", level: 3, content: "1. Reselling: the fastest way to start" },
           {
             type: "paragraph",
             content:
@@ -52,7 +52,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "The beauty of reselling is that the learning curve is short. You find a good product, list it, and focus entirely on selling. This teaches you the skills that matter most early on: how to write a listing, how to price competitively, and how to handle customers. Margins are typically thinner than other models, but that is a fair trade for speed and simplicity.",
           },
-          { type: "heading", level: 3, content: "2. Print-on-demand — sell your designs, hold no stock" },
+          { type: "heading", level: 3, content: "2. Print-on-demand: sell your designs, hold no stock" },
           {
             type: "paragraph",
             content:
@@ -69,7 +69,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
         id: "chapter-2-step-2-more-models",
         title: "Three more models",
         blocks: [
-          { type: "heading", level: 3, content: "3. Dropshipping — test demand without buying stock" },
+          { type: "heading", level: 3, content: "3. Dropshipping: test demand without buying stock" },
           {
             type: "paragraph",
             content:
@@ -80,7 +80,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "This can work well as a demand testing tool. You can quickly find out whether anyone wants a product before committing to buying stock. Choose your suppliers carefully and start with one or two products rather than a large catalogue. Many sellers use dropshipping to identify winning products, then switch to holding stock or private labelling once they have evidence something sells well.",
           },
-          { type: "heading", level: 3, content: "4. Private label — your brand, built on proven demand" },
+          { type: "heading", level: 3, content: "4. Private label: your brand, built on proven demand" },
           {
             type: "paragraph",
             content:
@@ -89,7 +89,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "This model takes longer to set up — a realistic timeline from first enquiry to products in hand is around 6 to 12 weeks. It works best when you already know what sells, which is why many founders start with reselling or dropshipping and move to private label for products that proved themselves.",
+              "This model takes longer to set up: a realistic timeline from first enquiry to products in hand is around 6 to 12 weeks. It works best when you already know what sells, which is why many founders start with reselling or dropshipping and move to private label for products that proved themselves.",
           },
           {
             type: "image",
@@ -98,7 +98,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             alt: "Private label timeline from finding a supplier to being ready to sell.",
             src: null,
           },
-          { type: "heading", level: 3, content: "5. Design and manufacture — build something truly unique" },
+          { type: "heading", level: 3, content: "5. Design and manufacture: build something truly unique" },
           {
             type: "paragraph",
             content:
@@ -126,7 +126,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "This is important: your choice here is a starting point, not a permanent decision. The selling skills you build — finding customers, writing great listings, running ads, reading your numbers — transfer across every model.",
+              "This is important: your choice here is a starting point, not a permanent decision. The selling skills you build, from finding customers to writing great listings, running ads, and reading your numbers, transfer across every model.",
           },
           {
             type: "paragraph",
@@ -310,12 +310,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Google Trends is free and takes 30 seconds to check any product idea. Type in what you are considering and look at the search interest over the last 12 months. A stable or gently rising line means consistent demand — ideal for a first product. A sharp spike followed by a drop means the trend has peaked.",
+              "Google Trends is free and takes 30 seconds to check any product idea. Type in what you are considering and look at the search interest over the last 12 months. A stable or gently rising line means consistent demand: ideal for a first product. A sharp spike followed by a drop means the trend has peaked.",
           },
           {
             type: "image",
             brief:
-              "Two simple Google Trends style line charts side by side. Left labelled 'Steady demand — great for a first product' shows a gently fluctuating but stable line across 12 months with a subtle upward drift. Right labelled 'Trend spike — the opportunity may have passed' shows a sharp peak followed by a decline. Clean, easy to read, not technical. Caption: 'Spend 30 seconds checking this for every idea. It could save you months.'",
+              "Two simple Google Trends style line charts side by side. Left labelled 'Steady demand: great for a first product' shows a gently fluctuating but stable line across 12 months with a subtle upward drift. Right labelled 'Trend spike: the opportunity may have passed' shows a sharp peak followed by a decline. Clean, easy to read, not technical. Caption: 'Spend 30 seconds checking this for every idea. It could save you months.'",
             alt: "Two charts contrasting steady demand vs a trend spike that has passed.",
             src: null,
           },
@@ -335,7 +335,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "insight",
             content:
-              "Every complaint is a potential opportunity. If a popular product consistently gets the same criticism, there is room for someone who solves that problem. You do not need to invent a new product — you might just need to offer a better version of something people already buy.",
+              "Every complaint is a potential opportunity. If a popular product consistently gets the same criticism, there is room for someone who solves that problem. You do not need to invent a new product: you might just need to offer a better version of something people already buy.",
           },
           { type: "heading", level: 3, content: "Social listening: hear what people are asking for" },
           {
@@ -346,7 +346,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "These are real people describing unmet needs in their own words. Pay attention to the language they use — it tells you not only what to sell but how to describe it in a way that resonates.",
+              "These are real people describing unmet needs in their own words. Pay attention to the language they use: it tells you not only what to sell but how to describe it in a way that resonates.",
           },
           { type: "heading", level: 3, content: "Check for seasonality" },
           {
@@ -374,7 +374,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "image",
             brief:
-              "A simple, friendly 2x2 matrix. X-axis: 'Lower demand' to 'Higher demand'. Y-axis: 'Weaker competition' to 'Stronger competition'. Four quadrant labels: top-left 'Niche — small but can work nicely', top-right 'Sweet spot — this is where you want to be' (highlighted), bottom-left 'Skip this one', bottom-right 'Tough — possible but you will need to work harder'. Helpful map feel, not academic.",
+              "A simple, friendly 2x2 matrix. X-axis: 'Lower demand' to 'Higher demand'. Y-axis: 'Weaker competition' to 'Stronger competition'. Four quadrant labels: top-left 'Niche: small but can work nicely', top-right 'Sweet spot: this is where you want to be' (highlighted), bottom-left 'Skip this one', bottom-right 'Tough: possible but you will need to work harder'. Helpful map feel, not academic.",
             alt: "2x2 matrix of demand vs competition with the high-demand/low-competition quadrant highlighted.",
             src: null,
           },
@@ -411,7 +411,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "loop",
             message:
-              "If none of your ideas show strong demand signals, that is genuinely useful information — it means you have avoided investing in something that would not have worked. Head back to the research methods, explore different categories, and try again. Many successful sellers tested several ideas before finding the one that clicked.",
+              "If none of your ideas show strong demand signals, that is genuinely useful information: it means you have avoided investing in something that would not have worked. Head back to the research methods, explore different categories, and try again. Many successful sellers tested several ideas before finding the one that clicked.",
             targets: [
               {
                 chapterSlug: "brainstorm-with-discipline",
@@ -503,7 +503,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "bullets",
             items: [
-              "How many hours per week can you realistically give this? Not the ambitious number — the honest number you could sustain even during a busy week.",
+              "How many hours per week can you realistically give this? Not the ambitious number: the honest number you could sustain even during a busy week.",
               "When exactly will you work on this? Pick specific days and times. 'Tuesday and Thursday evenings 7 to 9' is a rule. 'Whenever I get a chance' is a wish.",
               "When will you review your progress? Set a weekly review slot of 20 to 30 minutes to check what happened and decide what to focus on next week.",
             ],
@@ -562,9 +562,9 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "bullets",
             items: [
-              "Stop — not because you failed, but because the evidence told you this idea is not the right fit right now.",
-              "Continue — because the early signs are encouraging even if the results are not dramatic yet.",
-              "Invest more — because the results are strong enough to justify increasing your time, budget, or effort.",
+              "Stop: not because you failed, but because the evidence told you this idea is not the right fit right now.",
+              "Continue: because the early signs are encouraging even if the results are not dramatic yet.",
+              "Invest more: because the results are strong enough to justify increasing your time, budget, or effort.",
             ],
           },
           {
@@ -572,12 +572,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             style: "insight",
             title: "Data over ego",
             content:
-              "Your personal attachment to an idea is not a reason to keep going. Evidence is. Write a version of this commitment in your own words — the act of writing it down makes it real.",
+              "Your personal attachment to an idea is not a reason to keep going. Evidence is. Write a version of this commitment in your own words: the act of writing it down makes it real.",
           },
           {
             type: "image",
             brief:
-              "A simple visual showing three paths branching from a central decision point. Left path labelled 'Stop — try a different idea'. Middle path labelled 'Continue — give it more time'. Right path labelled 'Invest more — the numbers support it'. Calm decision tree, each path feels like a positive, informed outcome.",
+              "A simple visual showing three paths branching from a central decision point. Left path labelled 'Stop: try a different idea'. Middle path labelled 'Continue: give it more time'. Right path labelled 'Invest more: the numbers support it'. Calm decision tree, each path feels like a positive, informed outcome.",
             alt: "Decision tree showing three outcome paths: stop, continue, or invest more.",
             src: null,
           },
@@ -607,7 +607,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "tip",
             content:
-              "That last one matters more than it might seem right now. Keeping a record of income and expenses from the very start saves enormous hassle later — and depending on where you live, you may need to register as self-employed or understand basic tax requirements for selling online.",
+              "That last one matters more than it might seem right now. Keeping a record of income and expenses from the very start saves enormous hassle later. Depending on where you live, you may also need to register as self-employed or understand basic tax requirements for selling online.",
           },
         ],
       },
@@ -639,7 +639,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 2 — SET YOUR RULES AND TEST
+  // PHASE 2: SET YOUR RULES AND TEST
   // ─────────────────────────────────────────────────────────────
 
   "know-your-numbers": {
@@ -675,7 +675,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Product cost is only the starting point. The full picture includes: shipping to the customer (including packaging), platform fees (typically 3–15%), payment processing (roughly 2–3%), returns allowance (plan for 3–10% of orders), and — if you hold stock — shipping from the supplier to you.",
+              "Product cost is only the starting point. The full picture includes shipping to the customer (including packaging), platform fees (typically 3–15%), payment processing (roughly 2–3%), returns allowance (plan for 3–10% of orders), and, if you hold stock, shipping from the supplier to you.",
           },
           {
             type: "table",
@@ -695,7 +695,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "insight",
             content:
-              "If that margin were £2 instead of £10, you would need to sell five times as many products to make the same money — and a small cost increase could tip you into losing money on every sale.",
+              "If that margin were £2 instead of £10, you would need to sell five times as many products to make the same money. A small cost increase could tip you into losing money on every sale.",
           },
           { type: "heading", level: 3, content: "A quick margin health check" },
           {
@@ -724,7 +724,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "You have three options: free shipping (you absorb the cost, product price must be high enough to cover it), charged shipping (customer pays, but some abandon at checkout when they see it added), or flat-rate shipping (a middle ground — a fixed fee regardless of order size).",
+              "You have three options: free shipping, where you absorb the cost and the product price must be high enough to cover it; charged shipping, where the customer pays but some abandon at checkout; or flat-rate shipping, a fixed fee regardless of order size.",
           },
           {
             type: "callout",
@@ -750,7 +750,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Some products are straightforward — one SKU, one listing, one set of stock to buy. Others multiply quickly. A single t-shirt design in 5 sizes and 4 colours is 20 SKUs. If your supplier has a minimum order quantity of 50 per variant, you are buying 1,000 units before your first sale.",
+              "Some products are straightforward: one SKU, one listing, one set of stock to buy. Others multiply quickly. A single t-shirt design in 5 sizes and 4 colours is 20 SKUs. If your supplier has a minimum order quantity of 50 per variant, you are buying 1,000 units before your first sale.",
           },
           {
             type: "paragraph",
@@ -766,7 +766,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "image",
             brief:
-              "A visual comparison showing two products side by side. Left: 'Simple product — 1 SKU' showing a single item with a small stock pile. Right: 'Variant product — 20 SKUs' showing a t-shirt with a grid of size/colour combinations each needing stock. Right side feels busier but the tone is neutral — the message is 'know what you are choosing.'",
+              "A visual comparison showing two products side by side. Left: 'Simple product: 1 SKU' showing a single item with a small stock pile. Right: 'Variant product: 20 SKUs' showing a t-shirt with a grid of size/colour combinations each needing stock. Right side feels busier, but the tone is neutral. The message is 'know what you are choosing.'",
             alt: "Comparison of a simple 1-SKU product versus a complex multi-variant product showing the stock implications.",
             src: null,
           },
@@ -894,7 +894,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "As soon as your first listing goes live, start tracking. The Metrics section — available in the navigation — has a marketplace testing log built for this phase. It asks five simple questions each week: how many people saw your listing, how many clicked, how many bought, what you made per sale, and what you noticed. Logging from week one means you have data to learn from, not just results to wonder about.",
+              "As soon as your first listing goes live, start tracking. The Metrics section, available in the navigation, has a marketplace testing log built for this phase. It asks five simple questions each week: how many people saw your listing, how many clicked, how many bought, what you made per sale, and what you noticed. Logging from week one means you have data to learn from, not just results to wonder about.",
           },
         ],
       },
@@ -929,7 +929,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Marketplaces like eBay, Etsy, Amazon, Vinted, and Facebook Marketplace already have buyers. When you list on a marketplace, you are borrowing their audience to test your product. If it does not sell in front of an existing audience of active buyers, the issue is likely the product, the price, or the listing — not a lack of traffic. That clarity is incredibly valuable.",
+              "Marketplaces like eBay, Etsy, Amazon, Vinted, and Facebook Marketplace already have buyers. When you list on a marketplace, you are borrowing their audience to test your product. If it does not sell in front of an existing audience of active buyers, the issue is likely the product, the price, or the listing: not a lack of traffic. That clarity is incredibly valuable.",
           },
           { type: "heading", level: 2, content: "Choose your test marketplace" },
           {
@@ -954,13 +954,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "tip",
             content:
-              "Photos: natural light near a window, clean background, multiple angles. You do not need professional photography at this stage — you need clarity and honesty.",
+              "Photos: natural light near a window, clean background, multiple angles. You do not need professional photography at this stage: you need clarity and honesty.",
           },
           { type: "heading", level: 2, content: "Set your test duration" },
           {
             type: "paragraph",
             content:
-              "Decide in advance how long you will run this test before judging the results. A reasonable test duration is 2 to 4 weeks. Write it down before you list — this prevents you from pulling the listing after three days because you are impatient, or leaving it up for months because you are avoiding a decision.",
+              "Decide in advance how long you will run this test before judging the results. A reasonable test duration is 2 to 4 weeks. Write it down before you list: this prevents you from pulling the listing after three days because you are impatient, or leaving it up for months because you are avoiding a decision.",
           },
         ],
       },
@@ -972,7 +972,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Pack it properly. Ship promptly — aim to dispatch within one to two business days. Use tracked shipping whenever the cost is reasonable. Send a brief message to the buyer confirming dispatch and providing the tracking number.",
+              "Pack it properly. Ship promptly: aim to dispatch within one to two business days. Use tracked shipping whenever the cost is reasonable. Send a brief message to the buyer confirming dispatch and providing the tracking number.",
           },
           {
             type: "callout",
@@ -991,13 +991,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "It sold — excellent. How quickly? How many units? Did buyers ask questions that reveal what they needed more information about? Interest but no sale — something about the listing needs work (price, photos, or description). Views but no engagement — the title or main image may not be grabbing attention. Very few views — a search visibility issue, likely in your title keywords.",
+              "It sold: excellent. How quickly? How many units? Did buyers ask questions that reveal what they needed more information about? Interest but no sale: something about the listing needs work (price, photos, or description). Views but no engagement: the title or main image may not be grabbing attention. Very few views: a search visibility issue, likely in your title keywords.",
           },
           { type: "heading", level: 2, content: "Make your decision" },
           {
             type: "paragraph",
             content:
-              "This is where your kill/continue/escalate rules from Chapter 4 come in. Proceed to building your store if the product sold or generated strong interest. Iterate and retest if results were mixed. Pivot to a different product if there was little interest despite a fair test — this is not failure, this is exactly what the test was designed to discover.",
+              "This is where your kill/continue/escalate rules from Chapter 4 come in. Proceed to building your store if the product sold or generated strong interest. Iterate and retest if results were mixed. Pivot to a different product if there was little interest despite a fair test: this is not failure, this is exactly what the test was designed to discover.",
           },
           {
             type: "loop",
@@ -1023,7 +1023,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "What it does not prove is that you can build a profitable, repeatable business around it. That depends on whether you can drive your own traffic, acquire customers at a sustainable cost, and encourage repeat purchases — skills you will build in the chapters ahead.",
+              "What it does not prove is that you can build a profitable, repeatable business around it. That depends on whether you can drive your own traffic, acquire customers at a sustainable cost, and encourage repeat purchases: skills you will build in the chapters ahead.",
           },
           {
             type: "callout",
@@ -1037,7 +1037,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 3 — BUILD YOUR OFFER
+  // PHASE 3: BUILD YOUR OFFER
   // ─────────────────────────────────────────────────────────────
 
   "pick-your-customer": {
@@ -1067,13 +1067,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Trying to sell to everyone means you end up speaking to no one in particular. Think about it from the buyer's perspective. Which listing would you click — 'Car seat cover. Fits all vehicles. Great for pets, kids, and general use.' or 'Compact dog seat cover designed for small cars. Waterproof, folds flat for easy storage, machine washable.'?",
+              "Trying to sell to everyone means you end up speaking to no one in particular. Think about it from the buyer's perspective. Which listing would you click: 'Car seat cover. Fits all vehicles. Great for pets, kids, and general use.' or 'Compact dog seat cover designed for small cars. Waterproof, folds flat for easy storage, machine washable.'?",
           },
           {
             type: "callout",
             style: "insight",
             content:
-              "The second listing describes fewer people. But the people it does describe feel like it was made for them. They are far more likely to click, read, and buy. You are not excluding customers — you are attracting the right ones.",
+              "The second listing describes fewer people. But the people it does describe feel like it was made for them. They are far more likely to click, read, and buy. You are not excluding customers: you are attracting the right ones.",
           },
         ],
       },
@@ -1086,7 +1086,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "A niche customer is not a tiny market. It is a focused starting point. Answer these questions as specifically as you can: Who feels this problem most? What is their situation (time-poor, on a budget, new to something)? What words do they use? That last one is crucial — go back to the reviews and forum posts from Chapter 3 and use their language.",
+              "A niche customer is not a tiny market. It is a focused starting point. Answer these questions as specifically as you can: Who feels this problem most? What is their situation (time-poor, on a budget, new to something)? What words do they use? That last one is crucial: go back to the reviews and forum posts from Chapter 3 and use their language.",
           },
           {
             type: "callout",
@@ -1130,7 +1130,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your customer has never heard of you. Specificity builds trust — vague listings feel untrustworthy. Honesty about limitations ('this fits hatchbacks and small SUVs') signals you know your product. Responsive communication, a clear returns policy, and an about section that tells your story all contribute.",
+              "Your customer has never heard of you. Specificity builds trust: vague listings feel untrustworthy. Honesty about limitations ('this fits hatchbacks and small SUVs') signals you know your product. Responsive communication, a clear returns policy, and an about section that tells your story all contribute.",
           },
         ],
       },
@@ -1221,13 +1221,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your product name needs to be clear and searchable right now — 'Heavy-Duty Waterproof Dog Seat Cover' works perfectly at this stage. Your positioning statement is one sentence: '[Product] for [customer] who need [key benefit] — [differentiator].' This is your internal clarity tool, not a tagline. Every decision about your listing, pricing, photos, and marketing should be consistent with it.",
+              "Your product name needs to be clear and searchable right now: 'Heavy-Duty Waterproof Dog Seat Cover' works perfectly at this stage. Your positioning statement is one sentence: '[Product] for [customer] who need [key benefit]: [differentiator].' This is your internal clarity tool, not a tagline. Every decision about your listing, pricing, photos, and marketing should be consistent with it.",
           },
           {
             type: "callout",
             style: "example",
             content:
-              "Example: 'Heavy-duty seat cover for dog owners with small cars who need something that fits without taking over the back seat — waterproof, compact, and machine washable.'",
+              "Example: 'Heavy-duty seat cover for dog owners with small cars who need something that fits without taking over the back seat: waterproof, compact, and machine washable.'",
           },
         ],
       },
@@ -1240,7 +1240,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your floor is the minimum price that gives you a viable margin after all costs — calculated in Chapter 5. Your ceiling is the highest price your customer would consider reasonable. Your sweet spot is somewhere between them where the margin is healthy and the price feels fair relative to the alternatives.",
+              "Your floor is the minimum price that gives you a viable margin after all costs: calculated in Chapter 5. Your ceiling is the highest price your customer would consider reasonable. Your sweet spot is somewhere between them where the margin is healthy and the price feels fair relative to the alternatives.",
           },
           { type: "heading", level: 2, content: "Check: does your margin still work?" },
           {
@@ -1281,7 +1281,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 4 — GET YOUR STORE READY
+  // PHASE 4: GET YOUR STORE READY
   // ─────────────────────────────────────────────────────────────
 
   "write-listings-that-sell": {
@@ -1318,9 +1318,9 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "table",
             headers: ["Before", "After"],
             rows: [
-              ["Dog Seat Cover", "Waterproof Dog Car Seat Cover — Universal Fit, Heavy-Duty, Machine Washable"],
-              ["Phone Case", "Slim Silicone Phone Case for iPhone 15 — Drop Protection, Matte Black"],
-              ["Planner", "Weekly Planner for Freelancers — Undated, Project Tracking, A5 Size"],
+              ["Dog Seat Cover", "Waterproof Dog Car Seat Cover: Universal Fit, Heavy-Duty, Machine Washable"],
+              ["Phone Case", "Slim Silicone Phone Case for iPhone 15: Drop Protection, Matte Black"],
+              ["Planner", "Weekly Planner for Freelancers: Undated, Project Tracking, A5 Size"],
             ],
           },
         ],
@@ -1334,7 +1334,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Lead with the problem and the solution — not a list of features. Then cover the specifics: what the product does, exact dimensions and materials, what is included, compatibility, care instructions, and shipping details.",
+              "Lead with the problem and the solution, not a list of features. Then cover the specifics: what the product does, exact dimensions and materials, what is included, compatibility, care instructions, and shipping details.",
           },
           {
             type: "callout",
@@ -1353,7 +1353,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your photos are the closest thing to a physical experience the buyer gets. Natural light near a window is your best tool — never use your phone's flash. Use a clean background (a sheet of white card is all you need). Aim for: a front view, back view, close-up of key details, a scale shot, and an in-use shot.",
+              "Your photos are the closest thing to a physical experience the buyer gets. Natural light near a window is your best tool: never use your phone's flash. Use a clean background (a sheet of white card is all you need). Aim for: a front view, back view, close-up of key details, a scale shot, and an in-use shot.",
           },
           {
             type: "callout",
@@ -1376,7 +1376,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "When customers do leave reviews — positive or negative — respond promptly and professionally. How you respond to a negative review matters more than the review itself, because every future buyer will read your response. A thoughtful response to a negative review actually builds trust.",
+              "When customers do leave reviews: positive or negative: respond promptly and professionally. How you respond to a negative review matters more than the review itself, because every future buyer will read your response. A thoughtful response to a negative review actually builds trust.",
           },
         ],
       },
@@ -1424,13 +1424,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Modern e-commerce platforms are designed for people who are not technical. Shopify, WooCommerce, Squarespace, Big Cartel, Etsy — every one of them walks you through setup with guided steps, templates, and built-in tools. You do not write code. You fill in forms, choose options, and upload the content you created in Chapter 9.",
+              "Modern e-commerce platforms are designed for people who are not technical. Shopify, WooCommerce, Squarespace, Big Cartel, Etsy: every one of them walks you through setup with guided steps, templates, and built-in tools. You do not write code. You fill in forms, choose options, and upload the content you created in Chapter 9.",
           },
           { type: "heading", level: 2, content: "Choose your platform" },
           {
             type: "paragraph",
             content:
-              "Shopify is the most popular choice — handles everything in one package, ideal for a standalone branded store. Etsy gives you existing buyer traffic, best for creative and unique products. WooCommerce is free but requires more technical setup. Big Cartel is simpler and cheaper with a free tier for small catalogues. Amazon gives access to an enormous buyer base but is the most competitive environment.",
+              "Shopify is the most popular choice: handles everything in one package, ideal for a standalone branded store. Etsy gives you existing buyer traffic, best for creative and unique products. WooCommerce is free but requires more technical setup. Big Cartel is simpler and cheaper with a free tier for small catalogues. Amazon gives access to an enormous buyer base but is the most competitive environment.",
           },
         ],
       },
@@ -1462,7 +1462,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your platform will guide you through connecting Stripe and PayPal. Offer both — PayPal in particular is worth enabling because many buyers feel safer using it when buying from a store they have not purchased from before.",
+              "Your platform will guide you through connecting Stripe and PayPal. Offer both: PayPal in particular is worth enabling because many buyers feel safer using it when buying from a store they have not purchased from before.",
           },
           { type: "heading", level: 2, content: "Legal pages and checkout testing" },
           {
@@ -1510,7 +1510,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 5 — GET CUSTOMERS
+  // PHASE 5: GET CUSTOMERS
   // ─────────────────────────────────────────────────────────────
 
   "free-traffic": {
@@ -1528,7 +1528,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
     steps: [
       {
         id: "chapter-11-step-1-your-store-is-open",
-        title: "Your store is open — now people need to find it",
+        title: "Your store is open: now people need to find it",
         blocks: [
           { type: "heading", level: 2, content: "Your store is open. Now people need to find it." },
           {
@@ -1569,7 +1569,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Pick one platform — the one where your customer spends time. Show the product in context: a 15-second video of it being used, a before-and-after showing the problem and solution. Post consistently at a sustainable pace. Three posts per week for 12 weeks beats daily posts for 2 weeks followed by silence.",
+              "Pick one platform: the one where your customer spends time. Show the product in context: a 15-second video of it being used, a before-and-after showing the problem and solution. Post consistently at a sustainable pace. Three posts per week for 12 weeks beats daily posts for 2 weeks followed by silence.",
           },
         ],
       },
@@ -1607,7 +1607,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "insight",
             content:
-              "The Reddit comment you post today might drive traffic for months. That is the beauty of free traffic: once it is built, it keeps delivering without ongoing cost. And it tells you whether your listing converts — essential knowledge before you start spending money on ads.",
+              "The Reddit comment you post today might drive traffic for months. That is the beauty of free traffic: once it is built, it keeps delivering without ongoing cost. And it tells you whether your listing converts: essential knowledge before you start spending money on ads.",
           },
         ],
       },
@@ -1685,7 +1685,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "tip",
             content:
-              "Check that your daily budget fits within your monthly cap from Chapter 4 before you start. A 7-day test at £7/day costs £49 — confirm that is comfortable before you launch.",
+              "Check that your daily budget fits within your monthly cap from Chapter 4 before you start. A 7-day test at £7/day costs £49: confirm that is comfortable before you launch.",
           },
         ],
       },
@@ -1726,13 +1726,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Strong signal: CTR above 1.5% and CPA at or below your margin — continue and consider a gradual 20–30% budget increase. Mixed signal: decent CTR but CPA above your margin — work on the product page, price, or targeting. Weak signal: low CTR — try a different image, headline, or audience. No sales despite 200+ visitors — the issue is almost certainly the product page or offer.",
+              "Strong signal: CTR above 1.5% and CPA at or below your margin: continue and consider a gradual 20–30% budget increase. Mixed signal: decent CTR but CPA above your margin: work on the product page, price, or targeting. Weak signal: low CTR: try a different image, headline, or audience. No sales despite 200+ visitors: the issue is almost certainly the product page or offer.",
           },
           {
             type: "callout",
             style: "tip",
             content:
-              "Fill in the result fields after your test period. These are designed to be empty while you are learning the theory — come back when you have real data.",
+              "Fill in the result fields after your test period. These are designed to be empty while you are learning the theory: come back when you have real data.",
           },
         ],
       },
@@ -1745,7 +1745,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "You now have real data. Real numbers from real customers responding to real ads. Go back to your Founder Rules and update your kill, continue, and escalation criteria with specific thresholds. These rules are no longer abstract — they are grounded in evidence from your own business.",
+              "You now have real data. Real numbers from real customers responding to real ads. Go back to your Founder Rules and update your kill, continue, and escalation criteria with specific thresholds. These rules are no longer abstract: they are grounded in evidence from your own business.",
           },
           {
             type: "callout",
@@ -1812,7 +1812,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "You do not own your social media audience. The platform decides who sees your posts through its algorithm, and organic reach is typically 2–10% of followers. Email is different — when you send an email, it lands in the inbox. Open rates for e-commerce emails are 15–25%, vastly higher than social media reach. And subscribers have given you permission to contact them.",
+              "You do not own your social media audience. The platform decides who sees your posts through its algorithm, and organic reach is typically 2–10% of followers. Email is different: when you send an email, it lands in the inbox. Open rates for e-commerce emails are 15–25%, vastly higher than social media reach. And subscribers have given you permission to contact them.",
           },
         ],
       },
@@ -1844,13 +1844,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "You need three emails that go out automatically to every new subscriber. Email 1 (immediately): welcome and deliver your promise — include the discount code or promised content, a warm intro, and a link to your best product. Email 2 (day 2–3): your story — why you started this business, in genuine and specific terms. Email 3 (day 5–7): the product with a clear reason to buy — benefit-led, address the main hesitation, clear link.",
+              "You need three emails that go out automatically to every new subscriber. Email 1 (immediately): welcome and deliver your promise: include the discount code or promised content, a warm intro, and a link to your best product. Email 2 (day 2–3): your story: why you started this business, in genuine and specific terms. Email 3 (day 5–7): the product with a clear reason to buy: benefit-led, address the main hesitation, clear link.",
           },
           {
             type: "callout",
             style: "insight",
             content:
-              "Write these three emails once and they work for every person who signs up, forever. That is leverage — a few hours of work that runs on autopilot indefinitely.",
+              "Write these three emails once and they work for every person who signs up, forever. That is leverage: a few hours of work that runs on autopilot indefinitely.",
           },
         ],
       },
@@ -1869,7 +1869,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "If your margin is £10 and CPA is £8, you make £2 on the first sale. But if that customer buys three times over the next year, your total margin is £30 from an £8 acquisition cost — a £22 total profit. This means you could afford a CPA of up to £29 and still break even over a year. Suddenly campaigns that looked unprofitable on a single sale become highly profitable.",
+              "If your margin is £10 and CPA is £8, you make £2 on the first sale. But if that customer buys three times over the next year, your total margin is £30 from an £8 acquisition cost: a £22 total profit. This means you could afford a CPA of up to £29 and still break even over a year. Suddenly campaigns that looked unprofitable on a single sale become highly profitable.",
           },
         ],
       },
@@ -1882,7 +1882,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Engine 1: Free traffic — communities, social media, and SEO at no cost. Engine 2: Paid advertising — a tested, measured channel you can dial up or down. Engine 3: Email and retention — a system that brings existing customers back.",
+              "Engine 1: Free traffic: communities, social media, and SEO at no cost. Engine 2: Paid advertising: a tested, measured channel you can dial up or down. Engine 3: Email and retention: a system that brings existing customers back.",
           },
           {
             type: "callout",
@@ -1896,7 +1896,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 6 — MEASURE, LEARN, GROW
+  // PHASE 6: MEASURE, LEARN, GROW
   // ─────────────────────────────────────────────────────────────
 
   "read-your-numbers": {
@@ -1926,12 +1926,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your business generates a lot of data. Most of it is noise. These six are signal: Traffic (visitors per week — find in your store analytics), Conversion rate (percentage who bought — orders ÷ visitors × 100), Average order value (total revenue ÷ orders), CPA (ad spend ÷ ad-attributed sales — only if running ads), Margin per sale (from your own records — the one number platforms will not calculate for you), Email list growth (new subscribers this week).",
+              "Your business generates a lot of data. Most of it is noise. These six are signal: Traffic (visitors per week: find in your store analytics), Conversion rate (percentage who bought: orders ÷ visitors × 100), Average order value (total revenue ÷ orders), CPA (ad spend ÷ ad-attributed sales: only if running ads), Margin per sale (from your own records: the one number platforms will not calculate for you), Email list growth (new subscribers this week).",
           },
           {
             type: "image",
             brief:
-              "A simple dashboard-style visual showing six cards in a 2x3 grid. Each card has an icon, metric name, example number, and a one-line interpretation. Traffic: 340 visitors ('Steady'). Conversion: 2.4% ('Healthy'). AOV: £22 ('Consistent'). CPA: £9.50 ('Below margin — profitable'). Margin: £10.80. Email subscribers: 47 new ('Growing'). Should feel like a calm weekly check-in, not an overwhelming analytics tool.",
+              "A simple dashboard-style visual showing six cards in a 2x3 grid. Each card has an icon, metric name, example number, and a one-line interpretation. Traffic: 340 visitors ('Steady'). Conversion: 2.4% ('Healthy'). AOV: £22 ('Consistent'). CPA: £9.50 ('Below margin: profitable'). Margin: £10.80. Email subscribers: 47 new ('Growing'). Should feel like a calm weekly check-in, not an overwhelming analytics tool.",
             alt: "Six-card dashboard showing the key weekly business metrics.",
             src: null,
           },
@@ -1945,13 +1945,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Store platform (Shopify, WooCommerce, etc.): traffic, conversion rate, average order value, revenue, orders. Ad platform (Meta Ads Manager, Google Ads): impressions, clicks, CTR, CPC, conversions. Email tool (Mailchimp, Klaviyo): subscriber count, open rates, click rates. Your own spreadsheet: actual product costs, real margins, total expenses — the source of truth that no platform dashboard captures.",
+              "Store platform (Shopify, WooCommerce, etc.): traffic, conversion rate, average order value, revenue, orders. Ad platform (Meta Ads Manager, Google Ads): impressions, clicks, CTR, CPC, conversions. Email tool (Mailchimp, Klaviyo): subscriber count, open rates, click rates. Your own spreadsheet: actual product costs, real margins, total expenses: the source of truth that no platform dashboard captures.",
           },
           { type: "heading", level: 2, content: "What 'good' looks like at your stage" },
           {
             type: "paragraph",
             content:
-              "Conversion rate: 1–3% is normal, below 1% needs attention, above 3% is strong. CPA: only matters relative to your margin — is CPA below margin per sale? Email open rate: 15–25% is healthy for e-commerce. Do not compare to large brands. Compare to your own numbers from last week. The trend matters more than the absolute number.",
+              "Conversion rate: 1–3% is normal, below 1% needs attention, above 3% is strong. CPA: only matters relative to your margin: is CPA below margin per sale? Email open rate: 15–25% is healthy for e-commerce. Do not compare to large brands. Compare to your own numbers from last week. The trend matters more than the absolute number.",
           },
         ],
       },
@@ -1963,12 +1963,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Once your store is live, this is the ritual you will repeat every week for as long as you run your business. Step 1 (5 min): collect your six numbers. Step 2 (5 min): compare to last week — up, down, or flat? Step 3 (5 min): identify one thing that worked. Step 4 (5 min): identify one thing to change. Step 5 (5 min): plan next week.",
+              "Once your store is live, this is the ritual you will repeat every week for as long as you run your business. Step 1 (5 min): collect your six numbers. Step 2 (5 min): compare to last week: up, down, or flat? Step 3 (5 min): identify one thing that worked. Step 4 (5 min): identify one thing to change. Step 5 (5 min): plan next week.",
           },
           {
             type: "paragraph",
             content:
-              "You are reading this before your store is live, so you do not have numbers to log yet. That is fine — this chapter is about understanding the system so that when data starts arriving, you already know what to do with it.",
+              "You are reading this before your store is live, so you do not have numbers to log yet. That is fine: this chapter is about understanding the system so that when data starts arriving, you already know what to do with it.",
           },
           {
             type: "callout",
@@ -1991,13 +1991,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "You will do this update for real once your store has been running. For now, understand that the rules you wrote are a starting point — they become more precise and more useful as data arrives.",
+              "You will do this update for real once your store has been running. For now, understand that the rules you wrote are a starting point: they become more precise and more useful as data arrives.",
           },
           {
             type: "callout",
             style: "example",
             content:
-              "'I will stop if conversion stays below 1% after two listing revisions and 500 visitors.' Updated rules like this are not just numbers on a page — they are the decision-making system that tells you exactly what to do when results come in.",
+              "'I will stop if conversion stays below 1% after two listing revisions and 500 visitors.' Updated rules like this are not just numbers on a page: they are the decision-making system that tells you exactly what to do when results come in.",
           },
         ],
       },
@@ -2016,7 +2016,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "insight",
             content:
-              "The next chapter teaches you what to do when the numbers tell you something needs to change — whether that means small adjustments or a bigger shift, you will have a clear framework for deciding.",
+              "The next chapter teaches you what to do when the numbers tell you something needs to change: whether that means small adjustments or a bigger shift, you will have a clear framework for deciding.",
           },
         ],
       },
@@ -2064,7 +2064,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Once you have diagnosed the problem, make one change at a time and measure the result. If you change your ad image, rewrite your description, and lower your price all in the same week, and sales go up — which change caused the improvement? You have fixed the problem but learned nothing.",
+              "Once you have diagnosed the problem, make one change at a time and measure the result. If you change your ad image, rewrite your description, and lower your price all in the same week, and sales go up: which change caused the improvement? You have fixed the problem but learned nothing.",
           },
           {
             type: "callout",
@@ -2093,7 +2093,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "loop",
             message:
-              "If you have decided to pivot, take a moment to write down what you learned from the approach you are leaving behind. What worked? What did not? What surprised you? This is the raw material that makes your next attempt better. The most successful sellers are not the ones who got it right the first time — they are the ones who learned the most from each round.",
+              "If you have decided to pivot, take a moment to write down what you learned from the approach you are leaving behind. What worked? What did not? What surprised you? This is the raw material that makes your next attempt better. The most successful sellers are not the ones who got it right the first time: they are the ones who learned the most from each round.",
             targets: [
               { chapterSlug: "brainstorm-with-discipline", label: "Back to Chapter 3: Brainstorm with Discipline" },
             ],
@@ -2114,7 +2114,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Go back to your minimum experiment duration from Chapter 4. Have you given this approach enough time? Have you tested enough iterations to be confident the problem is fundamental rather than fixable? The data-over-ego commitment works in both directions — it means sticking with an approach when the evidence is still developing, not just walking away from ideas you love.",
+              "Go back to your minimum experiment duration from Chapter 4. Have you given this approach enough time? Have you tested enough iterations to be confident the problem is fundamental rather than fixable? The data-over-ego commitment works in both directions: it means sticking with an approach when the evidence is still developing, not just walking away from ideas you love.",
           },
         ],
       },
@@ -2161,7 +2161,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your product is selling. Your CPA is within target. Conversion is stable. Customers are coming back. Revenue is growing week on week. This is the moment most founders dream about. It is also the moment where many of them make mistakes that undo everything they have built — growing too fast, adding too many products, spreading too thin.",
+              "Your product is selling. Your CPA is within target. Conversion is stable. Customers are coming back. Revenue is growing week on week. This is the moment most founders dream about. It is also the moment where many of them make mistakes that undo everything they have built: growing too fast, adding too many products, spreading too thin.",
           },
           { type: "heading", level: 2, content: "Recognise what 'working' actually looks like" },
           {
@@ -2180,7 +2180,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Growing means doing more of the same — more ad spend, more products, more hours. Scaling means increasing revenue without proportionally increasing time or cost — automating sequences, improving conversion rate, negotiating better supplier terms. Both have their place. Be intentional about which one you are doing.",
+              "Growing means doing more of the same: more ad spend, more products, more hours. Scaling means increasing revenue without proportionally increasing time or cost: automating sequences, improving conversion rate, negotiating better supplier terms. Both have their place. Be intentional about which one you are doing.",
           },
           { type: "heading", level: 2, content: "Increase ad spend gradually" },
           {
@@ -2229,7 +2229,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Your business has changed. Your rules should change with it. Time budget: are you spending more hours now — are they on high-impact activities? Money cap: if revenue is coming in, your cap can shift from 'what I can afford from savings' to 'what the business earns minus what I keep as profit.' Decision thresholds: recalibrate kill, continue, and escalation for a more mature business.",
+              "Your business has changed. Your rules should change with it. Time budget: are you spending more hours now, and are they on high-impact activities? Money cap: if revenue is coming in, your cap can shift from 'what I can afford from savings' to 'what the business earns minus what I keep as profit.' Decision thresholds: recalibrate kill, continue, and escalation for a more mature business.",
           },
         ],
       },
@@ -2256,7 +2256,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
   },
 
   // ─────────────────────────────────────────────────────────────
-  // PHASE 7 — ONGOING OPERATIONS
+  // PHASE 7: ONGOING OPERATIONS
   // ─────────────────────────────────────────────────────────────
 
   "your-operating-dashboard": {
@@ -2316,13 +2316,13 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "Each week, log your numbers in the Metrics dashboard. Over time, this becomes the most valuable record your business has — the history of what happened, what you tried, and what worked. Consistency matters more than precision. A rough weekly entry is infinitely more useful than a perfect monthly entry.",
+              "Each week, log your numbers in the Metrics dashboard. Over time, this becomes the most valuable record your business has: the history of what happened, what you tried, and what worked. Consistency matters more than precision. A rough weekly entry is infinitely more useful than a perfect monthly entry.",
           },
           { type: "heading", level: 2, content: "How to read your dashboard" },
           {
             type: "paragraph",
             content:
-              "Stable metrics are good news — they give you a foundation to test changes from. Gradual trends matter more than single-week changes. Connected metrics tell a story: if traffic is up but revenue is flat, conversion rate has dropped. If CPA is rising but conversion is stable, your ads are getting more expensive. The dashboard shows these relationships when you track everything in one place.",
+              "Stable metrics are good news: they give you a foundation to test changes from. Gradual trends matter more than single-week changes. Connected metrics tell a story: if traffic is up but revenue is flat, conversion rate has dropped. If CPA is rising but conversion is stable, your ads are getting more expensive. The dashboard shows these relationships when you track everything in one place.",
           },
           {
             type: "callout",
@@ -2347,7 +2347,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
-              "This is the final chapter of the course. But it is not the end of your business. The dashboard is your ongoing operating tool — it works for you every week for as long as you run your business.",
+              "This is the final chapter of the course. But it is not the end of your business. The dashboard is your ongoing operating tool: it works for you every week for as long as you run your business.",
           },
           {
             type: "callout",

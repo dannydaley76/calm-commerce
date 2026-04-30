@@ -18,14 +18,14 @@
       "label": "Diagnosis",
       "fieldType": "single-select",
       "required": true,
-      "helpText": "Where in the chain is the problem? Be honest — this shapes what to fix.",
+      "helpText": "Where in the chain is the problem? Be honest: this shapes what to fix.",
       "options": [
-        "Low traffic — marketing problem",
-        "Good traffic, low conversion — listing or offer problem",
-        "Good traffic + conversion, CPA too high — ad efficiency problem",
-        "Good traffic + conversion, margin too thin — cost structure problem",
+        "Low traffic: marketing problem",
+        "Good traffic, low conversion: listing or offer problem",
+        "Good traffic + conversion, CPA too high: ad efficiency problem",
+        "Good traffic + conversion, margin too thin: cost structure problem",
         "Mixed results, need more data",
-        "Things are working — continue"
+        "Things are working: continue"
       ]
     },
     {
@@ -73,12 +73,12 @@
       "required": false,
       "helpText": "Based on the result, what is your next move?",
       "options": [
-        "Iterate again — one more change",
-        "Pivot product — same customer, different product",
-        "Pivot customer — same product, different audience",
-        "Pivot channel — same product + customer, different traffic source",
-        "Pivot offer — same product, different packaging or price",
-        "Continue — things are working"
+        "Iterate again: one more change",
+        "Pivot product: same customer, different product",
+        "Pivot customer: same product, different audience",
+        "Pivot channel: same product + customer, different traffic source",
+        "Pivot offer: same product, different packaging or price",
+        "Continue: things are working"
       ]
     }
   ]

@@ -3,7 +3,7 @@
     "id": "offer-worksheet",
     "chapterId": "chapter-8",
     "title": "Offer Worksheet",
-    "description": "Turn your product into an offer — the complete package that makes a specific customer choose yours over every other option.",
+    "description": "Turn your product into an offer: the complete package that makes a specific customer choose yours over every other option.",
     "mode": "single",
     "completionRule": {
       "kind": "requiredFieldsComplete",
@@ -45,7 +45,7 @@
       "label": "Positioning statement",
       "fieldType": "text",
       "required": true,
-      "helpText": "One sentence: '[Product] for [customer] who need [key benefit] — [differentiator].' This is your internal clarity tool, not a tagline."
+      "helpText": "One sentence: '[Product] for [customer] who need [key benefit]: [differentiator].' This is your internal clarity tool, not a tagline."
     },
     {
       "type": "field",

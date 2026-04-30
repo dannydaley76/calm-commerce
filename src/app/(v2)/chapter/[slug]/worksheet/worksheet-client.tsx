@@ -55,7 +55,7 @@ const FIELD_GROUPS = [
   },
   {
     title: "Decision rules",
-    description: "Define what results mean stop, continue, or invest more — before emotion gets involved.",
+    description: "Define what results mean stop, continue, or invest more before emotion gets involved.",
     keys: ["minimum_experiment_duration", "kill_criteria", "continue_criteria", "escalation_criteria"],
   },
   {
@@ -94,7 +94,7 @@ function getFieldExample(fieldKey: string, currencySymbol: string) {
     return "Example: Stop if 4 weeks of consistent testing produce no traction, weak customer interest, and no sign of a real buying problem.";
   }
   if (fieldKey === "continue_criteria") {
-    return "Example: Keep going if I get questions and engagement but sales are slow — as long as the problem is confirmed as real.";
+    return "Example: Keep going if I get questions and engagement but sales are slow, as long as the problem is confirmed as real.";
   }
   if (fieldKey === "escalation_criteria") {
     return `Example: Increase effort if the first offer converts profitably, or if repeatable demand justifies spending ${currencySymbol}300/month instead of ${currencySymbol}200.`;

@@ -264,7 +264,7 @@ export function InlineWorksheetCard({
       {/* Header */}
       <div className="mb-5 flex items-center justify-between gap-4">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
-          Worksheet — capture your answer
+          Worksheet: capture your answer
         </p>
         <StatusBadge status={status} filledCount={filledCount} totalCount={totalCount} />
       </div>
@@ -440,7 +440,7 @@ function LinkedGroupRenderer({
           Add your product ideas in Chapter 3 first.
         </p>
         <p className="mt-1">
-          Each idea you list there will appear here with its own economics breakdown — no need
+          Each idea you list there will appear here with its own economics breakdown. No need
           to retype anything.
         </p>
       </div>
@@ -568,7 +568,7 @@ function FieldRenderer({
             </select>
           ) : (
             <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
-              Complete the Chapter 3 worksheet first — your shortlisted ideas will appear here as options.
+              Complete the Chapter 3 worksheet first. Your shortlisted ideas will appear here as options.
             </div>
           )}
         </label>
@@ -672,7 +672,7 @@ function StatusBadge({
     const remaining = totalCount - filledCount;
     return (
       <span className="shrink-0 rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">
-        {remaining > 0 ? `Not saved — ${remaining} to complete` : "Not saved"}
+        {remaining > 0 ? `Not saved: ${remaining} to complete` : "Not saved"}
       </span>
     );
   }

@@ -26,7 +26,7 @@
           "label": "Idea description",
           "fieldType": "text",
           "required": true,
-          "helpText": "Describe the product in one sentence. Be specific — 'reusable water bottle' is too broad, 'insulated water bottle for trail runners' is useful."
+          "helpText": "Describe the product in one sentence. Be specific: 'reusable water bottle' is too broad, 'insulated water bottle for trail runners' is useful."
         },
         {
           "type": "field",
@@ -35,7 +35,7 @@
           "label": "Demand evidence",
           "fieldType": "textarea",
           "required": true,
-          "helpText": "What did you find that suggests people are already looking for this? Bestseller ranks, search volumes, review counts, community posts — any real signal counts."
+          "helpText": "What did you find that suggests people are already looking for this? Bestseller ranks, search volumes, review counts, community posts: any real signal counts."
         },
         {
           "type": "field",
