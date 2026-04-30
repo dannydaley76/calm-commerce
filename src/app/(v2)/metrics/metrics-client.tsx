@@ -2,6 +2,8 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MetricsLineChart } from "./MetricsLineChart";
+import { ActionMenu, PencilIcon, TrashIcon, NotesIcon } from "@/components/ActionMenu";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -74,6 +76,15 @@ function toISODate(raw: string): string {
   const d = new Date(raw);
   if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
   return todayISO();
+}
+
+/** Short date label for chart x-axis, e.g. "15 Apr". */
+function formatWeekShort(raw: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const d = new Date(raw + "T12:00:00");
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  }
+  return raw.slice(0, 8);
 }
 
 function parseNum(val: string | undefined): number | null {
@@ -190,13 +201,6 @@ function roasVariant(roas: number | null): CellVariant {
   return "red";
 }
 
-function refundVariant(n: number | null): CellVariant {
-  if (n === null) return "muted";
-  if (n === 0) return "green";
-  if (n <= 2) return "amber";
-  return "red";
-}
-
 /* ─────────────────────────────────────────────────────────────
    Shared UI sub-components
 ───────────────────────────────────────────────────────────── */
@@ -261,6 +265,125 @@ function NoteCard({ label, text, variant }: {
 
 const inputBase =
   "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-cobalt-600 focus:ring-1 focus:ring-cobalt-600 disabled:bg-[#f4f4f8] disabled:text-[#9a9ca8]";
+
+/* ─────────────────────────────────────────────────────────────
+   Live store inline edit form
+───────────────────────────────────────────────────────────── */
+
+function LiveStoreInlineEdit({
+  entry,
+  onSaved,
+  onCancel,
+}: {
+  entry: MetricEntry;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<Record<string, string>>({
+    week_ending:           toISODate(entry.week_ending),
+    revenue:               entry.data_json.revenue ?? "",
+    orders:                entry.data_json.orders ?? "",
+    traffic:               entry.data_json.traffic ?? "",
+    ad_spend:              entry.data_json.ad_spend ?? "",
+    new_email_subscribers: entry.data_json.new_email_subscribers ?? "",
+    refunds_returns:       entry.data_json.refunds_returns ?? "",
+    what_worked:           entry.data_json.what_worked ?? "",
+    what_to_change:        entry.data_json.what_to_change ?? "",
+    notes:                 entry.data_json.notes ?? "",
+  });
+  const [status, setStatus] = useState<SubmitStatus>("idle");
+  const set = (key: string, value: string) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSave = async () => {
+    if (!(form.week_ending ?? "").trim()) return;
+    setStatus("submitting");
+    try {
+      const { week_ending, ...rest } = form;
+      const res = await fetch(`/api/v2/weekly-metrics/${entry.id}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ week_ending, data: rest }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setStatus("success");
+      setTimeout(() => { onSaved(); }, 800);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  const isSaving = status === "submitting";
+
+  return (
+    <div className="rounded-xl border border-[#d9def2] bg-[#f7f9ff] p-5">
+      <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Edit entry</p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Week ending</label>
+          <input type="date" className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSaving} />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Revenue</label>
+          <input className={inputBase} value={form.revenue ?? ""} onChange={(e) => set("revenue", e.target.value)} disabled={isSaving} placeholder="e.g. £480" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Orders</label>
+          <input type="number" className={inputBase} value={form.orders ?? ""} onChange={(e) => set("orders", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Traffic</label>
+          <input type="number" className={inputBase} value={form.traffic ?? ""} onChange={(e) => set("traffic", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Ad spend</label>
+          <input className={inputBase} value={form.ad_spend ?? ""} onChange={(e) => set("ad_spend", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Email subscribers</label>
+          <input type="number" className={inputBase} value={form.new_email_subscribers ?? ""} onChange={(e) => set("new_email_subscribers", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-500">Refunds / returns</label>
+          <input type="number" className={inputBase} value={form.refunds_returns ?? ""} onChange={(e) => set("refunds_returns", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div className="sm:col-span-2 lg:col-span-4">
+          <label className="block text-xs font-semibold text-ink-500">What worked</label>
+          <textarea className={`${inputBase} min-h-[56px] resize-y`} value={form.what_worked ?? ""} onChange={(e) => set("what_worked", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div className="sm:col-span-2 lg:col-span-4">
+          <label className="block text-xs font-semibold text-ink-500">What to change</label>
+          <textarea className={`${inputBase} min-h-[56px] resize-y`} value={form.what_to_change ?? ""} onChange={(e) => set("what_to_change", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+        <div className="sm:col-span-2 lg:col-span-4">
+          <label className="block text-xs font-semibold text-ink-500">Notes</label>
+          <textarea className={`${inputBase} min-h-[56px] resize-y`} value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} disabled={isSaving} placeholder="—" />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={isSaving || !(form.week_ending ?? "").trim()}
+          className="rounded-xl bg-cobalt-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#003da8] disabled:opacity-60"
+        >
+          {isSaving ? "Saving…" : "Save changes"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSaving}
+          className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
+        >
+          Cancel
+        </button>
+        {status === "success" && <span className="text-xs text-[#005e3f]">Saved ✓</span>}
+        {status === "error" && <span className="text-xs text-error-700">Could not save — try again.</span>}
+      </div>
+    </div>
+  );
+}
 
 /* ─────────────────────────────────────────────────────────────
    Phase selector
@@ -651,7 +774,7 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
   })();
 
   // How many columns total (used for colSpan in expanded rows)
-  const COL_COUNT = 9;
+  const COL_COUNT = 8;
 
   return (
     <div className="space-y-6">
@@ -667,6 +790,34 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
         />
         <SummaryCard label="Avg. buy rate" value={avgBuyRate !== null ? `${avgBuyRate.toFixed(1)}%` : "—"} sub="Of those who clicked, bought" variant={buyRateVariant(avgBuyRate)} />
       </div>
+
+      {/* ── Trend chart (renders when ≥2 weeks of data) ── */}
+      {rows.length >= 2 && (() => {
+        const chronological = [...rows].reverse();
+        const weeks = chronological.map((r) => formatWeekShort(r.entry.week_ending));
+        return (
+          <div className="rounded-2xl border border-ink-100 bg-white px-6 py-5 shadow-card">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500">Trend</p>
+            <MetricsLineChart
+              weeks={weeks}
+              primary={{
+                label: "Orders",
+                values: chronological.map((r) => r.orders),
+                color: "#0049CF",
+                format: (v) => String(Math.round(v)),
+              }}
+              secondary={{
+                label: "Buy rate",
+                values: chronological.map((r) => r.buyRate),
+                color: "#E89527",
+                dashed: true,
+                format: (v) => `${v.toFixed(1)}%`,
+                unit: "%",
+              }}
+            />
+          </div>
+        );
+      })()}
 
       {/* What the numbers mean */}
       <div className="rounded-2xl border border-[#e2e6f5] bg-white px-6 py-5">
@@ -699,8 +850,7 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Clicks</th>
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Click rate</th>
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Buy rate</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Notes</th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Actions</th>
+              <th className="w-10 px-3 py-3" aria-label="Actions"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f0f2fa]">
@@ -738,58 +888,41 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
                     <Cell variant="neutral">{row.clicks !== null ? row.clicks.toLocaleString("en-GB") : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={clickRateVariant(row.clickRate)}>{row.clickRate !== null ? `${row.clickRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={buyRateVariant(row.buyRate)}>{row.buyRate !== null ? `${row.buyRate.toFixed(1)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
-                    {/* Notes toggle */}
-                    <td className="px-3 py-3 text-center">
-                      {hasNotes ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(null);
-                            setDeletingId(null);
-                            setExpandedId(isNotesExpanded ? null : row.entry.id);
-                          }}
-                          className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]"
-                        >
-                          {isNotesExpanded ? "Hide" : "View"}
-                        </button>
-                      ) : (
-                        <span className="text-[#c8cad4]">—</span>
-                      )}
-                    </td>
-                    {/* Actions */}
-                    <td className="px-3 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedId(null);
-                            setDeletingId(null);
-                            setEditingId(isEditing ? null : row.entry.id);
-                          }}
-                          className={`rounded-lg border px-3 py-1 text-[11px] font-semibold transition ${
-                            isEditing
-                              ? "border-cobalt-600 bg-[#eef4ff] text-cobalt-600"
-                              : "border-[#d9def2] bg-[#f0f2fb] text-[#545a95] hover:bg-[#e4e8f8]"
-                          }`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedId(null);
-                            setEditingId(null);
-                            setDeletingId(isConfirmingDelete ? null : row.entry.id);
-                          }}
-                          className={`rounded-lg border px-3 py-1 text-[11px] font-semibold transition ${
-                            isConfirmingDelete
-                              ? "border-[#f5c0bf] bg-[#fff1f1] text-error-700"
-                              : "border-[#d9def2] bg-[#f0f2fb] text-[#545a95] hover:border-[#f5c0bf] hover:bg-[#fff1f1] hover:text-error-700"
-                          }`}
-                        >
-                          Delete
-                        </button>
-                      </div>
+                    {/* ⋯ action menu */}
+                    <td className="px-2 py-3 text-right">
+                      <ActionMenu
+                        ariaLabel={`Actions for ${formatWeekEnding(row.entry.week_ending)}`}
+                        items={[
+                          {
+                            label: "Edit",
+                            icon: <PencilIcon />,
+                            onClick: () => {
+                              setExpandedId(null);
+                              setDeletingId(null);
+                              setEditingId(isEditing ? null : row.entry.id);
+                            },
+                          },
+                          ...(hasNotes ? [{
+                            label: isNotesExpanded ? "Hide notes" : "View notes",
+                            icon: <NotesIcon />,
+                            onClick: () => {
+                              setEditingId(null);
+                              setDeletingId(null);
+                              setExpandedId(isNotesExpanded ? null : row.entry.id);
+                            },
+                          }] : []),
+                          {
+                            label: "Delete",
+                            icon: <TrashIcon />,
+                            onClick: () => {
+                              setExpandedId(null);
+                              setEditingId(null);
+                              setDeletingId(isConfirmingDelete ? null : row.entry.id);
+                            },
+                            variant: "destructive" as const,
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
 
@@ -943,8 +1076,29 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
 ───────────────────────────────────────────────────────────── */
 
 function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry[]; isDev: boolean; onSeedDone: () => void }) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedId, setExpandedId]   = useState<string | null>(null);
+  const [editingId, setEditingId]     = useState<string | null>(null);
+  const [deletingId, setDeletingId]   = useState<string | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting" | "error">("idle");
+
   const rows = computeLiveStore(entries);
+
+  const handleDelete = async (id: string) => {
+    setDeleteStatus("deleting");
+    try {
+      const res = await fetch(`/api/v2/weekly-metrics/${id}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!res.ok) throw new Error();
+      setDeletingId(null);
+      setDeleteStatus("idle");
+      onSeedDone(); // triggers refresh in parent
+    } catch {
+      setDeleteStatus("error");
+      setTimeout(() => setDeleteStatus("idle"), 3000);
+    }
+  };
 
   const revenues = rows.map((r) => r.revenue).filter((n): n is number => n !== null);
   const bestRevenue = revenues.length ? Math.max(...revenues) : null;
@@ -972,23 +1126,55 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
         <SummaryCard label="Avg. conversion" value={avgConv !== null ? `${avgConv.toFixed(1)}%` : "—"} sub="Orders ÷ traffic" variant={convVariant(avgConv)} />
       </div>
 
+      {/* ── Trend chart (renders when ≥2 weeks of data) ── */}
+      {rows.length >= 2 && (() => {
+        const chronological = [...rows].reverse();
+        const weeks = chronological.map((r) => formatWeekShort(r.entry.week_ending));
+        return (
+          <div className="rounded-2xl border border-ink-100 bg-white px-6 py-5 shadow-card">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500">Trend</p>
+            <MetricsLineChart
+              weeks={weeks}
+              primary={{
+                label: "Revenue",
+                values: chronological.map((r) => r.revenue),
+                color: "#0049CF",
+                format: (v) => `£${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v)}`,
+              }}
+              secondary={{
+                label: "Conv %",
+                values: chronological.map((r) => r.convRate),
+                color: "#00756A",
+                dashed: true,
+                format: (v) => `${v.toFixed(1)}%`,
+                unit: "%",
+              }}
+            />
+          </div>
+        );
+      })()}
+
       {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-[#e2e6f5] bg-white">
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-[#eef0f7] bg-surface-sunken">
-              {["Week", "Revenue", "Orders", "Traffic", "Conv %", "Ad Spend", "ROAS", "Notes"].map((h, i) => (
-                <th key={h} className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : i === 7 ? "text-center" : "text-right"}`}>{h}</th>
+              {["Week", "Revenue", "Orders", "Traffic", "Conv %", "Ad Spend", "ROAS"].map((h, i) => (
+                <th key={h} className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : "text-right"}`}>{h}</th>
               ))}
+              <th className="w-10 px-3 py-3" aria-label="Actions"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f0f2fa]">
             {rows.map((row, idx) => {
-              const isExpanded = expandedId === row.entry.id;
+              const isNotesExpanded    = expandedId === row.entry.id;
+              const isEditing          = editingId === row.entry.id;
+              const isConfirmingDelete = deletingId === row.entry.id;
+              const showExpandedRow    = isEditing || isConfirmingDelete || isNotesExpanded;
               const hasNotes = row.entry.data_json.what_worked || row.entry.data_json.what_to_change || row.entry.data_json.notes;
               return (
                 <React.Fragment key={row.entry.id}>
-                  <tr className={`transition-colors ${isExpanded ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-surface-sunken"}`}>
+                  <tr className={`transition-colors ${showExpandedRow ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-surface-sunken"}`}>
                     <td className="px-4 py-3 text-left">
                       <div className="flex items-center gap-2">
                         {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">Latest</span>}
@@ -1001,15 +1187,88 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                     <Cell variant={convVariant(row.convRate)}>{row.convRate !== null ? `${row.convRate.toFixed(2)}%` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant="neutral">{row.adSpend !== null ? `£${row.adSpend.toLocaleString("en-GB")}` : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={roasVariant(row.roas)}>{row.roas !== null ? `${row.roas.toFixed(1)}×` : <span className="text-[#c8cad4]">—</span>}</Cell>
-                    <td className="px-3 py-3 text-center">
-                      {hasNotes ? (
-                        <button type="button" onClick={() => setExpandedId(isExpanded ? null : row.entry.id)} className="rounded-lg border border-[#d9def2] bg-[#f0f2fb] px-3 py-1 text-[11px] font-semibold text-[#545a95] transition hover:bg-[#e4e8f8]">
-                          {isExpanded ? "Hide" : "View"}
-                        </button>
-                      ) : <span className="text-[#c8cad4]">—</span>}
+                    {/* ⋯ action menu */}
+                    <td className="px-2 py-3 text-right">
+                      <ActionMenu
+                        ariaLabel={`Actions for ${row.entry.week_ending}`}
+                        items={[
+                          {
+                            label: "Edit",
+                            icon: <PencilIcon />,
+                            onClick: () => {
+                              setExpandedId(null);
+                              setDeletingId(null);
+                              setEditingId(isEditing ? null : row.entry.id);
+                            },
+                          },
+                          ...(hasNotes ? [{
+                            label: isNotesExpanded ? "Hide notes" : "View notes",
+                            icon: <NotesIcon />,
+                            onClick: () => {
+                              setEditingId(null);
+                              setDeletingId(null);
+                              setExpandedId(isNotesExpanded ? null : row.entry.id);
+                            },
+                          }] : []),
+                          {
+                            label: "Delete",
+                            icon: <TrashIcon />,
+                            onClick: () => {
+                              setExpandedId(null);
+                              setEditingId(null);
+                              setDeletingId(isConfirmingDelete ? null : row.entry.id);
+                            },
+                            variant: "destructive" as const,
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
-                  {isExpanded && (
+
+                  {/* Expanded: edit form */}
+                  {isEditing && (
+                    <tr className="bg-[#f7f9ff]">
+                      <td colSpan={8} className="px-4 pb-5 pt-2">
+                        <LiveStoreInlineEdit
+                          entry={row.entry}
+                          onSaved={() => { setEditingId(null); onSeedDone(); }}
+                          onCancel={() => setEditingId(null)}
+                        />
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Expanded: delete confirm */}
+                  {isConfirmingDelete && !isEditing && (
+                    <tr className="bg-[#fff8f8]">
+                      <td colSpan={8} className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <p className="text-sm text-ink-500">
+                            Delete the entry for <strong>{row.entry.week_ending}</strong>? This cannot be undone.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => void handleDelete(row.entry.id)}
+                            disabled={deleteStatus === "deleting"}
+                            className="rounded-xl bg-[#c0392b] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#a93226] disabled:opacity-60"
+                          >
+                            {deleteStatus === "deleting" ? "Deleting…" : "Yes, delete"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setDeletingId(null); setDeleteStatus("idle"); }}
+                            className="rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#545a95] transition hover:bg-[#f0f2fb]"
+                          >
+                            Cancel
+                          </button>
+                          {deleteStatus === "error" && <span className="text-xs text-error-700">Could not delete — try again.</span>}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Expanded: notes */}
+                  {isNotesExpanded && !isEditing && !isConfirmingDelete && (
                     <tr className="bg-[#f7f9ff]">
                       <td colSpan={8} className="px-6 pb-5 pt-2">
                         <div className="grid gap-4 sm:grid-cols-3">
