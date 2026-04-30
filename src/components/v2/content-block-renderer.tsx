@@ -1,6 +1,35 @@
 import Link from "next/link";
 import type { ContentBlock } from "@/lib/v2/types/domain";
 
+const TOOLTIP_TERMS: Record<string, string> = {
+  SKU: "Stock Keeping Unit. A unique version of a product that you track separately, such as one size, colour, or bundle.",
+  SKUs: "Stock Keeping Units. Each product variant you sell and track separately, such as each size or colour.",
+  CPA: "Cost per acquisition. The average amount you spend on ads to get one sale.",
+  CTR: "Click-through rate. The percentage of people who saw something and clicked it.",
+  AOV: "Average order value. Total revenue divided by number of orders.",
+};
+
+const tooltipPattern = new RegExp(`\\b(${Object.keys(TOOLTIP_TERMS).join("|")})\\b`, "g");
+
+function renderWithTooltips(text: string) {
+  const parts = text.split(tooltipPattern);
+
+  return parts.map((part, index) => {
+    const definition = TOOLTIP_TERMS[part];
+    if (!definition) return part;
+
+    return (
+      <span
+        key={`${part}-${index}`}
+        className="cursor-help border-b border-dotted border-cobalt-600 text-ink-900"
+        title={definition}
+      >
+        {part}
+      </span>
+    );
+  });
+}
+
 export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
   switch (block.type) {
     case "heading":
@@ -15,13 +44,13 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       );
 
     case "paragraph":
-      return <p className="text-lg leading-8 text-ink-700">{block.content}</p>;
+      return <p className="text-lg leading-8 text-ink-700">{renderWithTooltips(block.content)}</p>;
 
     case "bullets":
       return (
         <ul className="list-disc space-y-3 pl-6 text-lg leading-8 text-ink-700 marker:text-cobalt-600">
           {block.items.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>{renderWithTooltips(item)}</li>
           ))}
         </ul>
       );
@@ -30,7 +59,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       return (
         <ol className="list-decimal space-y-3 pl-6 text-lg leading-8 text-ink-700 marker:text-cobalt-600">
           {block.items.map((item) => (
-            <li key={item}>{item}</li>
+            <li key={item}>{renderWithTooltips(item)}</li>
           ))}
         </ol>
       );
@@ -53,7 +82,7 @@ export function ContentBlockRenderer({ block }: { block: ContentBlock }) {
                 <tr key={`${row.join("-")}-${index}`} className="border-t border-ink-100">
                   {row.map((cell, cellIndex) => (
                     <td key={`${cell}-${cellIndex}`} className="px-4 py-3 align-top text-ink-700">
-                      {cell}
+                      {renderWithTooltips(cell)}
                     </td>
                   ))}
                 </tr>

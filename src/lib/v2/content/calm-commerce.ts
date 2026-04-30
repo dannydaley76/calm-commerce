@@ -832,6 +832,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "Put each of your shortlisted ideas through the numbers. Use real figures wherever possible: actual supplier quotes, actual shipping rates, actual platform fees. Where you do not have real numbers yet, use conservative estimates.",
           },
           {
+            type: "callout",
+            style: "tip",
+            content:
+              "You do not need to open a separate spreadsheet for this. Add the numbers in the worksheet fields below. The worksheet is designed to hold each idea's costs, selling price, margin, and final decision in one place.",
+          },
+          {
             type: "paragraph",
             content:
               "Once you have run the numbers, you will likely find that some ideas have strong margins and some do not. The ones with thin or negative margins get eliminated here, regardless of how promising the demand signals were.",
