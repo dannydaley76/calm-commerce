@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const { supabase, learnerId, user } = await getActiveProjectForCurrentUser();
 
     if (!user || !learnerId) {
-      return NextResponse.redirect(new URL('/login', 'http://localhost:3000'), { status: 303 });
+      return NextResponse.redirect(new URL('/login', request.url), { status: 303 });
     }
 
     const { data: existing } = await supabase
@@ -25,11 +25,14 @@ export async function POST() {
 
       if (error) throw error;
 
-      await supabase.from("learners").update({ deletion_requested_at: new Date().toISOString() }).eq("id", learnerId);
+      await supabase
+        .from("learners")
+        .update({ deletion_requested_at: new Date().toISOString() })
+        .eq("id", learnerId);
     }
 
-    return NextResponse.redirect(new URL('/account?deletion=requested', 'http://localhost:3000'), { status: 303 });
+    return NextResponse.redirect(new URL('/account?deletion=requested', request.url), { status: 303 });
   } catch {
-    return NextResponse.redirect(new URL('/account?deletion=error', 'http://localhost:3000'), { status: 303 });
+    return NextResponse.redirect(new URL('/account?deletion=error', request.url), { status: 303 });
   }
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AccessLockedCard } from "@/components/access-locked-card";
-import { AccessStatusBadge } from "@/components/access-status-badge";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
@@ -14,38 +13,36 @@ type ChapterProgress = {
   worksheet_completion_percent: number;
 };
 
-async function getChapterProgress(): Promise<{ authenticated: boolean; progress: ChapterProgress[] }> {
+async function getChapterProgress(): Promise<{
+  authenticated: boolean;
+  progress: ChapterProgress[];
+}> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
-
-    if (!user || !projectId) {
-      return { authenticated: !!user, progress: [] };
-    }
+    if (!user || !projectId) return { authenticated: !!user, progress: [] };
 
     const { data } = await supabase
       .from("chapter_progress")
       .select("chapter_id, status, worksheet_completion_percent")
       .eq("project_id", projectId);
 
-    return {
-      authenticated: true,
-      progress: (data ?? []) as ChapterProgress[],
-    };
+    return { authenticated: true, progress: (data ?? []) as ChapterProgress[] };
   } catch {
     return { authenticated: false, progress: [] };
   }
 }
 
-function getStatusLabel(status: ChapterStatus) {
-  if (status === "completed") return "Completed";
-  if (status === "in_progress") return "In progress";
-  return "Not started";
+/** Maps ChapterStatus → cc-status-pill data-state. */
+function statusPillState(status: ChapterStatus): string {
+  if (status === "completed")   return "complete";
+  if (status === "in_progress") return "active";   // cobalt — learning progress, not a warning
+  return "not-started";
 }
 
-function getStatusColour(status: ChapterStatus) {
-  if (status === "completed") return "bg-success-100 text-[#005e3f]";
-  if (status === "in_progress") return "bg-[#eef4ff] text-cobalt-600";
-  return "bg-surface-sunken text-ink-500";
+function statusPillLabel(status: ChapterStatus): string {
+  if (status === "completed")   return "Completed";
+  if (status === "in_progress") return "In progress";
+  return "Not started";
 }
 
 export default async function ProgramPage() {
@@ -54,61 +51,73 @@ export default async function ProgramPage() {
     getAccessStateForCurrentUser(),
   ]);
 
-  // Build sorted chapter list from content
-  const chapters = Object.values(calmCommerceChapterContent).sort((a, b) => a.chapter.number - b.chapter.number);
+  const chapters = Object.values(calmCommerceChapterContent).sort(
+    (a, b) => a.chapter.number - b.chapter.number,
+  );
 
-  const progressByChapterId = Object.fromEntries(progress.map((p) => [p.chapter_id, p]));
+  const progressByChapterId = Object.fromEntries(
+    progress.map((p) => [p.chapter_id, p]),
+  );
 
   return (
     <LearnerShell
       items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program", active: true },
+        { href: "/",            label: "Dashboard" },
+        { href: "/program",     label: "Program", active: true },
         { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
+        { href: "/metrics",     label: "Metrics" },
+        { href: "/account",     label: "Account" },
       ]}
       title="Program"
       subtitle="All chapters in sequence. Pick up where you left off or jump to any chapter."
     >
-      {!access.canAccessPaidContent ? (
+
+      {/* Access gate */}
+      {!access.canAccessPaidContent && (
         <div className="mb-8">
           <AccessLockedCard
             title={
-              access.entitlementStatus === "expired" || access.entitlementStatus === "cancelled"
+              access.entitlementStatus === "expired" ||
+              access.entitlementStatus === "cancelled"
                 ? "Your paid access is inactive"
                 : "Preview access active"
             }
             body={
-              access.entitlementStatus === "expired" || access.entitlementStatus === "cancelled"
+              access.entitlementStatus === "expired" ||
+              access.entitlementStatus === "cancelled"
                 ? "You can still use the dashboard, but the full program is locked until you reactivate your access."
                 : "You are inside the product with preview access, but the full program view remains part of the paid experience."
             }
           />
         </div>
-      ) : null}
+      )}
 
-      {!authenticated ? (
-        <div className="mb-8 rounded-[1.5rem] bg-amber-100 p-5 ring-1 ring-[#f4d7a8]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9a5a00]">Signed-out mode</p>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#7a4b00]">
+      {/* Signed-out notice */}
+      {!authenticated && (
+        <div className="mb-8 rounded-[1.5rem] bg-amber-100 p-5 ring-1 ring-amber-100">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">
+            Signed-out mode
+          </p>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-amber-700">
             You can browse the program here, but learner progress appears after sign-in.
           </p>
           <div className="mt-4">
             <Link
               href="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-[#9a5a00] px-5 py-3 font-semibold !text-white"
+              className="inline-flex items-center justify-center rounded-xl bg-amber-700 px-5 py-3 font-semibold !text-white"
             >
               Sign in to continue
             </Link>
           </div>
         </div>
-      ) : null}
+      )}
 
+      {/* Chapter list */}
       <div className="space-y-4">
         {chapters.map((chapter) => {
           const chapterProgress = progressByChapterId[chapter.chapter.id];
-          const status: ChapterStatus = (chapterProgress?.status as ChapterStatus | undefined) ?? "not_started";
+          const status: ChapterStatus =
+            (chapterProgress?.status as ChapterStatus | undefined) ?? "not_started";
           const pct = Math.round(chapterProgress?.worksheet_completion_percent ?? 0);
           const hasWorksheet = !!chapter.chapter.worksheetId;
 
@@ -116,53 +125,70 @@ export default async function ProgramPage() {
             <Link
               key={chapter.chapter.slug}
               href={`/chapter/${chapter.chapter.slug}/steps`}
-              className="group flex items-start gap-5 rounded-[1.5rem] bg-white p-5 shadow-[0px_4px_16px_rgba(11,42,57,0.06)] ring-1 ring-[#e8e7f1] transition hover:ring-cobalt-600/30 lg:p-6"
+              className={[
+                "group flex items-start gap-5",
+                "rounded-[1.5rem] bg-surface-raised",
+                "border border-ink-100 shadow-card",
+                "p-5 lg:p-6",
+                "transition-[border-color,box-shadow,transform] duration-150",
+                "hover:border-cobalt-500 hover:shadow-card-hover",
+                "motion-safe:hover:-translate-y-px",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500",
+              ].join(" ")}
             >
-              {/* Chapter number */}
+              {/* Chapter number badge */}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-sunken font-[Manrope] text-sm font-extrabold text-ink-500">
                 {chapter.chapter.number}
               </div>
 
-              {/* Main content */}
+              {/* Content */}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
                       Phase {chapter.chapter.phase} · {chapter.chapter.phaseLabel}
                     </p>
-                    <h3 className="mt-1 font-[Manrope] text-base font-bold tracking-tight text-ink-900 group-hover:text-cobalt-600">
+                    <h3 className="mt-1 font-[Manrope] text-base font-bold tracking-tight text-ink-900 transition-colors duration-150 group-hover:text-cobalt-600">
                       {chapter.chapter.title}
                     </h3>
                   </div>
+
+                  {/* Status pill — uses cc-status-pill token system */}
                   <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${getStatusColour(status)}`}
+                    className="cc-status-pill shrink-0"
+                    data-state={statusPillState(status)}
                   >
-                    {getStatusLabel(status)}
+                    {statusPillLabel(status)}
                   </span>
                 </div>
 
+                {/* Metadata */}
                 <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-500">
                   <span>{chapter.chapter.estimatedReadMinutes} min read</span>
                   <span>{chapter.steps.length} steps</span>
                   {hasWorksheet && <span>Worksheet included</span>}
                 </div>
 
-                {hasWorksheet && authenticated && status !== "not_started" ? (
+                {/* Worksheet progress bar */}
+                {hasWorksheet && authenticated && status !== "not_started" && (
                   <div className="mt-3">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8e7f1]">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-100">
                       <div
-                        className="h-full rounded-full bg-cobalt-600 transition-all"
+                        className="h-full rounded-full bg-cobalt-600 transition-all duration-300"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="mt-1.5 text-xs text-ink-500">{pct}% worksheet complete</p>
+                    <p className="mt-1.5 text-xs text-ink-500">
+                      {pct}% worksheet complete
+                    </p>
                   </div>
-                ) : null}
+                )}
               </div>
             </Link>
           );
         })}
       </div>
+
     </LearnerShell>
   );
 }

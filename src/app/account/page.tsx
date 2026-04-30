@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { AccessStatusBadge } from "@/components/access-status-badge";
 import { LearnerShell } from "@/components/learner-shell";
+import { PrimaryButton, SecondaryButton, DestructiveButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
@@ -11,147 +11,248 @@ async function getAccountState() {
   ]);
 
   if (!user || !learnerId) {
-    return {
-      authenticated: false,
-      email: null,
-      fullName: null,
-      currencyCode: "GBP",
-      access,
-      deletionRequested: false,
-    };
+    return { authenticated: false as const, access, deletionRequested: false };
   }
 
   const [{ data: learner }, { data: deletionRequest }] = await Promise.all([
     supabase.from("learners").select("email, full_name").eq("id", learnerId).maybeSingle(),
-    supabase.from("account_deletion_requests").select("id, status").eq("learner_id", learnerId).order("requested_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase
+      .from("account_deletion_requests")
+      .select("id, status")
+      .eq("learner_id", learnerId)
+      .order("requested_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   return {
-    authenticated: true,
+    authenticated: true as const,
     email: learner?.email ?? user.email ?? null,
     fullName: learner?.full_name ?? null,
-    currencyCode: "GBP",
     access,
     deletionRequested: !!deletionRequest,
     deletionStatus: deletionRequest?.status ?? null,
   };
 }
 
-export default async function AccountPage() {
-  const state = await getAccountState();
+/* ── Status banner helper ─────────────────────────────────────────── */
+
+type BannerVariant = "success" | "error" | "info";
+
+function Banner({
+  variant,
+  children,
+}: {
+  variant: BannerVariant;
+  children: React.ReactNode;
+}) {
+  const styles: Record<BannerVariant, string> = {
+    success: "bg-success-100 text-success-600 border-success-100",
+    error:   "bg-error-100   text-error-700   border-error-100",
+    info:    "bg-cobalt-100  text-cobalt-600  border-cobalt-100",
+  };
+  return (
+    <div className={`rounded-xl border p-4 text-sm leading-6 ${styles[variant]}`}>
+      {children}
+    </div>
+  );
+}
+
+/* ── Page ─────────────────────────────────────────────────────────── */
+
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ profile?: string; deletion?: string }>;
+}) {
+  const [state, { profile, deletion }] = await Promise.all([
+    getAccountState(),
+    searchParams,
+  ]);
 
   return (
     <LearnerShell
       items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
+        { href: "/",            label: "Dashboard" },
+        { href: "/program",     label: "Program" },
         { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account", active: true },
+        { href: "/metrics",     label: "Metrics" },
+        { href: "/account",     label: "Account", active: true },
       ]}
       title="Account"
-      subtitle="Manage your current learner account details and support actions."
+      subtitle="Manage your learner account details and access."
     >
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
-        <section className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)]">
+
+        {/* ── Profile card ── */}
+        <section className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-8 shadow-card">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Profile</p>
-          <h2 className="mt-4 font-[Manrope] text-3xl font-extrabold tracking-tight">Your account details</h2>
+          <h2 className="mt-4 font-[Manrope] text-2xl font-bold tracking-tight text-ink-900">
+            Your account details
+          </h2>
 
           {!state.authenticated ? (
-            <div className="mt-6 rounded-2xl bg-error-100 p-5 text-error-700">
-              <p className="font-semibold">You are not signed in.</p>
-              <p className="mt-2 text-sm leading-6">Sign in first to view or manage your learner account.</p>
+            <div className="mt-6">
+              <Banner variant="error">
+                You are not signed in. Sign in first to view or manage your learner account.
+              </Banner>
             </div>
           ) : (
             <div className="mt-6 space-y-6">
+
+              {/* Profile updated / error feedback */}
+              {profile === "updated" && (
+                <Banner variant="success">Profile saved successfully.</Banner>
+              )}
+              {profile === "error" && (
+                <Banner variant="error">Something went wrong saving your profile. Please try again.</Banner>
+              )}
+
+              {/* Info tiles */}
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-surface-sunken p-5">
+                <div className="rounded-xl bg-surface-sunken p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Email</p>
-                  <p className="mt-2 text-sm leading-7 text-ink-900">{state.email || "Unknown"}</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-900 break-all">{state.email || "Unknown"}</p>
                 </div>
-                <div className="rounded-2xl bg-surface-sunken p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Money units</p>
-                  <p className="mt-2 text-sm leading-7 text-ink-900">GBP (temporary default)</p>
+                <div className="rounded-xl bg-surface-sunken p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Currency</p>
+                  <p className="mt-2 text-sm leading-7 text-ink-500">GBP (fixed)</p>
                 </div>
-                <div className="rounded-2xl bg-surface-sunken p-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Access state</p>
-                  <div className="mt-3"><AccessStatusBadge status={state.access.entitlementStatus} level={state.access.accessLevel} compact /></div>
+                <div className="rounded-xl bg-surface-sunken p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Access</p>
+                  <div className="mt-3">
+                    <AccessStatusBadge
+                      status={state.access.entitlementStatus}
+                      level={state.access.accessLevel}
+                      compact
+                    />
+                  </div>
                 </div>
               </div>
 
-              <form action="/api/account/update-profile" method="post" className="rounded-2xl bg-[#f8fbff] p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Edit profile</p>
+              {/* Edit profile form */}
+              <form
+                action="/api/account/update-profile"
+                method="post"
+                className="rounded-xl border border-ink-100 bg-surface-sunken p-5"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+                  Edit profile
+                </p>
                 <div className="mt-4 grid max-w-2xl gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-ink-900" htmlFor="full_name">Full name</label>
+                    <label
+                      className="block text-sm font-medium text-ink-900"
+                      htmlFor="full_name"
+                    >
+                      Full name
+                    </label>
                     <input
                       id="full_name"
                       name="full_name"
+                      type="text"
                       defaultValue={state.fullName ?? ""}
-                      className="mt-2 w-full rounded-xl border border-ink-100 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-cobalt-600"
+                      className="mt-2 w-full rounded-xl border border-ink-100 bg-surface-raised px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-cobalt-600 focus:ring-2 focus:ring-cobalt-500/20"
                       placeholder="Your name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-ink-900" htmlFor="currency_code">Currency</label>
+                    <label
+                      className="block text-sm font-medium text-ink-900"
+                      htmlFor="currency_code"
+                    >
+                      Currency
+                    </label>
+                    {/* defaultValue + readOnly prevents the React controlled-input warning */}
                     <input
                       id="currency_code"
                       name="currency_code"
-                      value="GBP"
-                      disabled
-                      className="mt-2 w-full rounded-xl border border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500 outline-none"
+                      type="text"
+                      defaultValue="GBP"
+                      readOnly
+                      className="mt-2 w-full cursor-not-allowed rounded-xl border border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500 outline-none"
                     />
                   </div>
                 </div>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-ink-500">
-                  Currency preference is temporarily fixed to GBP until the learner schema rollout is completed. Locale-aware onboarding and profile editing remain tracked follow-up work.
+                <p className="mt-3 max-w-2xl text-xs leading-6 text-ink-500">
+                  Currency preference is fixed to GBP while locale-aware onboarding is in development.
                 </p>
-                <div className="mt-4">
-                  <button className="inline-flex items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white">
+                <div className="mt-5">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center rounded-lg bg-cobalt-600 px-5 py-3 text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(11,42,57,0.08)] transition hover:bg-cobalt-700 motion-safe:hover:-translate-y-px hover:shadow-[0_6px_14px_rgba(0,73,207,0.30)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+                  >
                     Save profile
                   </button>
                 </div>
               </form>
+
             </div>
           )}
         </section>
 
+        {/* ── Right column ── */}
         <section className="space-y-6">
-          <div className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5b48d6]">Manage access</p>
-            <h3 className="mt-4 font-[Manrope] text-2xl font-extrabold tracking-tight">Subscription and access</h3>
-            <p className="mt-3 text-sm leading-7 text-ink-500">
-              You can review your current access path here and move toward the paid experience from this page when needed.
+
+          {/* Subscription card */}
+          <div className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-8 shadow-card">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#545a95]">
+              Manage access
             </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <Link href="/upgrade" className="inline-flex items-center justify-center rounded-xl bg-[#5b48d6] px-5 py-3 font-semibold !text-white">
-                View upgrade options
-              </Link>
-              <Link href="/dev/mock-billing" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
-                Access options
-              </Link>
+            <h3 className="mt-4 font-[Manrope] text-xl font-bold tracking-tight text-ink-900">
+              Subscription and access
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-ink-500">
+              Review your current access and upgrade to the full program when you&apos;re ready.
+            </p>
+            <div className="mt-6">
+              <PrimaryButton href="/upgrade">View upgrade options</PrimaryButton>
             </div>
           </div>
 
-          <div className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)]">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-error-700">Account deletion</p>
-            <h3 className="mt-4 font-[Manrope] text-2xl font-extrabold tracking-tight">Request account deletion</h3>
-            <p className="mt-3 text-sm leading-7 text-ink-500">
-              If you want your account removed, you can submit a deletion request here and it will be handled through the current support flow.
+          {/* Account deletion card */}
+          <div className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-8 shadow-card">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-error-700">
+              Account deletion
             </p>
-            {state.deletionRequested ? (
-              <div className="mt-5 rounded-2xl bg-amber-100 p-5 text-[#865400]">
-                <p className="font-semibold">Deletion request already received</p>
-                <p className="mt-2 text-sm leading-6">Current status: {state.deletionStatus ?? "requested"}</p>
+            <h3 className="mt-4 font-[Manrope] text-xl font-bold tracking-tight text-ink-900">
+              Request account deletion
+            </h3>
+            <p className="mt-3 text-sm leading-7 text-ink-500">
+              If you want your account removed, submit a deletion request here.
+              It will be processed through our support flow.
+            </p>
+
+            {/* Deletion feedback */}
+            {deletion === "requested" && (
+              <div className="mt-4">
+                <Banner variant="info">
+                  Deletion request received. We'll process this as soon as possible.
+                </Banner>
               </div>
-            ) : (
-              <form action="/api/account/request-deletion" method="post" className="mt-6">
-                <button className="inline-flex items-center justify-center rounded-xl bg-error-700 px-5 py-3 font-semibold !text-white">
-                  Request account deletion
-                </button>
-              </form>
             )}
+            {deletion === "error" && (
+              <div className="mt-4">
+                <Banner variant="error">Something went wrong. Please try again.</Banner>
+              </div>
+            )}
+
+            {state.authenticated && state.deletionRequested ? (
+              <div className="mt-5">
+                <Banner variant="info">
+                  <p className="font-semibold">Deletion request already received</p>
+                  <p className="mt-1">
+                    Status: {state.deletionStatus ?? "requested"}
+                  </p>
+                </Banner>
+              </div>
+            ) : state.authenticated ? (
+              <form action="/api/account/request-deletion" method="post" className="mt-6">
+                <DestructiveButton type="submit">Request account deletion</DestructiveButton>
+              </form>
+            ) : null}
           </div>
+
         </section>
       </div>
     </LearnerShell>

@@ -1,233 +1,279 @@
+import Link from "next/link";
 import { AccessStatusBadge } from "@/components/access-status-badge";
-import { Card, Eyebrow, PageHero, Panel, PrimaryButton, ProgressBar, SecondaryButton, SectionShell } from "@/components/design-system";
 import { LearnerShell } from "@/components/learner-shell";
+import { PrimaryButton, SecondaryButton, ProgressBar, Eyebrow } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
+import { calmCommerceChapterContent } from "@/lib/v2/content";
+
+/* ─────────────────────────────────────────────────────────────
+   Types
+───────────────────────────────────────────────────────────── */
 
 type ChapterStatus = "not_started" | "in_progress" | "completed";
 
-type DashboardState = {
-  authenticated: boolean;
-  status: ChapterStatus;
-  progressPercent: number;
+type ChapterEntry = {
+  chapter: {
+    id: string;
+    number: number;
+    slug: string;
+    title: string;
+    phase: number;
+    phaseLabel: string;
+    worksheetId?: string;
+  };
+  steps: unknown[];
 };
 
-const chapterCards = [
-  {
-    slug: "set-your-founder-rules",
-    number: 3,
-    title: "Set Your Founder Rules",
-    description: "Define the operating rules for time, budget, and decision-making.",
-    href: "/chapter/set-your-founder-rules",
-    badge: "Current",
-  },
-  {
-    slug: "welcome-you-can-do-this",
-    number: 4,
-    title: "Pick product ideas worth testing",
-    description: "Stress-test your hypotheses against market reality.",
-    href: "/chapter/welcome-you-can-do-this/steps",
-    badge: "Next",
-  },
-];
+type DashboardData =
+  | { authenticated: false }
+  | {
+      authenticated: true;
+      completedCount: number;
+      totalChapters: number;
+      progressPct: number;
+      currentChapter: ChapterEntry | null;
+      currentStatus: ChapterStatus;
+      worksheetPct: number;
+      allDone: boolean;
+    };
 
-async function getDashboardState(): Promise<DashboardState> {
+/* ─────────────────────────────────────────────────────────────
+   Data
+───────────────────────────────────────────────────────────── */
+
+async function getDashboardData(): Promise<DashboardData> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
 
-    if (!user) return { authenticated: false, status: "not_started", progressPercent: 0 };
-    if (!projectId) return { authenticated: true, status: "not_started", progressPercent: 0 };
+    if (!user) return { authenticated: false };
 
-    const { data: progress } = await supabase
+    const chapters = (
+      Object.values(calmCommerceChapterContent) as ChapterEntry[]
+    ).sort((a, b) => a.chapter.number - b.chapter.number);
+
+    if (!projectId) {
+      return {
+        authenticated: true,
+        completedCount: 0,
+        totalChapters: chapters.length,
+        progressPct: 0,
+        currentChapter: chapters[0] ?? null,
+        currentStatus: "not_started",
+        worksheetPct: 0,
+        allDone: false,
+      };
+    }
+
+    const { data: rows } = await supabase
       .from("chapter_progress")
-      .select("status, worksheet_completion_percent")
-      .eq("project_id", projectId)
-      .eq("chapter_id", "chapter-4")
-      .maybeSingle();
+      .select("chapter_id, status, worksheet_completion_percent")
+      .eq("project_id", projectId);
+
+    const byId = Object.fromEntries(
+      (rows ?? []).map((r) => [r.chapter_id, r]),
+    );
+
+    const completedCount = chapters.filter(
+      (ch) => byId[ch.chapter.id]?.status === "completed",
+    ).length;
+
+    // Current = first in_progress → first not_started → last chapter
+    const current =
+      chapters.find((ch) => byId[ch.chapter.id]?.status === "in_progress") ??
+      chapters.find((ch) => !byId[ch.chapter.id] || byId[ch.chapter.id].status === "not_started") ??
+      chapters[chapters.length - 1] ??
+      null;
+
+    const currentRow = current ? byId[current.chapter.id] : null;
 
     return {
       authenticated: true,
-      status: (progress?.status as ChapterStatus | undefined) ?? "not_started",
-      progressPercent: Math.round(progress?.worksheet_completion_percent ?? 0),
+      completedCount,
+      totalChapters: chapters.length,
+      progressPct: Math.round((completedCount / chapters.length) * 100),
+      currentChapter: current,
+      currentStatus: (currentRow?.status as ChapterStatus | undefined) ?? "not_started",
+      worksheetPct: Math.round(currentRow?.worksheet_completion_percent ?? 0),
+      allDone: completedCount === chapters.length,
     };
   } catch {
-    return { authenticated: false, status: "not_started", progressPercent: 0 };
+    return { authenticated: false };
   }
 }
 
-function getPrimaryCta(state: DashboardState) {
-  if (!state.authenticated) {
+/* ─────────────────────────────────────────────────────────────
+   CTA derivation
+───────────────────────────────────────────────────────────── */
+
+type Cta = { href: string; label: string; secondary?: boolean };
+
+function deriveCta(data: DashboardData): Cta {
+  if (!data.authenticated) {
+    return { href: "/login", label: "Sign in to continue" };
+  }
+  if (data.allDone) {
+    return { href: "/lean-canvas", label: "Open your Lean Canvas" };
+  }
+  if (!data.currentChapter) {
+    return { href: "/program", label: "Browse the program" };
+  }
+  const slug = data.currentChapter.chapter.slug;
+  if (data.currentStatus === "not_started" && data.completedCount === 0) {
     return {
-      href: "/login",
-      label: "Sign in to continue",
-      subtext: "Sign in to load your learner progress and saved worksheet answers.",
+      href: `/chapter/${slug}/steps`,
+      label: `Start Chapter ${data.currentChapter.chapter.number}`,
     };
   }
-
-  if (state.status === "completed") {
-    return {
-      href: "/lean-canvas",
-      label: "Open operating canvas",
-      subtext: "Your Founder Rules Sheet is complete. The best next move is to see the operating model built from your worksheet answers.",
-    };
-  }
-
-  if (state.status === "in_progress") {
-    return {
-      href: "/resume",
-      label: "Complete the worksheet",
-      subtext: "You are building the foundations of your e-commerce business. Chapter 3 helps you set the rules that will guide your decisions.",
-    };
-  }
-
   return {
-    href: "/chapter/set-your-founder-rules",
-    label: "Start Chapter 3",
-    subtext: "You are building the foundations of your e-commerce business. Chapter 3 helps you set the rules that will guide your decisions.",
+    href: `/chapter/${slug}/steps`,
+    label: `Continue Chapter ${data.currentChapter.chapter.number}`,
   };
 }
 
-function getStatusLabel(status: ChapterStatus) {
-  if (status === "completed") return "Completed";
-  if (status === "in_progress") return "In progress";
-  return "Not started";
+function heroTitle(data: DashboardData): string {
+  if (!data.authenticated) return "Welcome to Calm Commerce OS.";
+  if (!("allDone" in data)) return "Welcome back.";
+  if (data.allDone) return "Program complete.";
+  if (data.currentStatus === "in_progress")
+    return `You're on Chapter ${data.currentChapter?.chapter.number}.`;
+  if (data.completedCount === 0) return "Ready to start.";
+  return `Up next: Chapter ${data.currentChapter?.chapter.number}.`;
 }
 
+function heroDescription(data: DashboardData, cta: Cta): string {
+  if (!data.authenticated)
+    return "Sign in to load your learner progress and pick up where you left off.";
+  if (!("currentChapter" in data) || !data.currentChapter)
+    return "Browse the full program to choose where to begin.";
+  if (data.allDone)
+    return "You've completed all chapters. Your Lean Canvas and Metrics capture everything you've built.";
+  return data.currentChapter.chapter.title;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Page
+───────────────────────────────────────────────────────────── */
+
 export default async function DashboardPage() {
-  const [state, access] = await Promise.all([getDashboardState(), getAccessStateForCurrentUser()]);
-  const primaryCta = getPrimaryCta(state);
-  const [currentChapter, nextChapter] = chapterCards;
-  const visualProgress = state.authenticated ? Math.max(state.progressPercent, 35) : 35;
+  const [data, access] = await Promise.all([
+    getDashboardData(),
+    getAccessStateForCurrentUser(),
+  ]);
+
+  const cta = deriveCta(data);
 
   return (
     <LearnerShell
       items={[
-        { href: "/", label: "Dashboard", active: true },
-        { href: "/program", label: "Program" },
+        { href: "/",            label: "Dashboard", active: true },
+        { href: "/program",     label: "Program" },
         { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
+        { href: "/metrics",     label: "Metrics" },
+        { href: "/account",     label: "Account" },
       ]}
       title="Dashboard"
     >
-      <div className="space-y-16">
-        <PageHero label="Current focus" title="Focusing your journey." description={primaryCta.subtext}>
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <AccessStatusBadge status={access.entitlementStatus} level={access.accessLevel} compact />
+      <div className="space-y-10">
+
+        {/* ── Hero ── */}
+        <section className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-8 shadow-card">
+
+          {/* Access badge */}
+          <div className="mb-5">
+            <AccessStatusBadge
+              status={access.entitlementStatus}
+              level={access.accessLevel}
+              compact
+            />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <ProgressBar value={visualProgress} />
-            </div>
-            <span className="text-[12px] font-medium text-teal-600">{state.authenticated ? `${visualProgress}% complete` : "Preview mode"}</span>
-          </div>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            <div>
-              <Eyebrow>Current chapter</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">3. Set your founder rules</p>
-            </div>
-            <div>
-              <Eyebrow>Worksheet status</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">{state.authenticated ? getStatusLabel(state.status) : "Sign in to load"}</p>
-            </div>
-            <div>
-              <Eyebrow>Best next action</Eyebrow>
-              <p className="mt-1 font-[Manrope] text-[14px] font-semibold text-ink-900">{primaryCta.label}</p>
-            </div>
-          </div>
-        </PageHero>
+          {/* Title + description */}
+          <h2 className="font-[Manrope] text-3xl font-bold tracking-tight text-ink-900">
+            {heroTitle(data)}
+          </h2>
+          {"currentChapter" in data && data.currentChapter && !data.allDone && (
+            <p className="mt-1 text-base text-ink-500">
+              {data.currentChapter.chapter.phaseLabel}
+            </p>
+          )}
+          <p className="mt-3 max-w-[560px] text-sm leading-7 text-ink-700">
+            {heroDescription(data, cta)}
+          </p>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <Card>
-            <Eyebrow>Chapter 3</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">Set your founder rules</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Market validation and archetype definition.</p>
-            <span className="mt-3 inline-block rounded-full bg-[rgba(84,90,149,0.1)] px-[8px] py-[2px] text-[11px] font-medium text-[#545a95]">
-              {state.authenticated ? getStatusLabel(state.status) : "Preview"}
-            </span>
-          </Card>
-
-          <Card>
-            <Eyebrow>Worksheet progress</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">{state.authenticated ? `${Math.round((visualProgress / 100) * 8)} of 8 fields` : "No saved data"}</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Founder Rules sheet nearly complete.</p>
-            <span className="mt-3 inline-block rounded-full bg-[rgba(0,107,95,0.1)] px-[8px] py-[2px] text-[11px] font-medium text-teal-600">
-              {state.authenticated ? `${visualProgress}% done` : "Preview"}
-            </span>
-          </Card>
-
-          <Card>
-            <Eyebrow>Best next action</Eyebrow>
-            <p className="mt-1 font-[Manrope] text-[16px] font-semibold text-ink-900">{primaryCta.label}</p>
-            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Then view your Lean Canvas to see the operating model.</p>
-          </Card>
-        </div>
-
-        <SectionShell label="Curriculum path" title="Where you are" description="Your current chapter and what comes next.">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Card className="outline outline-2 outline-[#545a95]">
-              <Eyebrow>Chapter {currentChapter.number}</Eyebrow>
-              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-ink-900">{currentChapter.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">{currentChapter.description}</p>
-              <div className="mt-3">
-                <ProgressBar value={Math.max(state.progressPercent, 75)} />
+          {/* Progress bar — overall program completion */}
+          {"progressPct" in data && (
+            <div className="mt-6">
+              <div className="mb-2 flex items-baseline justify-between gap-4">
+                <Eyebrow>Program progress</Eyebrow>
+                <span className="text-xs text-ink-500">
+                  {data.completedCount} of {data.totalChapters} chapters complete
+                </span>
               </div>
-              <span className="mt-3 inline-block rounded-full bg-[rgba(84,90,149,0.12)] px-[8px] py-[2px] text-[10px] font-medium text-[#545a95]">
-                {currentChapter.badge}
-              </span>
-            </Card>
+              <ProgressBar value={data.progressPct} />
+              {data.worksheetPct > 0 && !data.allDone && data.currentStatus !== "not_started" && (
+                <p className="mt-1.5 text-xs text-ink-500">
+                  Current chapter worksheet: {data.worksheetPct}% complete
+                </p>
+              )}
+            </div>
+          )}
 
-            <Card>
-              <Eyebrow>Chapter {nextChapter.number}</Eyebrow>
-              <h3 className="mt-2 font-[Manrope] text-[15px] font-semibold text-ink-900">{nextChapter.title}</h3>
-              <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">{nextChapter.description}</p>
-              <div className="mt-3">
-                <ProgressBar value={0} />
-              </div>
-              <span className="mt-3 inline-block rounded-full bg-[rgba(73,99,111,0.1)] px-[8px] py-[2px] text-[10px] font-medium text-ink-700">
-                {nextChapter.badge}
-              </span>
-            </Card>
+          {/* Primary CTA */}
+          <div className="mt-6">
+            <PrimaryButton href={cta.href}>{cta.label} →</PrimaryButton>
           </div>
+        </section>
 
-          <Panel className="mt-6">
-            <Eyebrow>Your lean canvas</Eyebrow>
-            <h3 className="mt-2 font-[Manrope] text-[16px] font-semibold text-ink-900">Operating model preview</h3>
-            <p className="mt-2 text-[13px] leading-[1.5] text-ink-700">Your worksheet answers feed into this evolving business artifact.</p>
+        {/* ── Quick links ── */}
+        <section>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">
+            Where to go
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
 
-            <div className="mt-4 grid grid-cols-4 gap-[6px]">
-              {[
-                "Problem",
-                "Solution",
-                "Key metrics",
-                "Value prop",
-                "Channels",
-                "Customers",
-                "Cost",
-                "Revenue",
-              ].map((label, index) => (
-                <div
-                  key={label}
-                  className={[
-                    "rounded px-2 py-2 font-[Inter] text-[10px] font-medium uppercase tracking-[0.03em]",
-                    index < 4 ? "bg-[rgba(255,255,255,0.9)] text-ink-900" : "bg-[rgba(255,255,255,0.6)] text-ink-700",
-                  ].join(" ")}
-                >
-                  {label}
-                </div>
-              ))}
-            </div>
+            <Link
+              href="/program"
+              className="group flex flex-col rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card transition-[border-color,box-shadow,transform] duration-150 hover:border-cobalt-500 hover:shadow-card-hover motion-safe:hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500"
+            >
+              <span className="text-xl">📖</span>
+              <span className="mt-3 font-[Manrope] text-sm font-semibold text-ink-900 group-hover:text-cobalt-600 transition-colors duration-150">
+                Full program
+              </span>
+              <span className="mt-1 text-xs text-ink-500">
+                All chapters in sequence
+              </span>
+            </Link>
 
-            <div className="mt-4">
-              <SecondaryButton href="/lean-canvas">View lean canvas</SecondaryButton>
-            </div>
-          </Panel>
-        </SectionShell>
+            <Link
+              href="/lean-canvas"
+              className="group flex flex-col rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card transition-[border-color,box-shadow,transform] duration-150 hover:border-cobalt-500 hover:shadow-card-hover motion-safe:hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500"
+            >
+              <span className="text-xl">🗺</span>
+              <span className="mt-3 font-[Manrope] text-sm font-semibold text-ink-900 group-hover:text-cobalt-600 transition-colors duration-150">
+                Lean Canvas
+              </span>
+              <span className="mt-1 text-xs text-ink-500">
+                Your operating model
+              </span>
+            </Link>
 
-        <div className="flex justify-center">
-          <PrimaryButton href={primaryCta.href}>{primaryCta.label}</PrimaryButton>
-        </div>
+            <Link
+              href="/metrics"
+              className="group flex flex-col rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card transition-[border-color,box-shadow,transform] duration-150 hover:border-cobalt-500 hover:shadow-card-hover motion-safe:hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500"
+            >
+              <span className="text-xl">📊</span>
+              <span className="mt-3 font-[Manrope] text-sm font-semibold text-ink-900 group-hover:text-cobalt-600 transition-colors duration-150">
+                Metrics
+              </span>
+              <span className="mt-1 text-xs text-ink-500">
+                Weekly performance log
+              </span>
+            </Link>
+
+          </div>
+        </section>
+
       </div>
     </LearnerShell>
   );

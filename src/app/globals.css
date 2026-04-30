@@ -386,6 +386,8 @@ textarea:focus-visible {
 }
 .cc-status-pill[data-state="not-started"] { background: var(--cc-pill-not-bg); color: var(--cc-pill-not-fg); }
 .cc-status-pill[data-state="in-progress"]  { background: var(--cc-pill-in-bg);  color: var(--cc-pill-in-fg);  }
+/* active — cobalt blue, used for chapter progress "In progress" on the Program page */
+.cc-status-pill[data-state="active"]      { background: var(--cobalt-100);      color: var(--cobalt-600);     }
 .cc-status-pill[data-state="complete"]     { background: var(--cc-pill-cmp-bg); color: var(--cc-pill-cmp-fg); }
 .cc-status-pill[data-state="paid"]         { background: var(--cc-pill-paid-bg); color: var(--cc-pill-paid-fg); }
 .cc-indicator {
