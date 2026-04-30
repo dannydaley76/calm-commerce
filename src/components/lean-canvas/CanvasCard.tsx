@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import type { CanvasSectionState, SectionStatus } from './types';
 import { CompletionGlyph } from './CompletionGlyph';
+import { writeWorksheetField } from './write-worksheet-field';
+import { ActionMenu, PencilIcon, TrashIcon } from '@/components/ActionMenu';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -10,6 +12,10 @@ export interface SubField {
   label: string;
   /** null → italic muted "Not yet". */
   value: string | null;
+  /** Worksheet field key — enables inline edit/delete when provided. */
+  fieldKey?: string;
+  /** Which worksheet to write to when editing/deleting this field. */
+  worksheetId?: string;
 }
 
 /**
@@ -138,6 +144,56 @@ export function CanvasCard({
   const label   = actionLabel ?? getDefaultActionLabel(state);
   const isEmpty = status === 'empty';
 
+  /* Subfield inline-edit state */
+  const [editingKey, setEditingKey]     = useState<string | null>(null);
+  const [editValue, setEditValue]       = useState('');
+  const [saving, setSaving]             = useState(false);
+  const [fieldError, setFieldError]     = useState<string | null>(null);
+  /** Optimistic overrides applied after successful saves/deletes. */
+  const [localOverrides, setLocalOverrides] = useState<Record<string, string | null>>({});
+
+  function startEdit(key: string, current: string | null) {
+    setEditingKey(key);
+    setEditValue(current ?? '');
+    setFieldError(null);
+  }
+
+  function cancelEdit() {
+    setEditingKey(null);
+    setFieldError(null);
+  }
+
+  async function saveEdit(key: string, wsId: string) {
+    const trimmed = editValue.trim();
+    setSaving(true);
+    setFieldError(null);
+    const result = await writeWorksheetField(key, trimmed, wsId);
+    setSaving(false);
+    if (!result.ok) {
+      setFieldError(result.error ?? 'Save failed');
+    } else {
+      setLocalOverrides((prev) => ({ ...prev, [key]: trimmed || null }));
+      setEditingKey(null);
+    }
+  }
+
+  async function deleteField(key: string, wsId: string) {
+    setSaving(true);
+    setFieldError(null);
+    const result = await writeWorksheetField(key, '', wsId);
+    setSaving(false);
+    if (!result.ok) {
+      setFieldError(result.error ?? 'Delete failed');
+    } else {
+      setLocalOverrides((prev) => ({ ...prev, [key]: null }));
+    }
+  }
+
+  function displayValue(f: SubField): string | null {
+    if (f.fieldKey && f.fieldKey in localOverrides) return localOverrides[f.fieldKey];
+    return f.value;
+  }
+
   /* Expand / show-more */
   const [isExpanded, setIsExpanded] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -240,20 +296,85 @@ export function CanvasCard({
                       </Fragment>
                     ))}
                   </dl>
-                : /* Standard stacked list */
+                : /* Standard stacked list — editable when fieldKey+worksheetId provided */
                   <dl className={children ? 'mt-2' : undefined}>
-                    {subFields.map((f) => (
-                      <div key={f.label} className="mb-2">
-                        <dt className="text-[10px] font-bold uppercase tracking-wider text-cobalt-600">
-                          {f.label}
-                        </dt>
-                        {f.value !== null ? (
-                          <dd className="mt-0.5 text-sm leading-6 text-ink-900">{f.value}</dd>
-                        ) : (
-                          <dd className="mt-0.5 text-sm italic text-ink-300">Not yet</dd>
-                        )}
-                      </div>
-                    ))}
+                    {subFields.map((f) => {
+                      const dv      = displayValue(f);
+                      const isEditing = editingKey === f.fieldKey;
+                      const hasEditSupport = !!f.fieldKey && !!f.worksheetId;
+
+                      return (
+                        <div key={f.label} className="group/field mb-2">
+                          {/* Label row + ⋯ action menu */}
+                          <dt className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-cobalt-600">
+                            <span>{f.label}</span>
+                            {hasEditSupport && !isEditing && (
+                              <span className="relative z-20 opacity-0 transition-opacity group-hover/field:opacity-100">
+                                <ActionMenu
+                                  ariaLabel={`Actions for ${f.label}`}
+                                  items={[
+                                    {
+                                      label: 'Edit',
+                                      icon: <PencilIcon />,
+                                      onClick: () => startEdit(f.fieldKey!, dv),
+                                    },
+                                    ...(dv !== null ? [{
+                                      label: 'Delete',
+                                      icon: <TrashIcon />,
+                                      onClick: () => void deleteField(f.fieldKey!, f.worksheetId!),
+                                      variant: 'destructive' as const,
+                                      disabled: saving,
+                                    }] : []),
+                                  ]}
+                                />
+                              </span>
+                            )}
+                          </dt>
+
+                          {/* Value or inline edit input */}
+                          {isEditing ? (
+                            <dd className="relative z-20 mt-1">
+                              <input
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') { e.preventDefault(); void saveEdit(f.fieldKey!, f.worksheetId!); }
+                                  if (e.key === 'Escape') cancelEdit();
+                                }}
+                                autoFocus
+                                aria-label={f.label}
+                                className="w-full rounded-lg border border-ink-100 bg-surface-raised px-2.5 py-1.5 text-sm text-ink-900 focus:border-cobalt-600 focus:outline-none focus:ring-2 focus:ring-cobalt-500/20"
+                              />
+                              {fieldError && (
+                                <p className="mt-1 text-xs text-error-700">{fieldError}</p>
+                              )}
+                              <div className="mt-1.5 flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void saveEdit(f.fieldKey!, f.worksheetId!)}
+                                  disabled={saving}
+                                  className="rounded-md bg-cobalt-600 px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50 hover:bg-cobalt-700 transition-colors"
+                                >
+                                  {saving ? 'Saving…' : 'Save'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEdit}
+                                  className="rounded-md border border-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-700 hover:bg-surface-sunken transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </dd>
+                          ) : dv !== null ? (
+                            <dd className="mt-0.5 text-sm leading-6 text-ink-900">{dv}</dd>
+                          ) : (
+                            <dd className="mt-0.5 text-sm italic text-ink-300">Not yet</dd>
+                          )}
+                        </div>
+                      );
+                    })}
                   </dl>
             )}
           </>

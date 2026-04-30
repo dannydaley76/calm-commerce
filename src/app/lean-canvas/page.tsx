@@ -32,6 +32,33 @@ const OPERATING_SECTIONS = [
 ] as const;
 
 /**
+ * Maps each canvas field key to the worksheetId it should be written to.
+ * Derived from the worksheet JSON files — a field key is globally unique.
+ */
+const FIELD_WORKSHEET_MAP: Record<string, string> = {
+  ad_platform:              "ad-test-worksheet",
+  chosen_idea:              "unit-economics-worksheet",
+  core_problem:             "customer-profile-worksheet",
+  customer_description:     "customer-profile-worksheet",
+  email_collection_method:  "email-retention-worksheet",
+  estimated_startup_cost:   "sourcing-model-sheet",
+  final_price:              "offer-worksheet",
+  first_week_actions:       "traffic-plan-worksheet",
+  free_channels_chosen:     "traffic-plan-worksheet",
+  key_differentiator:       "offer-worksheet",
+  margin_after_all_costs:   "offer-worksheet",
+  minimum_viable_version:   "offer-worksheet",
+  offer_summary:            "offer-worksheet",
+  positioning_statement:    "offer-worksheet",
+  product_title:            "product-listing-worksheet",
+  repeat_purchase_strategy: "email-retention-worksheet",
+  sourcing_model:           "sourcing-model-sheet",
+  what_builds_trust:        "customer-profile-worksheet",
+  what_they_value_most:     "customer-profile-worksheet",
+  where_they_gather:        "customer-profile-worksheet",
+};
+
+/**
  * Maps each Business model section ID to its CSS grid area and internal
  * density variant.  Grid placement and card density are decoupled: the area
  * class controls where the card sits in the 12-col template-areas grid, and
@@ -834,6 +861,8 @@ export default async function LeanCanvasPage({
                   const subFields: SubField[] = section.fieldData.map((f) => ({
                     label: f.label,
                     value: f.filled ? (f.value ?? null) : null,
+                    fieldKey:    f.key,
+                    worksheetId: FIELD_WORKSHEET_MAP[f.key],
                   }));
 
                   /* Cost structure gets unit-economics block as children */
