@@ -650,7 +650,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       title: "Know Your Numbers Before You Commit",
       phase: 2,
       phaseLabel: "Set Your Rules and Test",
-      estimatedReadMinutes: 12,
+      estimatedReadMinutes: 15,
       worksheetId: "unit-economics-worksheet",
       canvasSections: ["product_economics"],
     },
@@ -697,6 +697,23 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "If that margin were £2 instead of £10, you would need to sell five times as many products to make the same money — and a small cost increase could tip you into losing money on every sale.",
           },
+          { type: "heading", level: 3, content: "A quick margin health check" },
+          {
+            type: "table",
+            headers: ["Margin after all costs", "What it usually means", "Decision"],
+            rows: [
+              ["40%+ of selling price", "You have room for mistakes, discounts, and some paid testing.", "Strong candidate"],
+              ["25-40%", "Workable, but you need to watch fees, shipping, and ad spend carefully.", "Continue with caution"],
+              ["10-25%", "Thin. One missed cost, return, or discount can remove most of the profit.", "Revise before testing"],
+              ["Below 10% or negative", "The product may sell, but the business probably does not work.", "Reject or rethink"],
+            ],
+          },
+          {
+            type: "callout",
+            style: "example",
+            content:
+              "Example: a product selling for £18 with £4 margin looks profitable at first. But if one in ten orders is returned, or you need to spend £5 to acquire a customer, the profit disappears. A product selling for £25 with £10 margin gives you far more room to learn.",
+          },
         ],
       },
       {
@@ -715,6 +732,20 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "There is no universally right answer. What matters is that you know your shipping cost per order and factor it into your unit economics before you set your price.",
           },
+          {
+            type: "table",
+            headers: ["Shipping choice", "Works best when", "Watch out for"],
+            rows: [
+              ["Free shipping", "The item is light, shipping is predictable, and the product price can absorb the cost.", "You may underprice if you forget shipping is still being paid by you."],
+              ["Charged shipping", "The product is heavier, bulky, or shipping varies by location.", "Some buyers abandon when the delivery fee appears at checkout."],
+              ["Flat-rate shipping", "Most orders cost roughly the same to send.", "If a few orders cost much more, they can wipe out profit."],
+            ],
+          },
+          {
+            type: "paragraph",
+            content:
+              "For your first test, avoid products where shipping is hard to predict. Very heavy, fragile, oversized, or regulated items can still become good businesses later, but they add operational risk before you have learned the basics.",
+          },
           { type: "heading", level: 2, content: "Product complexity: when one product becomes twenty" },
           {
             type: "paragraph",
@@ -725,6 +756,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "paragraph",
             content:
               "This does not mean avoid these categories. It means know what you are signing up for. The principle: start with the minimum viable range. If it sells, expand. If it does not, you have risked much less.",
+          },
+          {
+            type: "callout",
+            style: "example",
+            content:
+              "Better first version: one colour, one size, one bundle, or one best-selling variant. You are not trying to serve every possible customer yet. You are trying to prove that one clear version can sell profitably.",
           },
           {
             type: "image",
@@ -752,6 +789,17 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "\"Hello, I am interested in [product name]. Could you please provide: price per unit for quantities of 50/100/500, minimum order quantity, sample cost and shipping time, and production lead time for a first order. Thank you.\"",
           },
+          {
+            type: "table",
+            headers: ["Question to ask", "Why it matters"],
+            rows: [
+              ["What is the minimum order quantity?", "This tells you how much money is at risk before you know the product sells."],
+              ["What is the price at 50, 100, and 500 units?", "This shows whether margins improve as you grow."],
+              ["What does a sample cost, including shipping?", "A sample is your cheapest quality-control decision."],
+              ["What are production and dispatch times?", "Slow lead times can create stockouts or customer delays."],
+              ["Can you confirm packaging size and weight?", "You need this to estimate shipping accurately."],
+            ],
+          },
           { type: "heading", level: 3, content: "What to look for" },
           {
             type: "paragraph",
@@ -763,6 +811,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             style: "tip",
             content:
               "Samples are essential. Never place a bulk order without seeing a sample first. A £20 sample that reveals poor quality saves you from a £500 order of products you cannot sell.",
+          },
+          {
+            type: "callout",
+            style: "insight",
+            content:
+              "A supplier who answers clearly helps you make calm decisions. A supplier who makes the numbers hard to understand makes your business harder to run. Treat clarity as part of the offer.",
           },
         ],
       },
@@ -783,10 +837,32 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "Once you have run the numbers, you will likely find that some ideas have strong margins and some do not. The ones with thin or negative margins get eliminated here, regardless of how promising the demand signals were.",
           },
           {
+            type: "table",
+            headers: ["Score", "What you are looking for"],
+            rows: [
+              ["Demand evidence", "People already search for, buy, review, or ask for this kind of product."],
+              ["Margin", "After all costs, the product still leaves enough profit to make the effort worthwhile."],
+              ["Operational simplicity", "You can source, list, pack, and ship it without too many moving parts."],
+              ["Test speed", "You can get it listed or sampled quickly without committing a large amount of money."],
+              ["Learning value", "Even if it does not become your final product, the test will teach you something useful."],
+            ],
+          },
+          {
+            type: "paragraph",
+            content:
+              "You do not need a perfect score. You need a product that is good enough to test without putting your time or money at unnecessary risk. If two ideas look similar, choose the one that is simpler and cheaper to test.",
+          },
+          {
             type: "callout",
             style: "insight",
             content:
               "This is your data-over-ego commitment from Chapter 4 in action. A product with fantastic demand and terrible margins is not a business. It is a way to stay very busy while losing money.",
+          },
+          {
+            type: "callout",
+            style: "example",
+            content:
+              "Decision example: Idea A has exciting demand but only £3 margin after costs and needs 12 variants. Idea B has steadier demand, £9 margin, and one simple SKU. For a first seller, Idea B is usually the calmer, smarter test.",
           },
           {
             type: "loop",
