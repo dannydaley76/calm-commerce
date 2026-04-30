@@ -17,9 +17,23 @@ type StepShellProps = {
   allSteps: StepShellStep[];
   previousStepId?: string;
   nextStepId?: string;
-  stepKindLabel?: string;
   children: React.ReactNode;
 };
+
+/* Shared button classes — mirror PrimaryButton / SecondaryButton from design-system
+   but use <Link> (Next.js) instead of <a> so SPA navigation is preserved.        */
+const BTN_PRIMARY =
+  "inline-flex items-center justify-center rounded-lg bg-cobalt-600 px-5 py-3 text-[13px] font-medium text-white " +
+  "shadow-[0_1px_2px_rgba(11,42,57,0.08)] transition-[background-color,box-shadow,transform] duration-150 " +
+  "hover:bg-cobalt-700 motion-safe:hover:-translate-y-px hover:shadow-[0_6px_14px_rgba(0,73,207,0.30)] " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2";
+
+const BTN_SECONDARY =
+  "inline-flex items-center justify-center rounded-lg border border-ink-100 bg-surface-raised px-5 py-3 " +
+  "text-[13px] font-medium text-ink-900 transition-[background-color,border-color,box-shadow,transform] duration-150 " +
+  "hover:bg-surface-sunken hover:border-cobalt-500 motion-safe:hover:-translate-y-px " +
+  "hover:shadow-[0_4px_10px_rgba(11,42,57,0.08)] " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2";
 
 export function StepShell({
   chapterTitle,
@@ -30,74 +44,103 @@ export function StepShell({
   allSteps,
   previousStepId,
   nextStepId,
-  stepKindLabel,
   children,
 }: StepShellProps) {
   const progressPercent = Math.round(((currentIndex + 1) / totalSteps) * 100);
 
   return (
-    <div className="min-h-screen bg-surface-canvas px-6 py-8 text-ink-900 lg:px-8 lg:py-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)] lg:p-8">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="rounded-full bg-surface-sunken px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">
+    <div className="space-y-6">
+
+        {/* ── Chapter header ── */}
+        <header className="mb-8 rounded-[1.5rem] border border-ink-100 bg-surface-raised p-6 shadow-card lg:p-8">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Chapter badge uses "not-started" (gray) — it's a label, not a status */}
+            <span className="cc-status-pill" data-state="not-started">
               Chapter {chapterNumber}
             </span>
-            <span className="rounded-full bg-[#eef4ff] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+            {/* Step counter uses "active" (cobalt) — currently in progress */}
+            <span className="cc-status-pill" data-state="active">
               Step {currentIndex + 1} of {totalSteps}
             </span>
-            {stepKindLabel ? (
-              <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#005e3f]">
-                {stepKindLabel}
-              </span>
-            ) : null}
           </div>
-          <h1 className="mt-4 font-[Manrope] text-3xl font-extrabold tracking-tight lg:text-4xl">{chapterTitle}</h1>
-          {currentStep.summary ? <p className="mt-3 max-w-3xl text-base leading-7 text-ink-500">{currentStep.summary}</p> : null}
-          <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-[#e8e7f1]">
-            <div className="h-full rounded-full bg-cobalt-600" style={{ width: `${progressPercent}%` }}></div>
+
+          <h1 className="mt-4 font-[Manrope] text-2xl font-bold tracking-tight text-ink-900 lg:text-3xl">
+            {chapterTitle}
+          </h1>
+
+          {/* Progress bar */}
+          <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-ink-100">
+            <div
+              className="h-full rounded-full bg-cobalt-600 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </header>
 
+        {/* ── Two-column layout ── */}
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)] lg:p-8">{children}</section>
 
+          {/* Main content */}
+          <section className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-6 shadow-card lg:p-8">
+            {children}
+          </section>
+
+          {/* Sidebar */}
           <aside className="space-y-5">
-            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+
+            {/* Current step card */}
+            <div className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Current step</p>
-              <h2 className="mt-3 font-[Manrope] text-2xl font-bold tracking-tight">{currentStep.title}</h2>
-              {currentStep.goal ? <p className="mt-3 text-sm leading-6 text-ink-500">{currentStep.goal}</p> : null}
+              <h2 className="mt-3 font-[Manrope] text-xl font-bold tracking-tight text-ink-900">
+                {currentStep.title}
+              </h2>
+              {currentStep.goal && (
+                <p className="mt-3 text-sm leading-6 text-ink-500">{currentStep.goal}</p>
+              )}
             </div>
 
-            <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+            {/* Chapter map */}
+            <div className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Chapter map</p>
               <div className="mt-4 space-y-3">
                 {allSteps.map((step, index) => {
-                  const isCurrent = step.id === currentStep.id;
+                  const isCurrent  = step.id === currentStep.id;
                   const isComplete = index < currentIndex;
                   return (
                     <Link
                       key={step.id}
                       href={`?step=${step.id}`}
-                      className={`block rounded-2xl px-4 py-3 transition ${
-                        isCurrent ? "bg-[#eef4ff] ring-1 ring-cobalt-600/20" : isComplete ? "bg-success-100" : "bg-surface-sunken"
-                      }`}
+                      className={[
+                        "block rounded-xl px-4 py-3 transition-colors duration-150",
+                        isCurrent
+                          ? "border border-cobalt-500/30 bg-cobalt-100"
+                          : isComplete
+                            ? "bg-success-100 hover:bg-success-100"
+                            : "bg-surface-sunken hover:bg-ink-100",
+                      ].join(" ")}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-ink-500">Step {index + 1}</span>
-                        <span className={`text-xs font-semibold ${isCurrent ? "text-cobalt-600" : isComplete ? "text-[#005e3f]" : "text-ink-500"}`}>
+                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-ink-500">
+                          Step {index + 1}
+                        </span>
+                        <span className={`text-xs font-semibold ${
+                          isCurrent ? "text-cobalt-600" : isComplete ? "text-success-600" : "text-ink-500"
+                        }`}>
                           {isCurrent ? "Current" : isComplete ? "Seen" : "Next"}
                         </span>
                       </div>
-                      <p className="mt-2 font-[Manrope] text-base font-bold tracking-tight text-ink-900">{step.title}</p>
+                      <p className="mt-2 font-[Manrope] text-base font-bold tracking-tight text-ink-900">
+                        {step.title}
+                      </p>
                     </Link>
                   );
                 })}
               </div>
             </div>
 
+            {/* Source sections */}
             {currentStep.sourceSections?.length ? (
-              <div className="rounded-[2rem] bg-white p-5 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
+              <div className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-5 shadow-card">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Source</p>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-ink-500">
                   {currentStep.sourceSections.map((section) => (
@@ -106,36 +149,38 @@ export function StepShell({
                 </ul>
               </div>
             ) : null}
+
           </aside>
         </div>
 
+        {/* ── Footer navigation ── */}
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <footer className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               {previousStepId ? (
-                <Link href={`?step=${previousStepId}`} className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
-                  Back
+                <Link href={`?step=${previousStepId}`} className={BTN_SECONDARY}>
+                  ← Back
                 </Link>
               ) : (
-                <Link href="/program" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-5 py-3 font-semibold text-ink-900">
-                  Back to program
+                <Link href="/program" className={BTN_SECONDARY}>
+                  ← Back to program
                 </Link>
               )}
             </div>
             <div>
               {nextStepId ? (
-                <Link href={`?step=${nextStepId}`} className="inline-flex items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white">
-                  Next
+                <Link href={`?step=${nextStepId}`} className={BTN_PRIMARY}>
+                  Next →
                 </Link>
               ) : (
-                <Link href="/program" className="inline-flex items-center justify-center rounded-xl bg-[#005e3f] px-5 py-3 font-semibold !text-white">
-                  Finish chapter
+                <Link href="/program" className={BTN_PRIMARY}>
+                  Finish chapter →
                 </Link>
               )}
             </div>
           </footer>
         </div>
-      </div>
+
     </div>
   );
 }

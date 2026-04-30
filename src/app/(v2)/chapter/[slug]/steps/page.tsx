@@ -72,8 +72,6 @@ export default async function ChapterStepsPage({
         { href: "/account", label: "Account" },
         { href: `/chapter/${slug}`, label: `Chapter ${chapter.chapter.number}`, active: true },
       ]}
-      title={chapter.chapter.title}
-      subtitle="Read through each step at your own pace. You can jump to any step using the chapter map."
     >
       <StepShell
         chapterTitle={chapter.chapter.title}
@@ -82,13 +80,11 @@ export default async function ChapterStepsPage({
         currentStep={{
           id: currentStep.id,
           title: currentStep.title,
-          summary: currentStep.blocks.find((block) => block.type === "paragraph")?.content,
         }}
         currentIndex={resolvedIndex}
         allSteps={chapter.steps.map((item) => ({ id: item.id, title: item.title }))}
         previousStepId={previousStep?.id}
         nextStepId={nextStep?.id}
-        stepKindLabel={currentStep.closingStep ? "closing" : currentStep.inlineWorksheetFieldKeys?.length ? "action" : "lesson"}
       >
         <div className="space-y-8">
           {currentStep.blocks.map((block, index) => (
