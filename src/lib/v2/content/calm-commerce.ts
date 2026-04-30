@@ -915,7 +915,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       title: "Test Before You Build a Store",
       phase: 2,
       phaseLabel: "Set Your Rules and Test",
-      estimatedReadMinutes: 10,
+      estimatedReadMinutes: 13,
       worksheetId: "pre-store-test-worksheet",
       canvasSections: ["pre_store_validation"],
     },
@@ -943,6 +943,23 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "eBay works well for almost anything. Vinted is ideal for fashion and accessories. Etsy suits handmade items, digital products, and vintage goods. Amazon suits products with high search volume. Facebook Marketplace is useful for local testing. Pick the one where your target buyer is most likely to be shopping.",
           },
+          {
+            type: "table",
+            headers: ["Marketplace", "Best first use", "What to watch"],
+            rows: [
+              ["eBay", "General products, resale, parts, accessories, and price testing.", "Competition can be broad. Look at sold listings, not only active listings."],
+              ["Etsy", "Handmade, personalised, vintage, digital, and giftable products.", "Photos, search terms, and niche positioning matter a lot."],
+              ["Vinted", "Fashion, accessories, and simple resale tests.", "Great for speed, but less useful for proving a standalone brand."],
+              ["Facebook Marketplace", "Local, bulky, or second-hand products.", "Buyer intent can be mixed. Expect messages that do not always turn into sales."],
+              ["Amazon", "Products with strong search demand and clear existing categories.", "Harder for a beginner. Fees, competition, and listing rules are stricter."],
+            ],
+          },
+          {
+            type: "callout",
+            style: "tip",
+            content:
+              "Do not choose the marketplace you personally like most. Choose the one where the buyer is already looking for this kind of product. A boring match beats an exciting guess.",
+          },
         ],
       },
       {
@@ -957,16 +974,38 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "You will learn how to write polished listings in Chapter 9. For now, you just need something clear, honest, and good enough. Title: what it is, who it is for, one key detail. Description: what the product does, what is included, key dimensions, and shipping information.",
           },
           {
+            type: "table",
+            headers: ["Listing element", "Good enough for this test"],
+            rows: [
+              ["Title", "Product type, key use case, and one specific detail. Example: compact dog seat cover for small cars."],
+              ["Main photo", "Clear, bright, and easy to understand at thumbnail size."],
+              ["Description", "What it is, who it helps, dimensions, condition, what's included, and shipping details."],
+              ["Price", "High enough to protect the Chapter 5 margin, but still believable next to similar listings."],
+              ["Shipping", "Clear dispatch time, delivery method, and whether tracking is included."],
+            ],
+          },
+          {
             type: "callout",
             style: "tip",
             content:
               "Photos: natural light near a window, clean background, multiple angles. You do not need professional photography at this stage: you need clarity and honesty.",
+          },
+          {
+            type: "callout",
+            style: "insight",
+            content:
+              "A fair test does not mean a perfect listing. It means the product was presented clearly enough that a real buyer could understand it, trust it, and decide whether to buy.",
           },
           { type: "heading", level: 2, content: "Set your test duration" },
           {
             type: "paragraph",
             content:
               "Decide in advance how long you will run this test before judging the results. A reasonable test duration is 2 to 4 weeks. Write it down before you list: this prevents you from pulling the listing after three days because you are impatient, or leaving it up for months because you are avoiding a decision.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "For low-cost products or fast-moving categories, two weeks may be enough to see a signal. For higher-priced or more niche products, four weeks is usually fairer. The goal is not to force a sale. The goal is to collect enough evidence to make the next decision calmly.",
           },
         ],
       },
@@ -979,6 +1018,16 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "paragraph",
             content:
               "Pack it properly. Ship promptly: aim to dispatch within one to two business days. Use tracked shipping whenever the cost is reasonable. Send a brief message to the buyer confirming dispatch and providing the tracking number.",
+          },
+          {
+            type: "table",
+            headers: ["After a sale", "Why it matters"],
+            rows: [
+              ["Dispatch quickly", "Fast dispatch builds trust and reduces buyer anxiety."],
+              ["Use sensible packaging", "Damage in transit can turn a promising test into a misleading failure."],
+              ["Message the buyer", "A short dispatch note feels professional and can encourage a positive review."],
+              ["Record what happened", "Questions, delays, returns, and reviews are part of the test result."],
+            ],
           },
           {
             type: "callout",
@@ -999,11 +1048,35 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "It sold: excellent. How quickly? How many units? Did buyers ask questions that reveal what they needed more information about? Interest but no sale: something about the listing needs work (price, photos, or description). Views but no engagement: the title or main image may not be grabbing attention. Very few views: a search visibility issue, likely in your title keywords.",
           },
+          {
+            type: "table",
+            headers: ["Result", "Likely meaning", "Next move"],
+            rows: [
+              ["Sold quickly", "The product, price, and listing were good enough to convert.", "Proceed carefully or repeat the test with a small restock."],
+              ["Sold slowly", "There is some demand, but the offer may need sharpening.", "Improve photos, title, price, or description before scaling."],
+              ["Questions but no sale", "People are interested, but something is unclear or risky.", "Answer the repeated questions directly in the listing."],
+              ["Views but no clicks", "The title, thumbnail, price, or category may not be compelling.", "Retest the listing presentation before judging the product."],
+              ["Clicks but no sale", "People understand the idea but hesitate at the offer.", "Review price, trust signals, photos, shipping, and objections."],
+              ["Very few views", "The marketplace may not be showing the listing to the right people.", "Improve keywords/category or test a different marketplace."],
+            ],
+          },
+          {
+            type: "callout",
+            style: "tip",
+            content:
+              "Use the result fields below when the test period ends. If the test is still running, leave the result open and keep logging weekly metrics until the agreed end date.",
+          },
           { type: "heading", level: 2, content: "Make your decision" },
           {
             type: "paragraph",
             content:
               "This is where your kill/continue/escalate rules from Chapter 4 come in. Proceed to building your store if the product sold or generated strong interest. Iterate and retest if results were mixed. Pivot to a different product if there was little interest despite a fair test: this is not failure, this is exactly what the test was designed to discover.",
+          },
+          {
+            type: "callout",
+            style: "example",
+            content:
+              "Example: 400 views, 30 clicks, 5 questions about sizing, and no sales is not the same as failure. It may mean the idea has interest, but the listing needs clearer dimensions, better photos, or a lower-risk first offer before you retest.",
           },
           {
             type: "loop",
