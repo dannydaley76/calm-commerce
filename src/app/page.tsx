@@ -213,7 +213,7 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
             Product candidates
           </h3>
         </div>
-        <SecondaryButton href="/lean-canvas">Open canvas</SecondaryButton>
+        <SecondaryButton href="/ideas">View all ideas</SecondaryButton>
       </div>
 
       <div className="mt-5 divide-y divide-ink-100">
@@ -254,6 +254,7 @@ export default async function DashboardPage() {
       items={[
         { href: "/",            label: "Dashboard", active: true },
         { href: "/program",     label: "Program" },
+        { href: "/ideas",       label: "Ideas" },
         { href: "/lean-canvas", label: "Lean Canvas" },
         { href: "/metrics",     label: "Metrics" },
         { href: "/account",     label: "Account" },

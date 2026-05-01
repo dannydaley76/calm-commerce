@@ -64,6 +64,7 @@ export default async function ProgramPage() {
       items={[
         { href: "/",            label: "Dashboard" },
         { href: "/program",     label: "Program", active: true },
+        { href: "/ideas",       label: "Ideas" },
         { href: "/lean-canvas", label: "Lean Canvas" },
         { href: "/metrics",     label: "Metrics" },
         { href: "/account",     label: "Account" },

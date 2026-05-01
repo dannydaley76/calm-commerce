@@ -25,6 +25,15 @@ export type ProductIdeaLifecycle = {
   latestSignal: string;
   isChosen: boolean;
   isTestIdea: boolean;
+  demandEvidence: string | null;
+  competitionNotes: string | null;
+  seasonality: string | null;
+  economicsDecision: string | null;
+  testMarketplace: string | null;
+  testResult: string | null;
+  testDecision: string | null;
+  unitsSold: string | null;
+  testLearning: string | null;
 };
 
 type EconomicsRow = ProductIdeaRow & {
@@ -151,6 +160,15 @@ export function getProductIdeaLifecycles(responses: LifecycleResponses): Product
       latestSignal: deriveLatestSignal({ status, economics, responses }),
       isChosen,
       isTestIdea,
+      demandEvidence: normalize(idea.demand_evidence) || null,
+      competitionNotes: normalize(idea.competition_notes) || null,
+      seasonality: normalize(idea.seasonality) || null,
+      economicsDecision: normalize(economics?.viable) || null,
+      testMarketplace: isTestIdea ? normalize(responses.test_marketplace) || null : null,
+      testResult: isTestIdea ? normalize(responses.result) || null : null,
+      testDecision: isTestIdea ? normalize(responses.decision) || null : null,
+      unitsSold: isTestIdea ? normalize(responses.units_sold) || null : null,
+      testLearning: isTestIdea ? normalize(responses.what_you_learned) || null : null,
     };
   });
 }

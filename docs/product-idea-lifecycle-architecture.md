@@ -69,7 +69,7 @@ This avoids a database migration for the first durable-idea pass.
 
 ## Lifecycle Status Layer
 
-The dashboard now derives a compact lifecycle state for each idea from worksheet responses.
+The dashboard and Ideas page now derive a compact lifecycle state for each idea from worksheet responses.
 
 Inputs:
 
@@ -105,6 +105,6 @@ That is acceptable for the first slice, but the next stronger version should eit
 
 ## Next Steps
 
-1. Add an idea history view now that Chapters 5 and 6 are both ID-linked.
-2. Add timeline events when the user selects, tests, proceeds, retests, or pivots an idea.
-3. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
+1. Add timeline events when the user selects, tests, proceeds, retests, or pivots an idea.
+2. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
+3. Attach metrics entries to a product idea once the user is operating a live store.

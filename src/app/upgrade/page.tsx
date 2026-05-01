@@ -7,6 +7,7 @@ export default function UpgradePage() {
       items={[
         { href: "/", label: "Dashboard" },
         { href: "/program", label: "Program" },
+        { href: "/ideas", label: "Ideas" },
         { href: "/lean-canvas", label: "Lean Canvas" },
         { href: "/metrics", label: "Metrics" },
         { href: "/account", label: "Account" },

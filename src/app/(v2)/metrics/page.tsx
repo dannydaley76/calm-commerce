@@ -74,6 +74,7 @@ export default async function MetricsPage() {
   const breadcrumbs = [
     { href: "/", label: "Dashboard" },
     { href: "/program", label: "Program" },
+    { href: "/ideas", label: "Ideas" },
     { href: "/lean-canvas", label: "Lean Canvas" },
     { href: "/metrics", label: "Metrics", active: true },
     { href: "/account", label: "Account" },
