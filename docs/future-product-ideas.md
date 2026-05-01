@@ -1,8 +1,82 @@
 # Future Product Ideas
 
-Last updated: 2026-04-30
+Last updated: 2026-05-01
 
 This file holds useful ideas that are not the current focus. The current focus is Chapter 5 idea review and scoring.
+
+## Product Idea Lifecycle
+
+### Idea Pipeline
+
+Treat each Chapter 3 product idea as a durable candidate that can move through the whole Calm Commerce OS.
+
+Lifecycle:
+
+- Draft idea.
+- Demand evidence captured.
+- Economics checked.
+- Selected for marketplace test.
+- Test running.
+- Test reviewed.
+- Offer/store candidate.
+- Live product.
+- Iterated, paused, retired, or replaced.
+
+Why this matters:
+
+- Turns the product from a course into an operating system.
+- Lets the learner add more ideas later and run the same viability loop again.
+- Preserves the story of why an idea was chosen, changed, paused, or rejected.
+- Makes later metrics more meaningful because numbers connect back to the original idea and test history.
+
+### Stable Idea Identity
+
+Current linked worksheet rows are useful, but the long-term model needs stable IDs for ideas.
+
+Needed:
+
+- Add stable IDs to Chapter 3 idea rows.
+- Store Chapter 5 economics against idea IDs, not only row position.
+- Store the chosen idea as an idea ID.
+- Carry the selected idea into Chapter 6 and later chapters.
+- Preserve history if the user edits, reorders, deletes, or adds ideas.
+
+This should be handled before the idea flow becomes too complex. Row-index matching is acceptable for a prototype, but it will become fragile once users revisit Chapter 3 and run multiple testing cycles.
+
+### Idea History View
+
+Add a place where the learner can inspect the full journey of an idea.
+
+Possible first version:
+
+- Idea name and current status.
+- Demand evidence from Chapter 3.
+- Economics result from Chapter 5.
+- Marketplace test from Chapter 6.
+- Offer, store, listing, and acquisition decisions from later chapters.
+- Metrics tied to the product once live.
+- Decision log: continue, improve, pause, retire, or revisit.
+
+Possible UI locations:
+
+- Dedicated Ideas page.
+- Dashboard module.
+- Lean Canvas side panel.
+- Product detail page linked from worksheets and metrics.
+
+### Testing Cycle UX
+
+Make it obvious that going back to Chapter 3 is part of the system, not a backward step.
+
+UX ideas:
+
+- "Add another idea" from Chapter 5 when no candidate is viable.
+- "Run this idea through the numbers" from Chapter 3.
+- "Test next candidate" after a failed marketplace test.
+- "Retire this idea" with a short reason.
+- "Duplicate and adjust" for a related idea or narrower version.
+
+The learner should feel that each cycle makes the business smarter, even when an individual idea does not continue.
 
 ## AI And MCP Ideas
 

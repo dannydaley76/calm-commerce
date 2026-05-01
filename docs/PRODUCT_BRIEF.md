@@ -1,7 +1,7 @@
 # Digital Product — Product Vision Brief
 
-_Status: Draft v0.4 (living document)_
-_Last updated: 2026-03-03_
+_Status: Draft v0.5 (living document)_
+_Last updated: 2026-05-01_
 _Owner: Product team_
 
 ## 1) Why this exists
@@ -9,6 +9,25 @@ This brief is the single source of truth for product direction. It keeps strateg
 
 ## 2) Vision
 Build the most practical execution companion for **solo founders** applying Disciplined Entrepreneurship—so one person can move from idea to validated traction with clear weekly actions.
+
+### Calm Commerce OS direction
+
+The product is evolving from a linear learning programme into a lightweight operating system for first-time e-commerce founders.
+
+The key shift: **product ideas should become durable objects that move through the system**, not isolated worksheet answers. A learner should be able to create several ideas, evaluate them, choose one to test, return to add more ideas, and see the full history of each candidate over time.
+
+The intended idea lifecycle is:
+
+1. Draft idea from Chapter 3.
+2. Demand evidence captured.
+3. Unit economics checked in Chapter 5.
+4. Selected or rejected for marketplace testing.
+5. Marketplace test planned and reviewed in Chapter 6.
+6. Offer, customer, store, listing, and acquisition decisions attached to the chosen idea.
+7. Metrics and iteration history connected once the store is live.
+8. Idea can be continued, improved, paused, retired, or replaced.
+
+This is what makes the product an OS rather than a course. The learner should not only complete chapters. They should build an auditable history of product decisions, evidence, tests, and outcomes.
 
 ## 3) Problem we are solving
 - Solo founders consume startup frameworks but struggle to turn them into sequenced, concrete actions.
@@ -31,6 +50,10 @@ Build the most practical execution companion for **solo founders** applying Disc
 ## 5) Core value proposition
 For **solo founders who need structure and momentum**, this product provides **a guided, chapter-by-chapter implementation system grounded in Disciplined Entrepreneurship**, by **combining concise teaching, decision-ready worksheets, and explicit next actions in one flow**, unlike **static courses, disconnected template packs, or passive book summaries**.
 
+For Calm Commerce specifically, the strongest value proposition is:
+
+For **first-time online sellers**, Calm Commerce OS provides **a guided product testing and operating system**, by **turning product ideas into tracked candidates with evidence, economics, tests, decisions, and metrics history**, unlike **static e-commerce courses, spreadsheets, or disconnected templates**.
+
 ## 6) Product principles (decision filters)
 1. **Solo-first clarity** — every step must be understandable and executable by one person.
 2. **Action over analysis** — each chapter must produce a concrete output/decision.
@@ -39,6 +62,9 @@ For **solo founders who need structure and momentum**, this product provides **a
 5. **Source-of-truth discipline** — source-copy parity is a hard gate before advancing chapter batches.
 6. **Framework fidelity, practical UX** — preserve DE intent while reducing cognitive load.
 7. **Performance is part of the product** — build for real adoption, not a fragile demo. The learner experience should stay fast and responsive as users, content, and saved learner state grow.
+8. **Ideas have continuity** — product ideas should keep their identity as they move from research to economics, testing, offer creation, store setup, and metrics.
+9. **The loop matters** — the product should support going back to Chapter 3, creating more ideas, retesting viability, and progressing the strongest candidate without treating that as failure.
+10. **History creates value** — each product candidate should accumulate a useful record of decisions, assumptions, evidence, tests, and outcomes.
 
 ## 7) Scope
 ### In scope (current phase)
@@ -48,6 +74,7 @@ For **solo founders who need structure and momentum**, this product provides **a
 - Progress and momentum cues designed for single-operator accountability.
 - Source-copy parity workflow and release gate for chapter content.
 - Baseline analytics: activation, first-output completion, 7-day return.
+- Product idea continuity from Chapter 3 into Chapter 5 and Chapter 6, starting with stable idea identity and clear selected-candidate state.
 
 ### Out of scope (for now)
 - Team collaboration, roles, or permissions.
@@ -55,6 +82,7 @@ For **solo founders who need structure and momentum**, this product provides **a
 - Advanced AI automation beyond assistive guidance.
 - Mobile-native app experience.
 - Enterprise reporting/compliance features.
+- Full multi-product inventory management, order management, or ERP-style operations.
 
 ## 8) Success criteria
 ### User outcomes (solo-founder specific)
@@ -101,6 +129,9 @@ For **solo founders who need structure and momentum**, this product provides **a
 - What is the minimum chapter depth that creates clear willingness to pay for each priority demographic?
 - Which onboarding language variants best convert older income-supplement seekers vs recent grads?
 - Where should lightweight AI guidance add value without replacing user judgment?
+- What is the simplest data model that gives product ideas stable identity without overbuilding a full product management system too early?
+- Where should the user see idea history first: a dedicated Ideas page, the Lean Canvas, the dashboard, or within chapter worksheets?
+- Which events should be captured in an idea timeline automatically, and which should require explicit user confirmation?
 
 ## 12) How to use / update this brief
 - Treat this as a living document and default decision anchor.
@@ -112,3 +143,4 @@ For **solo founders who need structure and momentum**, this product provides **a
 - **2026-03-03 (v0.2):** Replaced placeholders with concrete DE-aligned draft.
 - **2026-03-03 (v0.3):** Narrowed to one explicit ICP: solo founders; tightened scope, principles, success metrics, and milestones accordingly.
 - **2026-03-03 (v0.4):** Added canonical priority demographics within the solo-founder ICP: older adults supplementing income + recent grads/young adults seeking a career path.
+- **2026-05-01 (v0.5):** Added Calm Commerce OS direction: product ideas should become durable tracked candidates with evidence, economics, tests, decisions, and metrics history.
