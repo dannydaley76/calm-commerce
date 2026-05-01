@@ -69,4 +69,28 @@ describe("getProductIdeaLifecycles", () => {
 
     expect(lifecycle.status).toBe("selected");
   });
+
+  it("builds an ordered idea timeline", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf", demand_evidence: "Search demand" }]);
+    const [lifecycle] = getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+      idea_economics: JSON.stringify([{ idea_id: ideas[0].idea_id, viable: "Yes: proceed" }]),
+      chosen_idea: ideas[0].idea_id,
+      test_idea: ideas[0].idea_id,
+      test_marketplace: "Etsy",
+      result: "Sold: strong demand",
+      units_sold: "3",
+      decision: "Proceed: build the store",
+    });
+
+    expect(lifecycle.timeline.map((event) => event.key)).toEqual([
+      "captured",
+      "economics",
+      "selected",
+      "test-planned",
+      "test-result",
+      "test-decision",
+    ]);
+    expect(lifecycle.timeline[4].detail).toContain("Units sold: 3");
+  });
 });

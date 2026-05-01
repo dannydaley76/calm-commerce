@@ -34,6 +34,14 @@ export type ProductIdeaLifecycle = {
   testDecision: string | null;
   unitsSold: string | null;
   testLearning: string | null;
+  timeline: ProductIdeaTimelineEvent[];
+};
+
+export type ProductIdeaTimelineEvent = {
+  key: string;
+  label: string;
+  detail: string;
+  chapter: string;
 };
 
 type EconomicsRow = ProductIdeaRow & {
@@ -134,6 +142,86 @@ function deriveLatestSignal({
   return "Decision: try a different product.";
 }
 
+function buildTimeline({
+  idea,
+  label,
+  economics,
+  isChosen,
+  isTestIdea,
+  responses,
+}: {
+  idea: ProductIdeaRow;
+  label: string;
+  economics: EconomicsRow | null;
+  isChosen: boolean;
+  isTestIdea: boolean;
+  responses: LifecycleResponses;
+}): ProductIdeaTimelineEvent[] {
+  const events: ProductIdeaTimelineEvent[] = [
+    {
+      key: "captured",
+      label: "Idea captured",
+      detail: normalize(idea.demand_evidence)
+        ? "Demand evidence was added in Chapter 3."
+        : "Added to the Chapter 3 shortlist.",
+      chapter: "Chapter 3",
+    },
+  ];
+
+  if (economics) {
+    events.push({
+      key: "economics",
+      label: "Economics checked",
+      detail: normalize(economics.viable)
+        ? `Decision: ${economics.viable}.`
+        : "Unit economics were entered in Chapter 5.",
+      chapter: "Chapter 5",
+    });
+  }
+
+  if (isChosen) {
+    events.push({
+      key: "selected",
+      label: "Selected candidate",
+      detail: `${label} was chosen as the strongest candidate to progress.`,
+      chapter: "Chapter 5",
+    });
+  }
+
+  if (isTestIdea) {
+    events.push({
+      key: "test-planned",
+      label: "Marketplace test planned",
+      detail: normalize(responses.test_marketplace)
+        ? `Marketplace: ${responses.test_marketplace}.`
+        : "Selected for the Chapter 6 marketplace test.",
+      chapter: "Chapter 6",
+    });
+
+    if (normalize(responses.result)) {
+      events.push({
+        key: "test-result",
+        label: "Test result recorded",
+        detail: normalize(responses.units_sold)
+          ? `${responses.result}. Units sold: ${responses.units_sold}.`
+          : normalize(responses.result),
+        chapter: "Chapter 6",
+      });
+    }
+
+    if (normalize(responses.decision)) {
+      events.push({
+        key: "test-decision",
+        label: "Next decision made",
+        detail: normalize(responses.decision),
+        chapter: "Chapter 6",
+      });
+    }
+  }
+
+  return events;
+}
+
 export function getProductIdeaLifecycles(responses: LifecycleResponses): ProductIdeaLifecycle[] {
   const ideas = ensureProductIdeaIds(parseRows(responses.product_ideas));
   const economicsRows = parseRows(responses.idea_economics) as EconomicsRow[];
@@ -169,6 +257,7 @@ export function getProductIdeaLifecycles(responses: LifecycleResponses): Product
       testDecision: isTestIdea ? normalize(responses.decision) || null : null,
       unitsSold: isTestIdea ? normalize(responses.units_sold) || null : null,
       testLearning: isTestIdea ? normalize(responses.what_you_learned) || null : null,
+      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses }),
     };
   });
 }

@@ -92,7 +92,7 @@ Statuses:
 - retest
 - pivot
 
-This is intentionally derived rather than stored. The stored source of truth remains the worksheet answers; the lifecycle helper interprets those answers into a product-candidate view.
+This is intentionally derived rather than stored. The stored source of truth remains the worksheet answers; the lifecycle helper interprets those answers into a product-candidate view and an ordered timeline.
 
 ## Known Limits
 
@@ -105,6 +105,6 @@ That is acceptable for the first slice, but the next stronger version should eit
 
 ## Next Steps
 
-1. Add timeline events when the user selects, tests, proceeds, retests, or pivots an idea.
-2. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
-3. Attach metrics entries to a product idea once the user is operating a live store.
+1. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
+2. Attach metrics entries to a product idea once the user is operating a live store.
+3. Add explicit user notes to the idea timeline.

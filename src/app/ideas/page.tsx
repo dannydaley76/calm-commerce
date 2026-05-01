@@ -59,6 +59,25 @@ function DetailRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+function IdeaTimeline({ idea }: { idea: ProductIdeaLifecycle }) {
+  return (
+    <ol className="mt-6 space-y-3 border-l border-ink-100 pl-4">
+      {idea.timeline.map((event) => (
+        <li key={event.key} className="relative">
+          <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+              {event.chapter}
+            </span>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function EmptyIdeas() {
   return (
     <section className="rounded-xl border border-dashed border-ink-100 bg-surface-raised p-8">
@@ -108,6 +127,8 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
         <DetailRow label="Test learning" value={idea.testLearning} />
         <DetailRow label="Test decision" value={idea.testDecision} />
       </dl>
+
+      <IdeaTimeline idea={idea} />
 
       <div className="mt-6 flex flex-wrap gap-3">
         <GhostButton href="/chapter/brainstorm-with-discipline/steps">
