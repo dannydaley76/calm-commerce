@@ -180,6 +180,25 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
   return "bg-surface-sunken text-ink-500";
 }
 
+function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
+  const priority: Record<ProductIdeaLifecycleStatus, number> = {
+    test_reviewed: 1,
+    test_running: 2,
+    test_planned: 3,
+    selected: 4,
+    retest: 5,
+    economics_checked: 6,
+    draft: 7,
+    proceed: 8,
+    pivot: 9,
+  };
+  return priority[status];
+}
+
+function chooseDashboardIdeaAction(ideas: ProductIdeaLifecycle[]): ProductIdeaLifecycle {
+  return [...ideas].sort((a, b) => ideaActionPriority(a.status) - ideaActionPriority(b.status))[0];
+}
+
 function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
   if (ideas.length === 0) {
     return (
@@ -202,6 +221,8 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
     );
   }
 
+  const actionIdea = chooseDashboardIdeaAction(ideas);
+
   return (
     <section className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-6 shadow-card">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -214,6 +235,25 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
           </h3>
         </div>
         <SecondaryButton href="/ideas">View all ideas</SecondaryButton>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-cobalt-100 bg-cobalt-100/50 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+              Next product action
+            </p>
+            <h4 className="mt-2 font-[Manrope] text-base font-bold text-ink-900">
+              {actionIdea.nextAction.label}: {actionIdea.label}
+            </h4>
+            <p className="mt-1 text-sm leading-6 text-ink-600">
+              {actionIdea.nextAction.note}
+            </p>
+          </div>
+          <PrimaryButton href={actionIdea.nextAction.href} className="shrink-0">
+            {actionIdea.nextAction.label}
+          </PrimaryButton>
+        </div>
       </div>
 
       <div className="mt-5 divide-y divide-ink-100">
@@ -230,6 +270,9 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
             <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
               {idea.statusLabel}
             </span>
+            <SecondaryButton href={idea.nextAction.href} className="shrink-0 px-4 py-2">
+              {idea.nextAction.label}
+            </SecondaryButton>
           </div>
         ))}
       </div>
