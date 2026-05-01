@@ -8,6 +8,11 @@ import {
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 
 type ResponseMap = Record<string, string>;
+type MetricEntry = {
+  id: string;
+  week_ending: string;
+  data_json: Record<string, string>;
+};
 
 async function getIdeaData(): Promise<{
   authenticated: boolean;
@@ -17,10 +22,17 @@ async function getIdeaData(): Promise<{
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) return { authenticated: false, ideas: [] };
 
-    const { data } = await supabase
-      .from("worksheet_responses")
-      .select("field_key, value_json")
-      .eq("project_id", projectId);
+    const [{ data }, { data: metricRows }] = await Promise.all([
+      supabase
+        .from("worksheet_responses")
+        .select("field_key, value_json")
+        .eq("project_id", projectId),
+      supabase
+        .from("weekly_metrics")
+        .select("id, week_ending, data_json")
+        .eq("project_id", projectId)
+        .order("week_ending", { ascending: false }),
+    ]);
 
     const responses: ResponseMap = Object.fromEntries(
       (data ?? []).map((row) => [
@@ -31,7 +43,7 @@ async function getIdeaData(): Promise<{
 
     return {
       authenticated: true,
-      ideas: getProductIdeaLifecycles(responses),
+      ideas: getProductIdeaLifecycles(responses, (metricRows ?? []) as MetricEntry[]),
     };
   } catch {
     return { authenticated: false, ideas: [] };
@@ -126,6 +138,10 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
         <DetailRow label="Units sold" value={idea.unitsSold} />
         <DetailRow label="Test learning" value={idea.testLearning} />
         <DetailRow label="Test decision" value={idea.testDecision} />
+        <DetailRow
+          label="Metric entries"
+          value={idea.metricEntries.length > 0 ? String(idea.metricEntries.length) : null}
+        />
       </dl>
 
       <IdeaTimeline idea={idea} />

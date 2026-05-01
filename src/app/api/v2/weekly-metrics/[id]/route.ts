@@ -97,8 +97,8 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     // Phase-specific allowed keys (same as POST)
     const allowedKeys =
       entryType === "validation"
-        ? ["impressions", "listing_clicks", "orders", "profit_per_sale", "noticed"]
-        : ["revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"];
+        ? ["product_idea_id", "impressions", "listing_clicks", "orders", "profit_per_sale", "noticed"]
+        : ["product_idea_id", "revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"];
 
     // Validate numeric fields
     if (entryType === "validation") {

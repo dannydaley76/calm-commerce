@@ -1,5 +1,11 @@
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import {
+  ensureProductIdeaIds,
+  findProductIdeaByIdOrLabel,
+  getProductIdeaId,
+  getProductIdeaLabel,
+} from "@/lib/v2/worksheets/product-idea-identity";
 import { MetricsClient } from "./metrics-client";
 
 type MetricEntry = {
@@ -9,25 +15,71 @@ type MetricEntry = {
   submitted_at: string;
 };
 
-async function getMetrics(): Promise<{ authenticated: boolean; entries: MetricEntry[] }> {
+type ProductIdeaOption = {
+  id: string;
+  label: string;
+};
+
+function parseRows(raw: string | undefined): Record<string, string | undefined>[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getMetrics(): Promise<{
+  authenticated: boolean;
+  entries: MetricEntry[];
+  productIdeas: ProductIdeaOption[];
+  defaultProductIdeaId: string;
+}> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
 
     if (!user || !projectId) {
-      return { authenticated: false, entries: [] };
+      return { authenticated: false, entries: [], productIdeas: [], defaultProductIdeaId: "" };
     }
 
-    const { data, error } = await supabase
-      .from("weekly_metrics")
-      .select("id, week_ending, data_json, submitted_at")
-      .eq("project_id", projectId)
-      .order("submitted_at", { ascending: false });
+    const [{ data, error }, { data: worksheetRows, error: worksheetError }] = await Promise.all([
+      supabase
+        .from("weekly_metrics")
+        .select("id, week_ending, data_json, submitted_at")
+        .eq("project_id", projectId)
+        .order("submitted_at", { ascending: false }),
+      supabase
+        .from("worksheet_responses")
+        .select("field_key, value_json")
+        .eq("project_id", projectId),
+    ]);
 
     if (error) throw error;
+    if (worksheetError) throw worksheetError;
 
-    return { authenticated: true, entries: (data ?? []) as MetricEntry[] };
+    const responseEntries = (worksheetRows ?? []).map((row) => [
+      row.field_key,
+      typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? ""),
+    ]) as Array<[string, string]>;
+    const responses = Object.fromEntries(
+      responseEntries,
+    ) as Record<string, string>;
+    const ideas = ensureProductIdeaIds(parseRows(responses.product_ideas));
+    const productIdeas = ideas.map((idea, index) => ({
+      id: getProductIdeaId(idea, index),
+      label: getProductIdeaLabel(idea, index),
+    }));
+    const defaultIdea =
+      findProductIdeaByIdOrLabel(ideas, responses.test_idea) ??
+      findProductIdeaByIdOrLabel(ideas, responses.chosen_idea);
+    const defaultProductIdeaId = defaultIdea
+      ? getProductIdeaId(defaultIdea, ideas.indexOf(defaultIdea))
+      : "";
+
+    return { authenticated: true, entries: (data ?? []) as MetricEntry[], productIdeas, defaultProductIdeaId };
   } catch {
-    return { authenticated: false, entries: [] };
+    return { authenticated: false, entries: [], productIdeas: [], defaultProductIdeaId: "" };
   }
 }
 
@@ -66,7 +118,7 @@ async function markChapter17DashboardViewed() {
 }
 
 export default async function MetricsPage() {
-  const { authenticated, entries } = await getMetrics();
+  const { authenticated, entries, productIdeas, defaultProductIdeaId } = await getMetrics();
   if (authenticated) await markChapter17DashboardViewed();
 
   const isDev = process.env.NODE_ENV !== "production";
@@ -86,7 +138,13 @@ export default async function MetricsPage() {
       title="Weekly Metrics"
       subtitle="Your store's performance over time. Numbers update each week as you log your metrics."
     >
-      <MetricsClient entries={entries} authenticated={authenticated} isDev={isDev} />
+      <MetricsClient
+        entries={entries}
+        authenticated={authenticated}
+        isDev={isDev}
+        productIdeas={productIdeas}
+        defaultProductIdeaId={defaultProductIdeaId}
+      />
     </LearnerShell>
   );
 }

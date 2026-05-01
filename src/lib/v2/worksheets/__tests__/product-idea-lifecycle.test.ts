@@ -93,4 +93,30 @@ describe("getProductIdeaLifecycles", () => {
     ]);
     expect(lifecycle.timeline[4].detail).toContain("Units sold: 3");
   });
+
+  it("adds metric entries to the idea timeline when they are linked by idea ID", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+    const [lifecycle] = getProductIdeaLifecycles(
+      {
+        product_ideas: JSON.stringify(ideas),
+      },
+      [
+        {
+          id: "metric-1",
+          week_ending: "2026-05-03",
+          data_json: {
+            entry_type: "validation",
+            product_idea_id: ideas[0].idea_id,
+            impressions: "100",
+            listing_clicks: "8",
+            orders: "1",
+          },
+        },
+      ],
+    );
+
+    expect(lifecycle.metricEntries).toHaveLength(1);
+    expect(lifecycle.timeline.at(-1)?.key).toBe("metric-metric-1");
+    expect(lifecycle.timeline.at(-1)?.detail).toContain("100 impressions");
+  });
 });

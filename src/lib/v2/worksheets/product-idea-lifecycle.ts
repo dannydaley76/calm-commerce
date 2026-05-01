@@ -34,7 +34,21 @@ export type ProductIdeaLifecycle = {
   testDecision: string | null;
   unitsSold: string | null;
   testLearning: string | null;
+  metricEntries: ProductIdeaMetricEntry[];
   timeline: ProductIdeaTimelineEvent[];
+};
+
+export type ProductIdeaMetricEntry = {
+  id: string;
+  weekEnding: string;
+  entryType: "validation" | "live_store";
+  summary: string;
+};
+
+type RawMetricEntry = {
+  id: string;
+  week_ending: string;
+  data_json: Record<string, string>;
 };
 
 export type ProductIdeaTimelineEvent = {
@@ -149,6 +163,7 @@ function buildTimeline({
   isChosen,
   isTestIdea,
   responses,
+  metricEntries,
 }: {
   idea: ProductIdeaRow;
   label: string;
@@ -156,6 +171,7 @@ function buildTimeline({
   isChosen: boolean;
   isTestIdea: boolean;
   responses: LifecycleResponses;
+  metricEntries: ProductIdeaMetricEntry[];
 }): ProductIdeaTimelineEvent[] {
   const events: ProductIdeaTimelineEvent[] = [
     {
@@ -219,10 +235,52 @@ function buildTimeline({
     }
   }
 
+  for (const entry of metricEntries.slice(0, 4)) {
+    events.push({
+      key: `metric-${entry.id}`,
+      label: entry.entryType === "validation" ? "Marketplace metrics logged" : "Store metrics logged",
+      detail: `${entry.weekEnding}: ${entry.summary}.`,
+      chapter: entry.entryType === "validation" ? "Metrics" : "Dashboard",
+    });
+  }
+
   return events;
 }
 
-export function getProductIdeaLifecycles(responses: LifecycleResponses): ProductIdeaLifecycle[] {
+function metricSummary(entry: RawMetricEntry): string {
+  const data = entry.data_json;
+  if (data.entry_type === "validation") {
+    const parts = [
+      data.impressions ? `${data.impressions} impressions` : "",
+      data.listing_clicks ? `${data.listing_clicks} clicks` : "",
+      data.orders ? `${data.orders} orders` : "",
+    ].filter(Boolean);
+    return parts.join(", ") || "validation metrics added";
+  }
+
+  const parts = [
+    data.revenue ? `${data.revenue} revenue` : "",
+    data.orders ? `${data.orders} orders` : "",
+    data.traffic ? `${data.traffic} visitors` : "",
+  ].filter(Boolean);
+  return parts.join(", ") || "store metrics added";
+}
+
+function metricsForIdea(metrics: RawMetricEntry[], ideaId: string): ProductIdeaMetricEntry[] {
+  return metrics
+    .filter((entry) => normalize(entry.data_json.product_idea_id) === ideaId)
+    .map((entry) => ({
+      id: entry.id,
+      weekEnding: entry.week_ending,
+      entryType: entry.data_json.entry_type === "validation" ? "validation" : "live_store",
+      summary: metricSummary(entry),
+    }));
+}
+
+export function getProductIdeaLifecycles(
+  responses: LifecycleResponses,
+  metrics: RawMetricEntry[] = [],
+): ProductIdeaLifecycle[] {
   const ideas = ensureProductIdeaIds(parseRows(responses.product_ideas));
   const economicsRows = parseRows(responses.idea_economics) as EconomicsRow[];
   const chosenIdea = findProductIdeaByIdOrLabel(ideas, responses.chosen_idea);
@@ -239,6 +297,7 @@ export function getProductIdeaLifecycles(responses: LifecycleResponses): Product
     if (economics) status = "economics_checked";
     if (isChosen) status = "selected";
     if (isTestIdea) status = deriveTestStatus(responses);
+    const metricEntries = metricsForIdea(metrics, ideaId);
 
     return {
       ideaId,
@@ -257,7 +316,8 @@ export function getProductIdeaLifecycles(responses: LifecycleResponses): Product
       testDecision: isTestIdea ? normalize(responses.decision) || null : null,
       unitsSold: isTestIdea ? normalize(responses.units_sold) || null : null,
       testLearning: isTestIdea ? normalize(responses.what_you_learned) || null : null,
-      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses }),
+      metricEntries,
+      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses, metricEntries }),
     };
   });
 }

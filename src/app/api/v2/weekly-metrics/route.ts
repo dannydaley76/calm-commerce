@@ -133,8 +133,8 @@ export async function POST(req: Request) {
     /* ── Sanitise data_json: only known keys per phase, strings, capped length ── */
     const allowedKeys =
       entryType === "validation"
-        ? ["impressions", "listing_clicks", "orders", "profit_per_sale", "noticed"]
-        : ["revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"];
+        ? ["product_idea_id", "impressions", "listing_clicks", "orders", "profit_per_sale", "noticed"]
+        : ["product_idea_id", "revenue", "orders", "traffic", "ad_spend", "new_email_subscribers", "refunds_returns", "what_worked", "what_to_change", "notes"];
 
     const sanitisedData: Record<string, string> = { entry_type: entryType };
     for (const key of allowedKeys) {

@@ -20,6 +20,11 @@ type MetricEntry = {
 
 type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
+type ProductIdeaOption = {
+  id: string;
+  label: string;
+};
+
 type ValidationRow = {
   entry: MetricEntry;
   impressions: number | null;
@@ -281,6 +286,7 @@ function LiveStoreInlineEdit({
 }) {
   const [form, setForm] = useState<Record<string, string>>({
     week_ending:           toISODate(entry.week_ending),
+    product_idea_id:       entry.data_json.product_idea_id ?? "",
     revenue:               entry.data_json.revenue ?? "",
     orders:                entry.data_json.orders ?? "",
     traffic:               entry.data_json.traffic ?? "",
@@ -470,12 +476,58 @@ function Question({
   );
 }
 
+function ProductIdeaQuestion({
+  productIdeas,
+  value,
+  onChange,
+  disabled,
+}: {
+  productIdeas: ProductIdeaOption[];
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  if (productIdeas.length === 0) return null;
+  return (
+    <Question
+      eyebrow="Product"
+      question="Which product idea does this week belong to?"
+      context="This keeps metrics attached to the product history in Ideas."
+    >
+      <select
+        className={inputBase}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="">No idea selected</option>
+        {productIdeas.map((idea) => (
+          <option key={idea.id} value={idea.id}>
+            {idea.label}
+          </option>
+        ))}
+      </select>
+    </Question>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────────
    Validation entry form
 ───────────────────────────────────────────────────────────── */
 
-function ValidationForm({ onSaved }: { onSaved: () => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayISO() });
+function ValidationForm({
+  onSaved,
+  productIdeas,
+  defaultProductIdeaId,
+}: {
+  onSaved: () => void;
+  productIdeas: ProductIdeaOption[];
+  defaultProductIdeaId: string;
+}) {
+  const [form, setForm] = useState<Record<string, string>>({
+    week_ending: todayISO(),
+    product_idea_id: defaultProductIdeaId,
+  });
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -514,6 +566,13 @@ function ValidationForm({ onSaved }: { onSaved: () => void }) {
       </div>
 
       <div className="space-y-6">
+        <ProductIdeaQuestion
+          productIdeas={productIdeas}
+          value={form.product_idea_id ?? ""}
+          onChange={(value) => set("product_idea_id", value)}
+          disabled={isSubmitting}
+        />
+
         <Question
           eyebrow="Week"
           question="Which week are you logging?"
@@ -650,6 +709,7 @@ function ValidationInlineEdit({
 }) {
   const [form, setForm] = useState<Record<string, string>>({
     week_ending: toISODate(entry.week_ending),
+    product_idea_id: entry.data_json.product_idea_id ?? "",
     impressions: entry.data_json.impressions ?? "",
     listing_clicks: entry.data_json.listing_clicks ?? "",
     orders: entry.data_json.orders ?? "",
@@ -990,8 +1050,19 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
    Live store entry form
 ───────────────────────────────────────────────────────────── */
 
-function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
-  const [form, setForm] = useState<Record<string, string>>({ week_ending: todayISO() });
+function LiveStoreForm({
+  onSaved,
+  productIdeas,
+  defaultProductIdeaId,
+}: {
+  onSaved: () => void;
+  productIdeas: ProductIdeaOption[];
+  defaultProductIdeaId: string;
+}) {
+  const [form, setForm] = useState<Record<string, string>>({
+    week_ending: todayISO(),
+    product_idea_id: defaultProductIdeaId,
+  });
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1031,6 +1102,13 @@ function LiveStoreForm({ onSaved }: { onSaved: () => void }) {
       </div>
 
       <div className="space-y-6">
+        <ProductIdeaQuestion
+          productIdeas={productIdeas}
+          value={form.product_idea_id ?? ""}
+          onChange={(value) => set("product_idea_id", value)}
+          disabled={isSubmitting}
+        />
+
         <Question eyebrow="Week" question="Which week are you logging?" context="Pick the last day of the week, usually a Sunday.">
           <input type="date" className={inputBase} value={form.week_ending ?? ""} onChange={(e) => set("week_ending", e.target.value)} disabled={isSubmitting} />
         </Question>
@@ -1367,10 +1445,18 @@ function PhaseOnboarding({ onChoose }: { onChoose: (p: Phase) => void }) {
    Main component
 ───────────────────────────────────────────────────────────── */
 
-export function MetricsClient({ entries, authenticated, isDev = false }: {
+export function MetricsClient({
+  entries,
+  authenticated,
+  isDev = false,
+  productIdeas = [],
+  defaultProductIdeaId = "",
+}: {
   entries: MetricEntry[];
   authenticated: boolean;
   isDev?: boolean;
+  productIdeas?: ProductIdeaOption[];
+  defaultProductIdeaId?: string;
 }) {
   const router = useRouter();
 
@@ -1442,9 +1528,17 @@ export function MetricsClient({ entries, authenticated, isDev = false }: {
       {showForm && (
         <div className="space-y-3">
           {phase === "validation" ? (
-            <ValidationForm onSaved={() => { setShowForm(false); router.refresh(); }} />
+            <ValidationForm
+              onSaved={() => { setShowForm(false); router.refresh(); }}
+              productIdeas={productIdeas ?? []}
+              defaultProductIdeaId={defaultProductIdeaId ?? ""}
+            />
           ) : (
-            <LiveStoreForm onSaved={() => { setShowForm(false); router.refresh(); }} />
+            <LiveStoreForm
+              onSaved={() => { setShowForm(false); router.refresh(); }}
+              productIdeas={productIdeas ?? []}
+              defaultProductIdeaId={defaultProductIdeaId ?? ""}
+            />
           )}
           <button
             type="button"
