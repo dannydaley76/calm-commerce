@@ -95,6 +95,36 @@
         {
           "type": "field",
           "id": "ue-8",
+          "key": "upfront_cost_risk",
+          "label": "Upfront cost risk",
+          "fieldType": "single-select",
+          "required": false,
+          "helpText": "How much money is at risk before the first sale?",
+          "options": ["Low: can test without buying much stock", "Medium: small sample or stock order needed", "High: meaningful stock order needed", "Unknown: need supplier numbers"]
+        },
+        {
+          "type": "field",
+          "id": "ue-9",
+          "key": "test_speed",
+          "label": "Test speed",
+          "fieldType": "single-select",
+          "required": false,
+          "helpText": "How quickly could you get a fair marketplace test live?",
+          "options": ["Fast: can list this week", "Medium: needs sample, prep, or supplier confirmation", "Slow: needs production, customisation, or more setup", "Unknown"]
+        },
+        {
+          "type": "field",
+          "id": "ue-10",
+          "key": "numbers_confidence",
+          "label": "Confidence in the numbers",
+          "fieldType": "single-select",
+          "required": false,
+          "helpText": "Are these based on real quotes and known fees, or mostly estimates?",
+          "options": ["High: real quotes and known fees", "Medium: close estimates", "Low: mostly guesses", "Unknown: missing key costs"]
+        },
+        {
+          "type": "field",
+          "id": "ue-11",
           "key": "viable",
           "label": "Decision",
           "fieldType": "single-select",
@@ -106,7 +136,7 @@
     },
     {
       "type": "field",
-      "id": "ue-9",
+      "id": "ue-12",
       "key": "chosen_idea",
       "label": "Your chosen idea",
       "fieldType": "cross-worksheet-select",
@@ -117,7 +147,7 @@
     },
     {
       "type": "field",
-      "id": "ue-10",
+      "id": "ue-13",
       "key": "reason_for_choice",
       "label": "Why this idea",
       "fieldType": "textarea",

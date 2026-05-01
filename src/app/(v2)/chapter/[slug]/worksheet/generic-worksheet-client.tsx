@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { UnitEconomicsReviewPanel } from "@/components/v2/unit-economics-review-panel";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -22,6 +23,12 @@ type WorksheetField = {
   sourceLabelKey?: string;
 };
 
+type LinkedGroupConfig = {
+  sourceGroupKey: string;
+  sourceLabelKey: string;
+  targetFieldKey: string;
+};
+
 type FieldGroup = {
   type: "field-group";
   key: string;
@@ -30,6 +37,7 @@ type FieldGroup = {
   repeatMax: number;
   summaryFieldKey: string;
   fields: WorksheetField[];
+  linkedGroup?: LinkedGroupConfig;
 };
 
 type DefinitionItem = WorksheetField | FieldGroup;
@@ -69,6 +77,19 @@ function parseGroupValue(raw: string, repeatMin: number): InstanceRow[] {
   return Array.from({ length: repeatMin }, () => ({}));
 }
 
+function parseLinkedSource(
+  allValues: Record<string, string>,
+  sourceGroupKey: string,
+): InstanceRow[] {
+  try {
+    const parsed = JSON.parse(allValues[sourceGroupKey] ?? "");
+    if (Array.isArray(parsed)) return parsed as InstanceRow[];
+  } catch {
+    // fall through
+  }
+  return [];
+}
+
 function computeCompletion(
   items: DefinitionItem[],
   values: Record<string, string>,
@@ -81,14 +102,26 @@ function computeCompletion(
 
   for (const item of items) {
     if (isFieldGroup(item)) {
-      const instances = parseGroupValue(values[item.key] ?? "", item.repeatMin);
-      const filled = instances
-        .slice(0, item.repeatMin)
-        .filter((row) => (row[item.summaryFieldKey] ?? "").trim().length > 0).length;
-      totalAll += item.repeatMin;
+      const instances = parseGroupValue(values[item.key] ?? "", item.linkedGroup ? 0 : item.repeatMin);
+      const expectedCount = item.linkedGroup
+        ? Math.min(parseLinkedSource(values, item.linkedGroup.sourceGroupKey).length, item.repeatMax)
+        : item.repeatMin;
+      const filled = item.linkedGroup
+        ? instances
+            .slice(0, expectedCount)
+            .filter((row) =>
+              Object.entries(row).some(
+                ([key, value]) =>
+                  key !== item.linkedGroup!.targetFieldKey && (value ?? "").trim().length > 0,
+              ),
+            ).length
+        : instances
+            .slice(0, expectedCount)
+            .filter((row) => (row[item.summaryFieldKey] ?? "").trim().length > 0).length;
+      totalAll += expectedCount;
       filledAll += filled;
       if (requiredFieldKeys.includes(item.key)) {
-        totalRequired += item.repeatMin;
+        totalRequired += expectedCount;
         filledRequired += filled;
       }
     } else {
@@ -139,7 +172,12 @@ export function GenericWorksheetClient({
     .map((item) => (item as WorksheetField).sourceGroupKey ?? "")
     .filter(Boolean);
 
-  const keysToLoad = [...allKeys, ...crossWorksheetSourceKeys];
+  const linkedGroupSourceKeys: string[] = items
+    .filter((item): item is FieldGroup => isFieldGroup(item) && !!item.linkedGroup)
+    .map((item) => item.linkedGroup?.sourceGroupKey ?? "")
+    .filter(Boolean);
+
+  const keysToLoad = [...allKeys, ...crossWorksheetSourceKeys, ...linkedGroupSourceKeys];
 
   /* ── Load saved values on mount ── */
   useEffect(() => {
@@ -184,6 +222,9 @@ export function GenericWorksheetClient({
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(async () => {
         setStatus("saving");
+        const scopedResponses = Object.fromEntries(
+          Object.entries(nextValues).filter(([key]) => allKeys.includes(key)),
+        );
         try {
           const res = await fetch("/api/v2/learner-state", {
             method: "POST",
@@ -193,7 +234,7 @@ export function GenericWorksheetClient({
               worksheetId,
               chapterId,
               chapterSlug,
-              responses: nextValues,
+              responses: scopedResponses,
               worksheetCompletionPercent: completionPct,
               lastLocationType: "worksheet",
             }),
@@ -208,7 +249,7 @@ export function GenericWorksheetClient({
       }, 800);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [worksheetId, chapterId, chapterSlug],
+    [worksheetId, chapterId, chapterSlug, allKeys.join(",")],
   );
 
   const handleChange = (key: string, value: string) => {
@@ -266,14 +307,18 @@ export function GenericWorksheetClient({
       <div className="space-y-5 rounded-[2rem] bg-white p-6 shadow-[0px_24px_48px_rgba(11,42,57,0.04)]">
         {items.map((item) =>
           isFieldGroup(item) ? (
-            <FieldGroupSection
-              key={item.key}
-              group={item}
-              rawValue={values[item.key] ?? ""}
-              onChange={(val) => handleChange(item.key, val)}
-              disabled={status === "loading"}
-              allValues={values}
-            />
+            <div key={item.key} className="space-y-4">
+              <FieldGroupSection
+                group={item}
+                rawValue={values[item.key] ?? ""}
+                onChange={(val) => handleChange(item.key, val)}
+                disabled={status === "loading"}
+                allValues={values}
+              />
+              {worksheetId === "unit-economics-worksheet" && item.key === "idea_economics" ? (
+                <UnitEconomicsReviewPanel rawValue={values[item.key] ?? ""} allValues={values} />
+              ) : null}
+            </div>
           ) : (
             <FieldSection
               key={item.key}
@@ -340,6 +385,19 @@ function FieldGroupSection({
   disabled: boolean;
   allValues: Record<string, string>;
 }) {
+  if (group.linkedGroup) {
+    return (
+      <LinkedFieldGroupSection
+        group={group}
+        linkedGroup={group.linkedGroup}
+        rawValue={rawValue}
+        onChange={onChange}
+        disabled={disabled}
+        allValues={allValues}
+      />
+    );
+  }
+
   const instances = parseGroupValue(rawValue, group.repeatMin);
 
   const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
@@ -409,6 +467,89 @@ function FieldGroupSection({
             <span>Add another {group.label.toLowerCase()}</span>
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+function LinkedFieldGroupSection({
+  group,
+  linkedGroup,
+  rawValue,
+  onChange,
+  disabled,
+  allValues,
+}: {
+  group: FieldGroup;
+  linkedGroup: LinkedGroupConfig;
+  rawValue: string;
+  onChange: (val: string) => void;
+  disabled: boolean;
+  allValues: Record<string, string>;
+}) {
+  const sourceRows = parseLinkedSource(allValues, linkedGroup.sourceGroupKey);
+  const visibleSource = sourceRows.slice(0, group.repeatMax);
+  const stored = parseGroupValue(rawValue, 0);
+
+  if (visibleSource.length === 0) {
+    return (
+      <div className="rounded-[1.5rem] border border-dashed border-ink-100 bg-surface-sunken px-5 py-6 text-sm leading-6 text-ink-500">
+        <p className="font-semibold text-ink-900">Add your product ideas in Chapter 3 first.</p>
+        <p className="mt-1">
+          Each idea you list there will appear here with its own economics breakdown.
+        </p>
+      </div>
+    );
+  }
+
+  const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
+    const targetLength = Math.max(stored.length, visibleSource.length, index + 1);
+    const next: InstanceRow[] = Array.from({ length: targetLength }, (_, i) => ({
+      ...(stored[i] ?? {}),
+    }));
+    next[index] = { ...(next[index] ?? {}), [fieldKey]: fieldValue };
+    onChange(JSON.stringify(next));
+  };
+
+  return (
+    <div className="rounded-[1.5rem] bg-surface-sunken p-5 ring-1 ring-ink-100">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">{group.label}</p>
+      <div className="mt-4 space-y-4">
+        {visibleSource.map((sourceRow, index) => {
+          const derivedLabel =
+            (sourceRow[linkedGroup.sourceLabelKey] ?? "").trim() || `Idea ${index + 1}`;
+          const storedRow = stored[index] ?? {};
+          const shortLabel =
+            derivedLabel.length > 50 ? `${derivedLabel.slice(0, 50)}…` : derivedLabel;
+          const instanceLabel = `${group.label} ${index + 1}: ${shortLabel}`;
+
+          return (
+            <div key={index} className="rounded-2xl border border-[#e2e6f5] bg-white p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <p className="font-[Manrope] text-sm font-bold text-ink-900">{instanceLabel}</p>
+                <span className="rounded-full bg-[#eef4ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-cobalt-600">
+                  From Chapter 3
+                </span>
+              </div>
+              <div className="space-y-4">
+                {group.fields.map((field) => {
+                  const isTarget = field.key === linkedGroup.targetFieldKey;
+                  const fieldValue = isTarget ? derivedLabel : (storedRow[field.key] ?? "");
+                  return (
+                    <FieldSection
+                      key={field.key}
+                      field={field}
+                      value={fieldValue}
+                      onChange={(val) => updateInstance(index, field.key, val)}
+                      disabled={disabled || isTarget}
+                      allValues={allValues}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { UnitEconomicsReviewPanel } from "./unit-economics-review-panel";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -273,14 +274,18 @@ export function InlineWorksheetCard({
       <div className="space-y-5">
         {orderedItems.map((item) =>
           isFieldGroup(item) ? (
-            <FieldGroupRenderer
-              key={item.key}
-              group={item}
-              rawValue={values[item.key] ?? ""}
-              onChange={(val) => handleChange(item.key, val)}
-              disabled={status === "loading"}
-              allValues={values}
-            />
+            <div key={item.key} className="space-y-4">
+              <FieldGroupRenderer
+                group={item}
+                rawValue={values[item.key] ?? ""}
+                onChange={(val) => handleChange(item.key, val)}
+                disabled={status === "loading"}
+                allValues={values}
+              />
+              {worksheetId === "unit-economics-worksheet" && item.key === "idea_economics" ? (
+                <UnitEconomicsReviewPanel rawValue={values[item.key] ?? ""} allValues={values} />
+              ) : null}
+            </div>
           ) : (
             <FieldRenderer
               key={item.key}
