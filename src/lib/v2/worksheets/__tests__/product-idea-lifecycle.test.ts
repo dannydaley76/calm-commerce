@@ -24,6 +24,16 @@ describe("getProductIdeaLifecycles", () => {
     expect(lifecycle.latestSignal).toContain("Yes: proceed");
   });
 
+  it("matches legacy economics rows by position when no idea ID or name exists", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+    const [lifecycle] = getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+      idea_economics: JSON.stringify([{ viable: "Yes: proceed" }]),
+    });
+
+    expect(lifecycle.status).toBe("economics_checked");
+  });
+
   it("marks the chosen idea as selected", () => {
     const ideas = ensureProductIdeaIds([
       { idea_description: "Desk shelf" },
@@ -125,12 +135,16 @@ describe("getProductIdeaLifecycles", () => {
 
     expect(getProductIdeaLifecycles({
       product_ideas: JSON.stringify(ideas),
-    })[0].nextAction.label).toBe("Run the numbers");
+    })[0].nextAction).toEqual({
+      label: "Add economics",
+      href: "/chapter/know-your-numbers/steps?step=chapter-5-step-4-score-with-real-numbers",
+      note: "Check margin, costs, and first-test risk before committing.",
+    });
 
     expect(getProductIdeaLifecycles({
       product_ideas: JSON.stringify(ideas),
       test_idea: ideas[0].idea_id,
       decision: "Proceed: build the store",
-    })[0].nextAction.href).toBe("/chapter/pick-your-customer/steps");
+    })[0].nextAction.href).toBe("/chapter/pick-your-customer/steps?step=chapter-7-step-2-define-niche-customer");
   });
 });

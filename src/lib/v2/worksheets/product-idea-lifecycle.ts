@@ -72,6 +72,12 @@ type EconomicsRow = ProductIdeaRow & {
 
 type LifecycleResponses = Record<string, string | undefined>;
 
+const CHAPTER_3_IDEAS_HREF = "/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist";
+const CHAPTER_5_ECONOMICS_HREF = "/chapter/know-your-numbers/steps?step=chapter-5-step-4-score-with-real-numbers";
+const CHAPTER_6_PLAN_HREF = "/chapter/test-before-you-build/steps?step=chapter-6-step-1-your-first-sale-and-choose-marketplace";
+const CHAPTER_6_RESULTS_HREF = "/chapter/test-before-you-build/steps?step=chapter-6-step-4-read-results-and-decide";
+const CHAPTER_7_CUSTOMER_HREF = "/chapter/pick-your-customer/steps?step=chapter-7-step-2-define-niche-customer";
+
 function parseRows(raw: string | undefined): ProductIdeaRow[] {
   if (!raw) return [];
   try {
@@ -116,9 +122,15 @@ function findEconomicsForIdea(
 ): EconomicsRow | null {
   const ideaId = getProductIdeaId(idea, ideaIndex);
   const label = getProductIdeaLabel(idea, ideaIndex);
+  const legacyRowAtSameIndex = economicsRows[ideaIndex];
   return (
     economicsRows.find((row) => normalize(row.idea_id) === ideaId) ??
     economicsRows.find((row) => normalize(row.idea_name) === label) ??
+    (legacyRowAtSameIndex &&
+    !normalize(legacyRowAtSameIndex.idea_id) &&
+    !normalize(legacyRowAtSameIndex.idea_name)
+      ? legacyRowAtSameIndex
+      : null) ??
     null
   );
 }
@@ -167,20 +179,20 @@ function nextActionForStatus(status: ProductIdeaLifecycleStatus): ProductIdeaNex
   switch (status) {
     case "draft":
       return {
-        label: "Run the numbers",
-        href: "/chapter/know-your-numbers/steps",
+        label: "Add economics",
+        href: CHAPTER_5_ECONOMICS_HREF,
         note: "Check margin, costs, and first-test risk before committing.",
       };
     case "economics_checked":
       return {
-        label: "Choose candidate",
-        href: "/chapter/know-your-numbers/steps",
+        label: "Review and choose",
+        href: CHAPTER_5_ECONOMICS_HREF,
         note: "Compare the economics and select the idea to test first.",
       };
     case "selected":
       return {
         label: "Plan marketplace test",
-        href: "/chapter/test-before-you-build/steps",
+        href: CHAPTER_6_PLAN_HREF,
         note: "Turn the selected idea into a simple real-world test.",
       };
     case "test_planned":
@@ -192,31 +204,31 @@ function nextActionForStatus(status: ProductIdeaLifecycleStatus): ProductIdeaNex
     case "test_running":
       return {
         label: "Update test results",
-        href: "/chapter/test-before-you-build/steps",
+        href: CHAPTER_6_RESULTS_HREF,
         note: "Record what happened when the test period ends.",
       };
     case "test_reviewed":
       return {
         label: "Make test decision",
-        href: "/chapter/test-before-you-build/steps",
+        href: CHAPTER_6_RESULTS_HREF,
         note: "Choose whether to proceed, adjust and retest, or pivot.",
       };
     case "proceed":
       return {
-        label: "Shape the offer",
-        href: "/chapter/pick-your-customer/steps",
+        label: "Define customer",
+        href: CHAPTER_7_CUSTOMER_HREF,
         note: "Move the validated idea into customer, offer, and store planning.",
       };
     case "retest":
       return {
         label: "Plan retest",
-        href: "/chapter/test-before-you-build/steps",
+        href: CHAPTER_6_PLAN_HREF,
         note: "Adjust the listing, price, or offer and run another evidence loop.",
       };
     case "pivot":
       return {
         label: "Add next idea",
-        href: "/chapter/brainstorm-with-discipline/steps",
+        href: CHAPTER_3_IDEAS_HREF,
         note: "Use what you learned to shortlist another candidate.",
       };
   }
