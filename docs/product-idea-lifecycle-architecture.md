@@ -67,6 +67,33 @@ The compatibility layer:
 
 This avoids a database migration for the first durable-idea pass.
 
+## Lifecycle Status Layer
+
+The dashboard now derives a compact lifecycle state for each idea from worksheet responses.
+
+Inputs:
+
+- `product_ideas`
+- `idea_economics`
+- `chosen_idea`
+- `test_idea`
+- `result`
+- `decision`
+
+Statuses:
+
+- draft
+- economics checked
+- selected
+- test planned
+- test running
+- test reviewed
+- proceed
+- retest
+- pivot
+
+This is intentionally derived rather than stored. The stored source of truth remains the worksheet answers; the lifecycle helper interprets those answers into a product-candidate view.
+
 ## Known Limits
 
 The fallback ID for legacy rows is only fully stable once it has been saved into the row. Before that, changing the idea text or reordering legacy rows can change the generated fallback.
@@ -78,13 +105,6 @@ That is acceptable for the first slice, but the next stronger version should eit
 
 ## Next Steps
 
-1. Add an idea status derived from progress:
-   - draft
-   - economics checked
-   - selected for test
-   - test running
-   - reviewed
-   - live
-   - paused or retired
-2. Add an idea history view now that Chapters 5 and 6 are both ID-linked.
-3. Consider a dedicated table once the lifecycle needs timeline events, multiple tests per idea, or product-level metrics.
+1. Add an idea history view now that Chapters 5 and 6 are both ID-linked.
+2. Add timeline events when the user selects, tests, proceeds, retests, or pivots an idea.
+3. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.

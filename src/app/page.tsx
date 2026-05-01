@@ -5,6 +5,11 @@ import { PrimaryButton, SecondaryButton, ProgressBar, Eyebrow } from "@/componen
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
+import {
+  getProductIdeaLifecycles,
+  type ProductIdeaLifecycle,
+  type ProductIdeaLifecycleStatus,
+} from "@/lib/v2/worksheets/product-idea-lifecycle";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -36,6 +41,7 @@ type DashboardData =
       currentStatus: ChapterStatus;
       worksheetPct: number;
       allDone: boolean;
+      ideaLifecycles: ProductIdeaLifecycle[];
     };
 
 /* ─────────────────────────────────────────────────────────────
@@ -62,13 +68,20 @@ async function getDashboardData(): Promise<DashboardData> {
         currentStatus: "not_started",
         worksheetPct: 0,
         allDone: false,
+        ideaLifecycles: [],
       };
     }
 
-    const { data: rows } = await supabase
-      .from("chapter_progress")
-      .select("chapter_id, status, worksheet_completion_percent")
-      .eq("project_id", projectId);
+    const [{ data: rows }, { data: worksheetRows }] = await Promise.all([
+      supabase
+        .from("chapter_progress")
+        .select("chapter_id, status, worksheet_completion_percent")
+        .eq("project_id", projectId),
+      supabase
+        .from("worksheet_responses")
+        .select("field_key, value_json")
+        .eq("project_id", projectId),
+    ]);
 
     const byId = Object.fromEntries(
       (rows ?? []).map((r) => [r.chapter_id, r]),
@@ -86,6 +99,12 @@ async function getDashboardData(): Promise<DashboardData> {
       null;
 
     const currentRow = current ? byId[current.chapter.id] : null;
+    const worksheetResponses = Object.fromEntries(
+      (worksheetRows ?? []).map((row) => [
+        row.field_key,
+        typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? ""),
+      ]),
+    );
 
     return {
       authenticated: true,
@@ -96,6 +115,7 @@ async function getDashboardData(): Promise<DashboardData> {
       currentStatus: (currentRow?.status as ChapterStatus | undefined) ?? "not_started",
       worksheetPct: Math.round(currentRow?.worksheet_completion_percent ?? 0),
       allDone: completedCount === chapters.length,
+      ideaLifecycles: getProductIdeaLifecycles(worksheetResponses),
     };
   } catch {
     return { authenticated: false };
@@ -149,6 +169,72 @@ function heroDescription(data: DashboardData, cta: Cta): string {
   if (data.allDone)
     return "You've completed all chapters. Your Lean Canvas and Metrics capture everything you've built.";
   return data.currentChapter.chapter.title;
+}
+
+function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
+  if (status === "proceed") return "bg-success-100 text-[#005e3f]";
+  if (status === "pivot" || status === "retest") return "bg-[#fff8e6] text-[#835700]";
+  if (status === "test_running" || status === "test_reviewed" || status === "test_planned") {
+    return "bg-[#eef4ff] text-cobalt-600";
+  }
+  return "bg-surface-sunken text-ink-500";
+}
+
+function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
+  if (ideas.length === 0) {
+    return (
+      <section className="rounded-[1.5rem] border border-dashed border-ink-100 bg-surface-raised p-6">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+          Idea pipeline
+        </p>
+        <h3 className="mt-2 font-[Manrope] text-lg font-bold text-ink-900">
+          No product ideas yet
+        </h3>
+        <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+          Add your first shortlisted ideas in Chapter 3. They will start appearing here as tracked candidates.
+        </p>
+        <div className="mt-4">
+          <SecondaryButton href="/chapter/brainstorm-with-discipline/steps">
+            Go to Chapter 3
+          </SecondaryButton>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-[1.5rem] border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+            Idea pipeline
+          </p>
+          <h3 className="mt-2 font-[Manrope] text-lg font-bold text-ink-900">
+            Product candidates
+          </h3>
+        </div>
+        <SecondaryButton href="/lean-canvas">Open canvas</SecondaryButton>
+      </div>
+
+      <div className="mt-5 divide-y divide-ink-100">
+        {ideas.slice(0, 4).map((idea) => (
+          <div key={idea.ideaId} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0 last:pb-0">
+            <div className="min-w-0">
+              <p className="truncate font-[Manrope] text-sm font-bold text-ink-900">
+                {idea.label}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-ink-500">
+                {idea.latestSignal}
+              </p>
+            </div>
+            <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
+              {idea.statusLabel}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -224,6 +310,10 @@ export default async function DashboardPage() {
             <PrimaryButton href={cta.href}>{cta.label} →</PrimaryButton>
           </div>
         </section>
+
+        {"ideaLifecycles" in data && (
+          <IdeaPipelinePanel ideas={data.ideaLifecycles} />
+        )}
 
         {/* ── Quick links ── */}
         <section>

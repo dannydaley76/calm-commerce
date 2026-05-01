@@ -42,7 +42,7 @@ export function getProductIdeaLabel(row: ProductIdeaRow, index: number): string 
 export function findProductIdeaByIdOrLabel(
   rows: ProductIdeaRow[],
   value: string | undefined,
-): ProductIdeaRow | null {
+): (ProductIdeaRow & { idea_id: string }) | null {
   const selected = (value ?? "").trim();
   if (!selected) return null;
   const rowsWithIds = ensureProductIdeaIds(rows);
