@@ -119,4 +119,18 @@ describe("getProductIdeaLifecycles", () => {
     expect(lifecycle.timeline.at(-1)?.key).toBe("metric-metric-1");
     expect(lifecycle.timeline.at(-1)?.detail).toContain("100 impressions");
   });
+
+  it("derives a next action from the idea status", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+
+    expect(getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+    })[0].nextAction.label).toBe("Run the numbers");
+
+    expect(getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+      test_idea: ideas[0].idea_id,
+      decision: "Proceed: build the store",
+    })[0].nextAction.href).toBe("/chapter/pick-your-customer/steps");
+  });
 });

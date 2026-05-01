@@ -1,5 +1,5 @@
 import { LearnerShell } from "@/components/learner-shell";
-import { GhostButton, PageHero, SecondaryButton } from "@/components/design-system";
+import { GhostButton, PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import {
   getProductIdeaLifecycles,
@@ -146,7 +146,23 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
 
       <IdeaTimeline idea={idea} />
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className="mt-6 rounded-lg border border-cobalt-100 bg-cobalt-100/50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">
+              Next best action
+            </p>
+            <p className="mt-1 text-sm leading-6 text-ink-700">
+              {idea.nextAction.note}
+            </p>
+          </div>
+          <PrimaryButton href={idea.nextAction.href} className="shrink-0">
+            {idea.nextAction.label}
+          </PrimaryButton>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3">
         <GhostButton href="/chapter/brainstorm-with-discipline/steps">
           Edit idea
         </GhostButton>

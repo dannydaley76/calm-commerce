@@ -23,6 +23,7 @@ export type ProductIdeaLifecycle = {
   status: ProductIdeaLifecycleStatus;
   statusLabel: string;
   latestSignal: string;
+  nextAction: ProductIdeaNextAction;
   isChosen: boolean;
   isTestIdea: boolean;
   demandEvidence: string | null;
@@ -43,6 +44,12 @@ export type ProductIdeaMetricEntry = {
   weekEnding: string;
   entryType: "validation" | "live_store";
   summary: string;
+};
+
+export type ProductIdeaNextAction = {
+  label: string;
+  href: string;
+  note: string;
 };
 
 type RawMetricEntry = {
@@ -154,6 +161,65 @@ function deriveLatestSignal({
   if (status === "proceed") return "Decision: build the store.";
   if (status === "retest") return "Decision: adjust and retest.";
   return "Decision: try a different product.";
+}
+
+function nextActionForStatus(status: ProductIdeaLifecycleStatus): ProductIdeaNextAction {
+  switch (status) {
+    case "draft":
+      return {
+        label: "Run the numbers",
+        href: "/chapter/know-your-numbers/steps",
+        note: "Check margin, costs, and first-test risk before committing.",
+      };
+    case "economics_checked":
+      return {
+        label: "Choose candidate",
+        href: "/chapter/know-your-numbers/steps",
+        note: "Compare the economics and select the idea to test first.",
+      };
+    case "selected":
+      return {
+        label: "Plan marketplace test",
+        href: "/chapter/test-before-you-build/steps",
+        note: "Turn the selected idea into a simple real-world test.",
+      };
+    case "test_planned":
+      return {
+        label: "Log test metrics",
+        href: "/metrics",
+        note: "Track impressions, clicks, and orders while the test is running.",
+      };
+    case "test_running":
+      return {
+        label: "Update test results",
+        href: "/chapter/test-before-you-build/steps",
+        note: "Record what happened when the test period ends.",
+      };
+    case "test_reviewed":
+      return {
+        label: "Make test decision",
+        href: "/chapter/test-before-you-build/steps",
+        note: "Choose whether to proceed, adjust and retest, or pivot.",
+      };
+    case "proceed":
+      return {
+        label: "Shape the offer",
+        href: "/chapter/pick-your-customer/steps",
+        note: "Move the validated idea into customer, offer, and store planning.",
+      };
+    case "retest":
+      return {
+        label: "Plan retest",
+        href: "/chapter/test-before-you-build/steps",
+        note: "Adjust the listing, price, or offer and run another evidence loop.",
+      };
+    case "pivot":
+      return {
+        label: "Add next idea",
+        href: "/chapter/brainstorm-with-discipline/steps",
+        note: "Use what you learned to shortlist another candidate.",
+      };
+  }
 }
 
 function buildTimeline({
@@ -305,6 +371,7 @@ export function getProductIdeaLifecycles(
       status,
       statusLabel: statusLabel(status),
       latestSignal: deriveLatestSignal({ status, economics, responses }),
+      nextAction: nextActionForStatus(status),
       isChosen,
       isTestIdea,
       demandEvidence: normalize(idea.demand_evidence) || null,

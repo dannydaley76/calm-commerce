@@ -94,6 +94,10 @@ Statuses:
 
 This is intentionally derived rather than stored. The stored source of truth remains the worksheet answers; the lifecycle helper interprets those answers into a product-candidate view and an ordered timeline.
 
+Each lifecycle also derives a `nextAction` from the current status. The Ideas page uses this to show one clear action for each candidate, such as running the numbers, planning a marketplace test, logging metrics, shaping the offer, or adding the next idea after a pivot.
+
+Metrics entries can now attach to an idea through `weekly_metrics.data_json.product_idea_id`. Linked entries appear in the idea timeline, which keeps validation and store performance connected to the original product candidate.
+
 ## Known Limits
 
 The fallback ID for legacy rows is only fully stable once it has been saved into the row. Before that, changing the idea text or reordering legacy rows can change the generated fallback.
@@ -106,5 +110,5 @@ That is acceptable for the first slice, but the next stronger version should eit
 ## Next Steps
 
 1. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
-2. Attach metrics entries to a product idea once the user is operating a live store.
-3. Add explicit user notes to the idea timeline.
+2. Add explicit user notes to the idea timeline.
+3. Add an idea detail page once cards become too dense.
