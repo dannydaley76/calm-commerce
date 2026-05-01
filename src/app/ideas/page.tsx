@@ -59,6 +59,10 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
   return "bg-surface-sunken text-ink-500";
 }
 
+function ideaDetailHref(idea: ProductIdeaLifecycle): string {
+  return `/ideas/${encodeURIComponent(idea.ideaId)}`;
+}
+
 function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
@@ -116,9 +120,12 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
     <article className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">
+          <a
+            href={ideaDetailHref(idea)}
+            className="font-[Manrope] text-lg font-bold text-ink-900 underline-offset-4 hover:text-cobalt-600 hover:underline"
+          >
             {idea.label}
-          </h2>
+          </a>
           <p className="mt-2 text-sm leading-6 text-ink-600">
             {idea.latestSignal}
           </p>
@@ -163,13 +170,13 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <GhostButton href="/chapter/brainstorm-with-discipline/steps">
-          Edit idea
+        <GhostButton href={ideaDetailHref(idea)}>
+          Open detail
         </GhostButton>
-        <GhostButton href="/chapter/know-your-numbers/steps">
+        <GhostButton href="/chapter/know-your-numbers/steps?step=chapter-5-step-4-score-with-real-numbers">
           Review economics
         </GhostButton>
-        <GhostButton href="/chapter/test-before-you-build/steps">
+        <GhostButton href="/chapter/test-before-you-build/steps?step=chapter-6-step-4-read-results-and-decide">
           Review test
         </GhostButton>
       </div>

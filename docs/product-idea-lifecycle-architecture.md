@@ -98,6 +98,8 @@ Each lifecycle also derives a `nextAction` from the current status. The Ideas pa
 
 Metrics entries can now attach to an idea through `weekly_metrics.data_json.product_idea_id`. Linked entries appear in the idea timeline, which keeps validation and store performance connected to the original product candidate.
 
+The first dedicated detail route now lives at `/ideas/[ideaId]`. It gathers the candidate's evidence, economics, marketplace test, linked metrics, and timeline in one operating view. The core idea, economics, and test fields can be edited there; saves still write through the existing `worksheet_responses` path.
+
 ## Known Limits
 
 The fallback ID for legacy rows is only fully stable once it has been saved into the row. Before that, changing the idea text or reordering legacy rows can change the generated fallback.
@@ -111,4 +113,4 @@ That is acceptable for the first slice, but the next stronger version should eit
 
 1. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
 2. Add explicit user notes to the idea timeline.
-3. Add an idea detail page once cards become too dense.
+3. Consider extracting the idea detail edit panels into reusable worksheet field components.

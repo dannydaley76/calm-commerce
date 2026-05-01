@@ -199,6 +199,10 @@ function chooseDashboardIdeaAction(ideas: ProductIdeaLifecycle[]): ProductIdeaLi
   return [...ideas].sort((a, b) => ideaActionPriority(a.status) - ideaActionPriority(b.status))[0];
 }
 
+function ideaDetailHref(idea: ProductIdeaLifecycle): string {
+  return `/ideas/${encodeURIComponent(idea.ideaId)}`;
+}
+
 function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
   if (ideas.length === 0) {
     return (
@@ -260,9 +264,12 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
         {ideas.slice(0, 4).map((idea) => (
           <div key={idea.ideaId} className="flex flex-wrap items-start justify-between gap-3 py-4 first:pt-0 last:pb-0">
             <div className="min-w-0">
-              <p className="truncate font-[Manrope] text-sm font-bold text-ink-900">
+              <Link
+                href={ideaDetailHref(idea)}
+                className="block truncate font-[Manrope] text-sm font-bold text-ink-900 underline-offset-4 hover:text-cobalt-600 hover:underline"
+              >
                 {idea.label}
-              </p>
+              </Link>
               <p className="mt-1 text-xs leading-5 text-ink-500">
                 {idea.latestSignal}
               </p>
