@@ -5,6 +5,7 @@ import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { getCurrencyMeta } from "@/lib/profile/currency";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
+import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
   CanvasCard,
   CanvasTabs,
@@ -241,7 +242,6 @@ type UnitEconomicsRow = {
   shipping_to_customer?: string;
   platform_fees?: string;
   selling_price?: string;
-  margin_per_unit?: string;
 };
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -423,6 +423,11 @@ function getChosenIdeaEconomics(responses: ResponseMap): UnitEconomicsRow | null
   const match      = chosenIdea ? instances.find((e) => normalizeText(e.idea_name) === chosenIdea) : undefined;
   const row        = match ?? instances[0];
   return row && Object.keys(row).length > 0 ? row : null;
+}
+
+function formatCalculatedMoney(value: number | null, symbol: string): string | null {
+  if (value === null) return null;
+  return `${symbol}${value.toFixed(2)}`;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -864,6 +869,14 @@ export default async function LeanCanvasPage({
                     fieldKey:    f.key,
                     worksheetId: FIELD_WORKSHEET_MAP[f.key],
                   }));
+                  const calculatedMargin = chosenIdeaEconomics
+                    ? formatCalculatedMoney(
+                        calculateUnitEconomics(
+                          chosenIdeaEconomics as Record<string, string | undefined>,
+                        ).margin,
+                        currency.symbol,
+                      )
+                    : null;
 
                   /* Cost structure gets unit-economics block as children */
                   const costEconomicsBlock =
@@ -884,7 +897,6 @@ export default async function LeanCanvasPage({
                               { key: "product_cost",         label: "Product cost" },
                               { key: "shipping_to_customer", label: "Shipping" },
                               { key: "platform_fees",        label: "Platform fees" },
-                              { key: "margin_per_unit",      label: "Margin / unit" },
                             ] as const
                           )
                             .filter(({ key }) =>
@@ -900,6 +912,14 @@ export default async function LeanCanvasPage({
                                 </dd>
                               </div>
                             ))}
+                          {calculatedMargin ? (
+                            <div className="flex items-baseline justify-between gap-2">
+                              <dt className="text-xs text-ink-500">Margin / unit</dt>
+                              <dd className="text-xs font-semibold text-ink-900">
+                                {calculatedMargin}
+                              </dd>
+                            </div>
+                          ) : null}
                         </dl>
                       </div>
                     ) : null;

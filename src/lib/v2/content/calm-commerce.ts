@@ -835,7 +835,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "callout",
             style: "tip",
             content:
-              "You do not need to open a separate spreadsheet for this. Add the numbers in the worksheet fields below. The worksheet is designed to hold each idea's costs, selling price, margin, and final decision in one place.",
+              "You do not need to open a separate spreadsheet for this. Add the cost, fee, and selling price numbers in the worksheet fields below. The worksheet calculates margin and shows a viability signal before you make the final decision.",
           },
           {
             type: "paragraph",

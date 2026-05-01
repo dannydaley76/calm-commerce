@@ -12,6 +12,10 @@ export type IdeaReview = {
   ideaName: string;
   label: IdeaReviewLabel;
   score: number;
+  sellingPrice: number | null;
+  margin: number | null;
+  marginPercent: number | null;
+  missingNumbers: boolean;
   strengths: string[];
   cautions: string[];
   nextStep: string;
@@ -36,34 +40,23 @@ function optionIncludes(value: string | undefined, needle: string): boolean {
   return (value ?? "").toLowerCase().includes(needle.toLowerCase());
 }
 
-function calculateMargin(row: UnitEconomicsIdeaRow): {
+export function calculateUnitEconomics(row: UnitEconomicsIdeaRow): {
   sellingPrice: number | null;
   margin: number | null;
   marginPercent: number | null;
   missingNumbers: boolean;
 } {
   const sellingPrice = parseMoney(row.selling_price);
-  const manualMargin = parseMoney(row.margin_per_unit);
-
-  if (sellingPrice !== null && manualMargin !== null) {
-    return {
-      sellingPrice,
-      margin: manualMargin,
-      marginPercent: sellingPrice > 0 ? (manualMargin / sellingPrice) * 100 : null,
-      missingNumbers: false,
-    };
-  }
-
   const productCost = parseMoney(row.product_cost);
   const shippingToCustomer = parseMoney(row.shipping_to_customer);
 
   if (sellingPrice === null || productCost === null || shippingToCustomer === null) {
-    return { sellingPrice, margin: manualMargin, marginPercent: null, missingNumbers: true };
+    return { sellingPrice, margin: null, marginPercent: null, missingNumbers: true };
   }
 
   const platformFee = parseFee(row.platform_fees, sellingPrice);
   if (platformFee === null) {
-    return { sellingPrice, margin: manualMargin, marginPercent: null, missingNumbers: true };
+    return { sellingPrice, margin: null, marginPercent: null, missingNumbers: true };
   }
 
   const margin = sellingPrice - productCost - shippingToCustomer - platformFee;
@@ -81,7 +74,8 @@ function reviewIdea(row: UnitEconomicsIdeaRow, index: number): IdeaReview {
   const cautions: string[] = [];
   let score = 0;
 
-  const { marginPercent, missingNumbers } = calculateMargin(row);
+  const economics = calculateUnitEconomics(row);
+  const { marginPercent, missingNumbers } = economics;
 
   if (missingNumbers) {
     cautions.push("Some core numbers are missing, so the recommendation is provisional.");
@@ -190,10 +184,19 @@ function reviewIdea(row: UnitEconomicsIdeaRow, index: number): IdeaReview {
     ideaName,
     label,
     score,
+    sellingPrice: economics.sellingPrice,
+    margin: economics.margin,
+    marginPercent: economics.marginPercent,
+    missingNumbers: economics.missingNumbers,
     strengths: strengths.slice(0, 3),
     cautions: cautions.slice(0, 3),
     nextStep,
   };
+}
+
+export function reviewUnitEconomicsIdea(row: UnitEconomicsIdeaRow, index = 0): IdeaReview | null {
+  if (!Object.values(row).some((value) => (value ?? "").trim().length > 0)) return null;
+  return reviewIdea(row, index);
 }
 
 export function reviewUnitEconomicsIdeas(rows: UnitEconomicsIdeaRow[]): IdeaReview[] {

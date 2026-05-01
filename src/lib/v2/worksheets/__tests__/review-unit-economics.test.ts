@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reviewUnitEconomicsIdeas } from "../review-unit-economics";
+import { calculateUnitEconomics, reviewUnitEconomicsIdeas } from "../review-unit-economics";
 
 describe("reviewUnitEconomicsIdeas", () => {
   it("favours a low-risk simple idea over a higher-margin complex idea", () => {
@@ -87,7 +87,19 @@ describe("reviewUnitEconomicsIdeas", () => {
     expect(review.cautions.join(" ")).toContain("variants");
   });
 
-  it("uses manually entered margin when costs are otherwise incomplete", () => {
+  it("calculates margin per unit from the raw inputs", () => {
+    const economics = calculateUnitEconomics({
+      selling_price: "£30",
+      product_cost: "£10",
+      shipping_to_customer: "£4",
+      platform_fees: "10%",
+    });
+
+    expect(economics.margin).toBe(13);
+    expect(economics.marginPercent).toBeCloseTo(43.33, 2);
+  });
+
+  it("requires raw costs rather than accepting a manual margin", () => {
     const [review] = reviewUnitEconomicsIdeas([
       {
         idea_name: "Manual margin",
@@ -101,6 +113,6 @@ describe("reviewUnitEconomicsIdeas", () => {
       },
     ]);
 
-    expect(review.label).toBe("Strongest first test");
+    expect(review.label).toBe("Needs better numbers");
   });
 });

@@ -75,16 +75,6 @@
         {
           "type": "field",
           "id": "ue-6",
-          "key": "margin_per_unit",
-          "label": "Margin per unit",
-          "fieldType": "text",
-          "required": false,
-          "currencyAware": true,
-          "helpText": "Selling price minus all costs. Calculate this yourself: is it enough to advertise profitably?"
-        },
-        {
-          "type": "field",
-          "id": "ue-7",
           "key": "variant_complexity",
           "label": "Variant complexity",
           "fieldType": "single-select",
@@ -94,7 +84,7 @@
         },
         {
           "type": "field",
-          "id": "ue-8",
+          "id": "ue-7",
           "key": "upfront_cost_risk",
           "label": "Upfront cost risk",
           "fieldType": "single-select",
@@ -104,7 +94,7 @@
         },
         {
           "type": "field",
-          "id": "ue-9",
+          "id": "ue-8",
           "key": "test_speed",
           "label": "Test speed",
           "fieldType": "single-select",
@@ -114,7 +104,7 @@
         },
         {
           "type": "field",
-          "id": "ue-10",
+          "id": "ue-9",
           "key": "numbers_confidence",
           "label": "Confidence in the numbers",
           "fieldType": "single-select",
@@ -124,19 +114,19 @@
         },
         {
           "type": "field",
-          "id": "ue-11",
+          "id": "ue-10",
           "key": "viable",
           "label": "Decision",
           "fieldType": "single-select",
           "required": true,
-          "helpText": "Based on the numbers, does this idea pass the economics test?",
+          "helpText": "Use the calculated margin and viability feedback above, then decide whether this idea passes the economics test.",
           "options": ["Yes: proceed", "Marginal: possible with adjustments", "No: eliminate"]
         }
       ]
     },
     {
       "type": "field",
-      "id": "ue-12",
+      "id": "ue-11",
       "key": "chosen_idea",
       "label": "Your chosen idea",
       "fieldType": "cross-worksheet-select",
@@ -147,7 +137,7 @@
     },
     {
       "type": "field",
-      "id": "ue-13",
+      "id": "ue-12",
       "key": "reason_for_choice",
       "label": "Why this idea",
       "fieldType": "textarea",

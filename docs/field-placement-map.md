@@ -74,7 +74,7 @@ No worksheet. No inline fields.
 | 1 | The chapter that saves you the most money + The maths + Costs most beginners miss | None (absorbing the concept) |
 | 2 | Shipping + Product complexity (SKUs, MOQs, variants) | None (absorbing the concept) |
 | 3 | Talking to suppliers | None (guidance, no fields needed) |
-| 4 | Score your ideas with real numbers | Per-idea fields: `product_cost`, `shipping_to_customer`, `platform_fees`, `selling_price`, `margin_per_unit`, `variant_complexity` (select), `minimum_stock_investment` (conditional), `viable` (select). Then: `chosen_idea` (select from ideas), `reason_for_choice` (textarea) |
+| 4 | Score your ideas with real numbers | Per-idea fields: `product_cost`, `shipping_to_customer`, `platform_fees`, `selling_price`, calculated margin and viability feedback, `variant_complexity` (select), `viable` (select). Then: `chosen_idea` (select from ideas), `reason_for_choice` (textarea) |
 | 5 | You now know which idea can make money → next chapter teaser | None |
 
 **Rationale:** Same pattern as Chapter 3. The teaching builds up to a scoring exercise. Fields appear at the scoring moment. The per-idea fields use the field group pattern, ideally pre-populated with the idea descriptions from Chapter 3 so the learner doesn't re-enter them.

@@ -27,7 +27,7 @@ Existing fields:
 - `shipping_to_customer`
 - `platform_fees`
 - `selling_price`
-- `margin_per_unit`
+- calculated margin per unit from the raw price, cost, shipping, and fee inputs
 - `variant_complexity`
 - `viable`
 
@@ -137,7 +137,7 @@ Avoid making the score feel too precise. The score is only a sorting aid. The wr
 - Thin: margin is 10-25%.
 - Weak: margin is below 10%, negative, or missing.
 
-If margin cannot be calculated because values are missing, label the idea as needing better numbers unless the learner manually filled `margin_per_unit`.
+If margin cannot be calculated because values are missing, label the idea as needing better numbers. Do not ask the learner to calculate margin manually.
 
 ### Complexity
 

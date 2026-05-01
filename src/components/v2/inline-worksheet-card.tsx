@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { UnitEconomicsReviewPanel } from "./unit-economics-review-panel";
+import { UnitEconomicsReviewPanel, UnitEconomicsViabilityCard } from "./unit-economics-review-panel";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -489,14 +489,18 @@ function LinkedGroupRenderer({
                   ? derivedLabel
                   : (storedRow[field.key] ?? "");
                 return (
-                  <FieldRenderer
-                    key={field.key}
-                    field={field}
-                    value={fieldValue}
-                    onChange={(val) => updateInstance(index, field.key, val)}
-                    disabled={disabled || isTarget}
-                    allValues={allValues}
-                  />
+                  <div key={field.key} className="space-y-3">
+                    {field.key === "viable" ? (
+                      <UnitEconomicsViabilityCard row={{ ...storedRow, idea_name: derivedLabel }} />
+                    ) : null}
+                    <FieldRenderer
+                      field={field}
+                      value={fieldValue}
+                      onChange={(val) => updateInstance(index, field.key, val)}
+                      disabled={disabled || isTarget}
+                      allValues={allValues}
+                    />
+                  </div>
                 );
               })}
             </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { UnitEconomicsReviewPanel } from "@/components/v2/unit-economics-review-panel";
+import { UnitEconomicsReviewPanel, UnitEconomicsViabilityCard } from "@/components/v2/unit-economics-review-panel";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -536,14 +536,18 @@ function LinkedFieldGroupSection({
                   const isTarget = field.key === linkedGroup.targetFieldKey;
                   const fieldValue = isTarget ? derivedLabel : (storedRow[field.key] ?? "");
                   return (
-                    <FieldSection
-                      key={field.key}
-                      field={field}
-                      value={fieldValue}
-                      onChange={(val) => updateInstance(index, field.key, val)}
-                      disabled={disabled || isTarget}
-                      allValues={allValues}
-                    />
+                    <div key={field.key} className="space-y-3">
+                      {field.key === "viable" ? (
+                        <UnitEconomicsViabilityCard row={{ ...storedRow, idea_name: derivedLabel }} />
+                      ) : null}
+                      <FieldSection
+                        field={field}
+                        value={fieldValue}
+                        onChange={(val) => updateInstance(index, field.key, val)}
+                        disabled={disabled || isTarget}
+                        allValues={allValues}
+                      />
+                    </div>
                   );
                 })}
               </div>
