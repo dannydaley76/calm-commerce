@@ -5,6 +5,10 @@ import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { getCurrencyMeta } from "@/lib/profile/currency";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
+import {
+  findProductIdeaByIdOrLabel,
+  getProductIdeaId,
+} from "@/lib/v2/worksheets/product-idea-identity";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
   CanvasCard,
@@ -237,6 +241,7 @@ type CanvasSectionData = LeanCanvasSectionDef & {
 };
 
 type UnitEconomicsRow = {
+  idea_id?: string;
   idea_name?: string;
   product_cost?: string;
   shipping_to_customer?: string;
@@ -405,7 +410,7 @@ function buildCanvasInsights(responses: ResponseMap, currencySymbol: string): Ca
    Field-group parsing
    ───────────────────────────────────────────────────────────────────── */
 
-function parseFieldGroup<T extends Record<string, string>>(raw: string | undefined): T[] {
+function parseFieldGroup<T extends Record<string, string | undefined>>(raw: string | undefined): T[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -420,7 +425,16 @@ function getChosenIdeaEconomics(responses: ResponseMap): UnitEconomicsRow | null
   const instances = parseFieldGroup<UnitEconomicsRow>(responses.idea_economics);
   if (!instances.length) return null;
   const chosenIdea = normalizeText(responses.chosen_idea);
-  const match      = chosenIdea ? instances.find((e) => normalizeText(e.idea_name) === chosenIdea) : undefined;
+  const ideas = parseFieldGroup<Record<string, string | undefined>>(responses.product_ideas);
+  const chosenIdeaRow = findProductIdeaByIdOrLabel(ideas, chosenIdea);
+  const chosenIdeaId = chosenIdeaRow ? getProductIdeaId(chosenIdeaRow, ideas.indexOf(chosenIdeaRow)) : "";
+  const match = chosenIdea
+    ? instances.find((e) =>
+        normalizeText(e.idea_id) === chosenIdea ||
+        (chosenIdeaId && normalizeText(e.idea_id) === chosenIdeaId) ||
+        normalizeText(e.idea_name) === chosenIdea,
+      )
+    : undefined;
   const row        = match ?? instances[0];
   return row && Object.keys(row).length > 0 ? row : null;
 }
@@ -435,10 +449,13 @@ function formatCalculatedMoney(value: number | null, symbol: string): string | n
    ───────────────────────────────────────────────────────────────────── */
 
 function buildLeanCanvasSections(responses: ResponseMap): CanvasSectionData[] {
+  const ideaRows = parseFieldGroup<Record<string, string | undefined>>(responses.product_ideas);
+  const chosenIdeaRow = findProductIdeaByIdOrLabel(ideaRows, responses.chosen_idea);
+  const chosenIdeaLabel = chosenIdeaRow ? normalizeText(chosenIdeaRow.idea_description) : "";
   return LEAN_CANVAS_SECTIONS.map((def) => {
     const fieldData  = def.fields.map((f) => ({
       ...f,
-      value:  responses[f.key],
+      value:  f.key === "chosen_idea" && chosenIdeaLabel ? chosenIdeaLabel : responses[f.key],
       filled: !!normalizeText(responses[f.key]),
     }));
     const filledCount = fieldData.filter((f) => f.filled).length;

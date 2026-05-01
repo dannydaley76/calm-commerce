@@ -4,6 +4,11 @@ import {
   type IdeaReview,
   type UnitEconomicsIdeaRow,
 } from "@/lib/v2/worksheets/review-unit-economics";
+import {
+  PRODUCT_ID_FIELD,
+  ensureProductIdeaIds,
+  getProductIdeaId,
+} from "@/lib/v2/worksheets/product-idea-identity";
 
 type InstanceRow = Record<string, string>;
 
@@ -18,13 +23,17 @@ function parseRows(rawValue: string): InstanceRow[] {
 
 function hydrateLinkedIdeaNames(rawValue: string, allValues: Record<string, string>): UnitEconomicsIdeaRow[] {
   const rows = parseRows(rawValue);
-  const sourceRows = parseRows(allValues.product_ideas ?? "");
+  const sourceRows = ensureProductIdeaIds(parseRows(allValues.product_ideas ?? ""));
 
   return rows.map((row, index) => ({
     ...row,
     idea_name:
       (row.idea_name ?? "").trim() ||
-      (sourceRows[index]?.idea_description ?? "").trim() ||
+      (
+        sourceRows.find((sourceRow, sourceIndex) =>
+          getProductIdeaId(sourceRow, sourceIndex) === row[PRODUCT_ID_FIELD],
+        )?.idea_description ?? sourceRows[index]?.idea_description ?? ""
+      ).trim() ||
       `Idea ${index + 1}`,
   }));
 }

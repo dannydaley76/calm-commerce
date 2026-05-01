@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UnitEconomicsReviewPanel, UnitEconomicsViabilityCard } from "@/components/v2/unit-economics-review-panel";
+import {
+  PRODUCT_ID_FIELD,
+  ensureProductIdeaIds,
+  getProductIdeaId,
+  getProductIdeaLabel,
+} from "@/lib/v2/worksheets/product-idea-identity";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -88,6 +94,14 @@ function parseLinkedSource(
     // fall through
   }
   return [];
+}
+
+function withDurableRowId(groupKey: string, row: InstanceRow, index: number): InstanceRow {
+  if (groupKey !== "product_ideas") return row;
+  return {
+    ...row,
+    [PRODUCT_ID_FIELD]: getProductIdeaId(row, index),
+  };
 }
 
 function computeCompletion(
@@ -398,7 +412,9 @@ function FieldGroupSection({
     );
   }
 
-  const instances = parseGroupValue(rawValue, group.repeatMin);
+  const instances = parseGroupValue(rawValue, group.repeatMin).map((row, index) =>
+    withDurableRowId(group.key, row, index),
+  );
 
   const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
     const next = instances.map((row, i) => (i === index ? { ...row, [fieldKey]: fieldValue } : row));
@@ -407,7 +423,7 @@ function FieldGroupSection({
 
   const addInstance = () => {
     if (instances.length >= group.repeatMax) return;
-    onChange(JSON.stringify([...instances, {}]));
+    onChange(JSON.stringify([...instances, withDurableRowId(group.key, {}, instances.length)]));
   };
 
   const removeInstance = (index: number) => {
@@ -487,7 +503,10 @@ function LinkedFieldGroupSection({
   disabled: boolean;
   allValues: Record<string, string>;
 }) {
-  const sourceRows = parseLinkedSource(allValues, linkedGroup.sourceGroupKey);
+  const sourceRows =
+    linkedGroup.sourceGroupKey === "product_ideas"
+      ? ensureProductIdeaIds(parseLinkedSource(allValues, linkedGroup.sourceGroupKey))
+      : parseLinkedSource(allValues, linkedGroup.sourceGroupKey);
   const visibleSource = sourceRows.slice(0, group.repeatMax);
   const stored = parseGroupValue(rawValue, 0);
 
@@ -503,11 +522,18 @@ function LinkedFieldGroupSection({
   }
 
   const updateInstance = (index: number, fieldKey: string, fieldValue: string) => {
-    const targetLength = Math.max(stored.length, visibleSource.length, index + 1);
-    const next: InstanceRow[] = Array.from({ length: targetLength }, (_, i) => ({
-      ...(stored[i] ?? {}),
-    }));
-    next[index] = { ...(next[index] ?? {}), [fieldKey]: fieldValue };
+    const sourceRow = visibleSource[index] ?? {};
+    const sourceIdeaId = getProductIdeaId(sourceRow, index);
+    const sourceLabel = (sourceRow[linkedGroup.sourceLabelKey] ?? "").trim() || `Idea ${index + 1}`;
+    const existingIndex = stored.findIndex((row) => row[PRODUCT_ID_FIELD] === sourceIdeaId);
+    const writeIndex = existingIndex >= 0 ? existingIndex : index < stored.length ? index : stored.length;
+    const next: InstanceRow[] = stored.map((row) => ({ ...row }));
+    next[writeIndex] = {
+      ...(next[writeIndex] ?? {}),
+      [PRODUCT_ID_FIELD]: sourceIdeaId,
+      [linkedGroup.targetFieldKey]: sourceLabel,
+      [fieldKey]: fieldValue,
+    };
     onChange(JSON.stringify(next));
   };
 
@@ -518,7 +544,9 @@ function LinkedFieldGroupSection({
         {visibleSource.map((sourceRow, index) => {
           const derivedLabel =
             (sourceRow[linkedGroup.sourceLabelKey] ?? "").trim() || `Idea ${index + 1}`;
-          const storedRow = stored[index] ?? {};
+          const sourceIdeaId = getProductIdeaId(sourceRow, index);
+          const storedRow =
+            stored.find((row) => row[PRODUCT_ID_FIELD] === sourceIdeaId) ?? stored[index] ?? {};
           const shortLabel =
             derivedLabel.length > 50 ? `${derivedLabel.slice(0, 50)}…` : derivedLabel;
           const instanceLabel = `${group.label} ${index + 1}: ${shortLabel}`;
@@ -538,7 +566,7 @@ function LinkedFieldGroupSection({
                   return (
                     <div key={field.key} className="space-y-3">
                       {field.key === "viable" ? (
-                        <UnitEconomicsViabilityCard row={{ ...storedRow, idea_name: derivedLabel }} />
+                        <UnitEconomicsViabilityCard row={{ ...storedRow, [PRODUCT_ID_FIELD]: sourceIdeaId, idea_name: derivedLabel }} />
                       ) : null}
                       <FieldSection
                         field={field}
@@ -587,10 +615,16 @@ function FieldSection({
       try {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          crossOptions = parsed
-            .map((row: Record<string, string>) =>
-              (row[field.sourceLabelKey ?? ""] ?? "").trim(),
-            )
+          crossOptions = ensureProductIdeaIds(parsed as Record<string, string>[])
+            .map((row, index) => {
+              const label = field.sourceGroupKey === "product_ideas"
+                ? getProductIdeaLabel(row, index)
+                : (row[field.sourceLabelKey ?? ""] ?? "").trim();
+              const optionValue = field.sourceGroupKey === "product_ideas"
+                ? getProductIdeaId(row, index)
+                : label;
+              return label ? `${optionValue}|||${label}` : "";
+            })
             .filter(Boolean);
         }
       } catch {
@@ -599,6 +633,13 @@ function FieldSection({
     }
 
     const hasOptions = crossOptions.length > 0;
+    const selectedValue =
+      crossOptions
+        .map((opt) => {
+          const [optionValue, label] = opt.split("|||");
+          return { optionValue, label };
+        })
+        .find((opt) => value === opt.optionValue || value === opt.label)?.optionValue ?? value;
 
     return (
       <div>
@@ -616,16 +657,19 @@ function FieldSection({
         {hasOptions ? (
           <select
             className={inputBase}
-            value={value}
+            value={selectedValue}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
           >
             <option value="">Select your idea…</option>
-            {crossOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
+            {crossOptions.map((opt) => {
+              const [optionValue, label] = opt.split("|||");
+              return (
+                <option key={optionValue} value={optionValue}>
+                  {label}
+                </option>
+              );
+            })}
           </select>
         ) : (
           <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
