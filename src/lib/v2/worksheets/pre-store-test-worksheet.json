@@ -7,13 +7,24 @@
     "mode": "single",
     "completionRule": {
       "kind": "requiredFieldsComplete",
-      "requiredFieldKeys": ["test_marketplace", "decision"]
+      "requiredFieldKeys": ["test_idea", "test_marketplace", "decision"]
     }
   },
   "fields": [
     {
       "type": "field",
       "id": "pst-1",
+      "key": "test_idea",
+      "label": "Idea to test",
+      "fieldType": "cross-worksheet-select",
+      "sourceGroupKey": "product_ideas",
+      "sourceLabelKey": "idea_description",
+      "required": true,
+      "helpText": "Choose the product idea this marketplace test belongs to. This should usually be the idea you selected after running the numbers in Chapter 5."
+    },
+    {
+      "type": "field",
+      "id": "pst-2",
       "key": "test_marketplace",
       "label": "Test marketplace",
       "fieldType": "single-select",
@@ -23,16 +34,16 @@
     },
     {
       "type": "field",
-      "id": "pst-2",
+      "id": "pst-3",
       "key": "product_listed",
       "label": "Product listed",
       "fieldType": "text",
       "required": false,
-      "helpText": "Brief description of what you listed."
+      "helpText": "Brief description of the version you listed. This can be narrower than the original idea, for example a specific size, bundle, or variant."
     },
     {
       "type": "field",
-      "id": "pst-3",
+      "id": "pst-4",
       "key": "listing_price",
       "label": "Listing price",
       "fieldType": "text",
@@ -42,7 +53,7 @@
     },
     {
       "type": "field",
-      "id": "pst-4",
+      "id": "pst-5",
       "key": "test_duration",
       "label": "Test duration",
       "fieldType": "text",
@@ -51,7 +62,7 @@
     },
     {
       "type": "field",
-      "id": "pst-5",
+      "id": "pst-6",
       "key": "result",
       "label": "Test result",
       "fieldType": "single-select",
@@ -61,7 +72,7 @@
     },
     {
       "type": "field",
-      "id": "pst-6",
+      "id": "pst-7",
       "key": "units_sold",
       "label": "Units sold",
       "fieldType": "number",
@@ -70,7 +81,7 @@
     },
     {
       "type": "field",
-      "id": "pst-7",
+      "id": "pst-8",
       "key": "what_you_learned",
       "label": "What you learned",
       "fieldType": "textarea",
@@ -79,7 +90,7 @@
     },
     {
       "type": "field",
-      "id": "pst-8",
+      "id": "pst-9",
       "key": "decision",
       "label": "Your decision",
       "fieldType": "single-select",

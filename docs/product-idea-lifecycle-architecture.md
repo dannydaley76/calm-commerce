@@ -11,7 +11,8 @@ The first architecture step is stable identity:
 - Chapter 3 creates product idea rows.
 - Each row receives an internal `idea_id`.
 - Chapter 5 economics rows store the same `idea_id`.
-- The chosen idea field stores the selected `idea_id`.
+- The Chapter 5 chosen idea field stores the selected `idea_id`.
+- The Chapter 6 marketplace test stores the tested `idea_id`.
 - UI still shows the readable idea description.
 
 This lets later chapters attach tests, offer decisions, store decisions, and metrics to the same candidate over time.
@@ -25,6 +26,7 @@ Storage still uses `worksheet_responses`:
 - `product_ideas`: JSON array of Chapter 3 idea rows.
 - `idea_economics`: JSON array of Chapter 5 economics rows.
 - `chosen_idea`: selected idea ID for new saves. Legacy saved labels are still accepted.
+- `test_idea`: Chapter 6 marketplace test idea ID.
 
 Rows use:
 
@@ -76,8 +78,7 @@ That is acceptable for the first slice, but the next stronger version should eit
 
 ## Next Steps
 
-1. Carry selected `idea_id` into Chapter 6 marketplace test fields.
-2. Add an idea status derived from progress:
+1. Add an idea status derived from progress:
    - draft
    - economics checked
    - selected for test
@@ -85,5 +86,5 @@ That is acceptable for the first slice, but the next stronger version should eit
    - reviewed
    - live
    - paused or retired
-3. Add an idea history view once Chapters 5 and 6 are both ID-linked.
-4. Consider a dedicated table once the lifecycle needs timeline events, multiple tests per idea, or product-level metrics.
+2. Add an idea history view now that Chapters 5 and 6 are both ID-linked.
+3. Consider a dedicated table once the lifecycle needs timeline events, multiple tests per idea, or product-level metrics.

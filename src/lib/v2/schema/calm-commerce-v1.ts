@@ -262,7 +262,7 @@ export const CALM_COMMERCE_STEP_CONFIG: ChapterStructureConfig[] = [
 export const CALM_COMMERCE_DEPENDENCY_RULES: DependencyImpact[] = [
   {
     sourceFieldKey: "product_ideas",
-    affectedFieldKeys: ["chosen_idea", "offer_name", "offer_positioning"],
+    affectedFieldKeys: ["chosen_idea", "test_idea", "offer_name", "offer_positioning"],
     affectedCanvasSections: ["product_candidates", "product_economics", "value_proposition"],
     warningMessage:
       "Changing or deleting a product idea can break your chosen idea, offer setup, and later canvas sections.",
@@ -270,7 +270,7 @@ export const CALM_COMMERCE_DEPENDENCY_RULES: DependencyImpact[] = [
   },
   {
     sourceFieldKey: "chosen_idea",
-    affectedFieldKeys: ["offer_name", "offer_positioning", "listing_title"],
+    affectedFieldKeys: ["test_idea", "offer_name", "offer_positioning", "listing_title"],
     affectedCanvasSections: ["product_economics", "solution", "value_proposition"],
     warningMessage:
       "Changing the chosen idea will affect offer, listing, and economics work that depends on it.",

@@ -923,13 +923,19 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
       {
         id: "chapter-6-step-1-your-first-sale-and-choose-marketplace",
         title: "Your first sale could happen this week",
-        inlineWorksheetFieldKeys: ["test_marketplace"],
+        inlineWorksheetFieldKeys: ["test_idea", "test_marketplace"],
         blocks: [
           { type: "heading", level: 2, content: "Your first sale could happen this week" },
           {
             type: "paragraph",
             content:
               "You have a product idea backed by evidence. You know the numbers work. Now the question is: will someone actually buy it? You could spend weeks building a full store to find out. Or you could list it on a marketplace where millions of buyers are already shopping and get your answer much faster.",
+          },
+          {
+            type: "callout",
+            style: "tip",
+            content:
+              "Before you choose the marketplace, confirm which idea you are testing in the worksheet below. This keeps the test attached to the same product candidate you researched in Chapter 3 and checked in Chapter 5.",
           },
           { type: "heading", level: 2, content: "Why marketplaces first" },
           {

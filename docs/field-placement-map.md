@@ -87,7 +87,7 @@ No worksheet. No inline fields.
 
 | Step | Content | Fields |
 |------|---------|--------|
-| 1 | Your first sale could happen this week + Why marketplaces + Choose your marketplace | `test_marketplace` (single-select) |
+| 1 | Your first sale could happen this week + Why marketplaces + Choose your marketplace | `test_idea` (select from Chapter 3 ideas), `test_marketplace` (single-select) |
 | 2 | Write your first listing + Set your test duration | `product_listed` (text), `listing_price` (text, currency-aware), `test_duration` (text) |
 | 3 | When it sells: ship it well | None (guidance) |
 | 4 | Read the results + Make your decision | `result` (single-select), `units_sold` (number, visible when result=Sold), `what_you_learned` (textarea), `decision` (single-select) |
