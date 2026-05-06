@@ -149,6 +149,33 @@ describe("getProductIdeaLifecycles", () => {
     expect(lifecycle.timeline.at(-1)?.detail).toContain("Supplier confirmed lower MOQ");
   });
 
+  it("keeps decision notes newest first in the log but oldest first in the timeline", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+    const [lifecycle] = getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+      product_idea_notes: JSON.stringify([
+        {
+          note_id: "note-2",
+          idea_id: ideas[0].idea_id,
+          created_at: "2026-05-07",
+          note: "Second note.",
+        },
+        {
+          note_id: "note-1",
+          idea_id: ideas[0].idea_id,
+          created_at: "2026-05-06",
+          note: "First note.",
+        },
+      ]),
+    });
+
+    expect(lifecycle.notes.map((note) => note.id)).toEqual(["note-2", "note-1"]);
+    expect(lifecycle.timeline.slice(-2).map((event) => event.key)).toEqual([
+      "note-note-1",
+      "note-note-2",
+    ]);
+  });
+
   it("derives a next action from the idea status", () => {
     const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
 

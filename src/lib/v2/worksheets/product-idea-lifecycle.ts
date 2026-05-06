@@ -347,7 +347,7 @@ function buildTimeline({
     });
   }
 
-  for (const note of notes.slice(0, 4)) {
+  for (const note of notes.slice(0, 4).reverse()) {
     events.push({
       key: `note-${note.id}`,
       label: "Decision note added",
