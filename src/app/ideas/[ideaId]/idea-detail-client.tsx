@@ -19,6 +19,12 @@ import type {
 type ResponseMap = Record<string, string>;
 type InstanceRow = Record<string, string | undefined>;
 type SaveState = "idle" | "saving" | "saved" | "error";
+type NoteRow = {
+  note_id?: string;
+  idea_id?: string;
+  created_at?: string;
+  note?: string;
+};
 
 const inputBase =
   "mt-1.5 block w-full rounded-xl border border-[#e2e4ea] bg-white px-4 py-2.5 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-[#b0b3be] focus:border-cobalt-600 focus:ring-1 focus:ring-cobalt-600";
@@ -42,6 +48,14 @@ function parseRows(raw: string | undefined): InstanceRow[] {
   } catch {
     return [];
   }
+}
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function createNoteId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `note_${Date.now()}`;
 }
 
 function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
@@ -249,6 +263,67 @@ function MetricsSection({ idea }: { idea: ProductIdeaLifecycle }) {
   );
 }
 
+function NotesSection({
+  idea,
+  noteDraft,
+  status,
+  onChange,
+  onSave,
+}: {
+  idea: ProductIdeaLifecycle;
+  noteDraft: string;
+  status: SaveState;
+  onChange: (value: string) => void;
+  onSave: () => Promise<void>;
+}) {
+  return (
+    <section id="notes" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSave();
+        }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Decision log</h2>
+            <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+              Add dated notes when something changes, surprises you, or affects the next decision.
+            </p>
+          </div>
+          <SaveButton state={status} />
+        </div>
+        <label className="mt-5 block">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
+          <textarea
+            className={`${inputBase} min-h-28`}
+            value={noteDraft}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
+          />
+        </label>
+      </form>
+
+      {idea.notes.length === 0 ? (
+        <p className="mt-5 rounded-xl border border-dashed border-ink-100 bg-surface-sunken p-4 text-sm leading-6 text-ink-500">
+          No decision notes yet.
+        </p>
+      ) : (
+        <div className="mt-5 divide-y divide-ink-100">
+          {idea.notes.map((note) => (
+            <div key={note.id} className="py-4 first:pt-0 last:pb-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+                {note.createdAt}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ink-700">{note.note}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function localNextActionHref(idea: ProductIdeaLifecycle): string {
   if (idea.status === "draft" || idea.status === "economics_checked") return "#economics";
   if (
@@ -282,6 +357,7 @@ export function IdeaDetailClient({
   const sourceIdea = productIdeas[ideaIndex] ?? ({ idea_id: idea.ideaId, idea_description: idea.label } as ProductIdeaRow);
   const economicsRows = parseRows(responses.idea_economics);
   const economicsMatch = findEconomicsRow(economicsRows, idea, ideaIndex);
+  const noteRows = parseRows(responses.product_idea_notes) as NoteRow[];
 
   const [ideaDraft, setIdeaDraft] = useState({
     idea_description: getProductIdeaLabel(sourceIdea, ideaIndex),
@@ -310,10 +386,12 @@ export function IdeaDetailClient({
     what_you_learned: idea.isTestIdea ? responses.what_you_learned ?? "" : "",
     decision: idea.isTestIdea ? responses.decision ?? "" : "",
   });
+  const [noteDraft, setNoteDraft] = useState("");
   const [status, setStatus] = useState<Record<string, SaveState>>({
     idea: "idle",
     economics: "idle",
     test: "idle",
+    notes: "idle",
   });
 
   const setSectionStatus = (section: string, value: SaveState) => {
@@ -368,6 +446,31 @@ export function IdeaDetailClient({
     if (ok) router.refresh();
   };
 
+  const saveNote = async () => {
+    const trimmed = noteDraft.trim();
+    if (!trimmed) return;
+    setSectionStatus("notes", "saving");
+    const nextRows: NoteRow[] = [
+      {
+        note_id: createNoteId(),
+        idea_id: idea.ideaId,
+        created_at: todayISO(),
+        note: trimmed,
+      },
+      ...noteRows,
+    ];
+    const result = await writeWorksheetField(
+      "product_idea_notes",
+      JSON.stringify(nextRows),
+      "ideas-worksheet",
+    );
+    setSectionStatus("notes", result.ok ? "saved" : "error");
+    if (result.ok) {
+      setNoteDraft("");
+      router.refresh();
+    }
+  };
+
   return (
     <div className="space-y-6">
       <GhostButton href="/ideas">Back to ideas</GhostButton>
@@ -406,6 +509,7 @@ export function IdeaDetailClient({
           <SecondaryButton href="#idea-evidence" className="px-4 py-2">Idea evidence</SecondaryButton>
           <SecondaryButton href="#economics" className="px-4 py-2">Economics</SecondaryButton>
           <SecondaryButton href="#marketplace-test" className="px-4 py-2">Marketplace test</SecondaryButton>
+          <SecondaryButton href="#notes" className="px-4 py-2">Decision log</SecondaryButton>
           <SecondaryButton href="#history" className="px-4 py-2">History</SecondaryButton>
         </div>
       </nav>
@@ -555,6 +659,13 @@ export function IdeaDetailClient({
         </div>
 
         <aside id="history" className="space-y-6">
+          <NotesSection
+            idea={idea}
+            noteDraft={noteDraft}
+            status={status.notes}
+            onChange={setNoteDraft}
+            onSave={saveNote}
+          />
           <MetricsSection idea={idea} />
           <IdeaTimeline idea={idea} />
         </aside>

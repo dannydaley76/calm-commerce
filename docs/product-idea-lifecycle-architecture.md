@@ -27,6 +27,7 @@ Storage still uses `worksheet_responses`:
 - `idea_economics`: JSON array of Chapter 5 economics rows.
 - `chosen_idea`: selected idea ID for new saves. Legacy saved labels are still accepted.
 - `test_idea`: Chapter 6 marketplace test idea ID.
+- `product_idea_notes`: JSON array of dated decision notes linked by `idea_id`.
 
 Rows use:
 
@@ -98,7 +99,7 @@ Each lifecycle also derives a `nextAction` from the current status. The Ideas pa
 
 Metrics entries can now attach to an idea through `weekly_metrics.data_json.product_idea_id`. Linked entries appear in the idea timeline, which keeps validation and store performance connected to the original product candidate.
 
-The first dedicated detail route now lives at `/ideas/[ideaId]`. It gathers the candidate's evidence, economics, marketplace test, linked metrics, and timeline in one operating view. The core idea, economics, and test fields can be edited there; saves still write through the existing `worksheet_responses` path.
+The first dedicated detail route now lives at `/ideas/[ideaId]`. It gathers the candidate's evidence, economics, marketplace test, linked metrics, decision notes, and timeline in one operating view. The core idea, economics, test fields, and dated notes can be edited there; saves still write through the existing `worksheet_responses` path.
 
 ## Known Limits
 
@@ -112,5 +113,5 @@ That is acceptable for the first slice, but the next stronger version should eit
 ## Next Steps
 
 1. Consider a dedicated table once the lifecycle needs multiple tests per idea, richer timeline events, or product-level metrics.
-2. Add explicit user notes to the idea timeline.
-3. Consider extracting the idea detail edit panels into reusable worksheet field components.
+2. Consider extracting the idea detail edit panels into reusable worksheet field components.
+3. Consider richer note management: edit, delete, note categories, and filters.

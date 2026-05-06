@@ -130,6 +130,25 @@ describe("getProductIdeaLifecycles", () => {
     expect(lifecycle.timeline.at(-1)?.detail).toContain("100 impressions");
   });
 
+  it("adds idea notes to the idea timeline when linked by idea ID", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+    const [lifecycle] = getProductIdeaLifecycles({
+      product_ideas: JSON.stringify(ideas),
+      product_idea_notes: JSON.stringify([
+        {
+          note_id: "note-1",
+          idea_id: ideas[0].idea_id,
+          created_at: "2026-05-06",
+          note: "Supplier confirmed lower MOQ after follow-up.",
+        },
+      ]),
+    });
+
+    expect(lifecycle.notes).toHaveLength(1);
+    expect(lifecycle.timeline.at(-1)?.key).toBe("note-note-1");
+    expect(lifecycle.timeline.at(-1)?.detail).toContain("Supplier confirmed lower MOQ");
+  });
+
   it("derives a next action from the idea status", () => {
     const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
 

@@ -36,6 +36,7 @@ export type ProductIdeaLifecycle = {
   unitsSold: string | null;
   testLearning: string | null;
   metricEntries: ProductIdeaMetricEntry[];
+  notes: ProductIdeaNote[];
   timeline: ProductIdeaTimelineEvent[];
 };
 
@@ -49,6 +50,13 @@ export type ProductIdeaMetricEntry = {
 export type ProductIdeaNextAction = {
   label: string;
   href: string;
+  note: string;
+};
+
+export type ProductIdeaNote = {
+  id: string;
+  ideaId: string;
+  createdAt: string;
   note: string;
 };
 
@@ -69,6 +77,13 @@ export type ProductIdeaTimelineEvent = {
 type EconomicsRow = ProductIdeaRow & {
   idea_name?: string;
   viable?: string;
+};
+
+type NoteRow = {
+  note_id?: string;
+  idea_id?: string;
+  created_at?: string;
+  note?: string;
 };
 
 type LifecycleResponses = Record<string, string | undefined>;
@@ -243,6 +258,7 @@ function buildTimeline({
   isTestIdea,
   responses,
   metricEntries,
+  notes,
 }: {
   idea: ProductIdeaRow;
   label: string;
@@ -251,6 +267,7 @@ function buildTimeline({
   isTestIdea: boolean;
   responses: LifecycleResponses;
   metricEntries: ProductIdeaMetricEntry[];
+  notes: ProductIdeaNote[];
 }): ProductIdeaTimelineEvent[] {
   const events: ProductIdeaTimelineEvent[] = [
     {
@@ -330,6 +347,16 @@ function buildTimeline({
     });
   }
 
+  for (const note of notes.slice(0, 4)) {
+    events.push({
+      key: `note-${note.id}`,
+      label: "Decision note added",
+      detail: `${note.createdAt}: ${note.note}`,
+      chapter: "Idea notes",
+      href: "#notes",
+    });
+  }
+
   return events;
 }
 
@@ -363,12 +390,25 @@ function metricsForIdea(metrics: RawMetricEntry[], ideaId: string): ProductIdeaM
     }));
 }
 
+function notesForIdea(notes: NoteRow[], ideaId: string): ProductIdeaNote[] {
+  return notes
+    .filter((note) => normalize(note.idea_id) === ideaId && normalize(note.note))
+    .map((note, index) => ({
+      id: normalize(note.note_id) || `note-${index}`,
+      ideaId,
+      createdAt: normalize(note.created_at) || "Undated",
+      note: normalize(note.note),
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export function getProductIdeaLifecycles(
   responses: LifecycleResponses,
   metrics: RawMetricEntry[] = [],
 ): ProductIdeaLifecycle[] {
   const ideas = ensureProductIdeaIds(parseRows(responses.product_ideas));
   const economicsRows = parseRows(responses.idea_economics) as EconomicsRow[];
+  const noteRows = parseRows(responses.product_idea_notes) as NoteRow[];
   const chosenIdea = findProductIdeaByIdOrLabel(ideas, responses.chosen_idea);
   const testIdea = findProductIdeaByIdOrLabel(ideas, responses.test_idea);
 
@@ -384,6 +424,7 @@ export function getProductIdeaLifecycles(
     if (isChosen) status = "selected";
     if (isTestIdea) status = deriveTestStatus(responses);
     const metricEntries = metricsForIdea(metrics, ideaId);
+    const notes = notesForIdea(noteRows, ideaId);
 
     return {
       ideaId,
@@ -404,7 +445,8 @@ export function getProductIdeaLifecycles(
       unitsSold: isTestIdea ? normalize(responses.units_sold) || null : null,
       testLearning: isTestIdea ? normalize(responses.what_you_learned) || null : null,
       metricEntries,
-      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses, metricEntries }),
+      notes,
+      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses, metricEntries, notes }),
     };
   });
 }
