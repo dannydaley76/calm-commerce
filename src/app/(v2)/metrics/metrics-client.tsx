@@ -570,7 +570,6 @@ function ValidationForm({
         {status === "success" && <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
         {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
-
       <div className="space-y-6">
         <ProductIdeaQuestion
           productIdeas={productIdeas}
@@ -1125,6 +1124,9 @@ function LiveStoreForm({
         {status === "success" && <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
         {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
+      <p className="-mt-3 mb-6 max-w-2xl text-sm leading-6 text-ink-500">
+        Use this once your own store is live. If you are still testing on a marketplace, stay in Marketplace testing.
+      </p>
 
       <div className="space-y-6">
         <ProductIdeaQuestion
@@ -1291,13 +1293,14 @@ function LiveStoreHistory({
               const isConfirmingDelete = deletingId === row.entry.id;
               const showExpandedRow    = isEditing || isConfirmingDelete || isNotesExpanded;
               const hasNotes = row.entry.data_json.what_worked || row.entry.data_json.what_to_change || row.entry.data_json.notes;
+              const weekLabel = formatWeekEnding(row.entry.week_ending);
               return (
                 <React.Fragment key={row.entry.id}>
                   <tr className={`transition-colors ${showExpandedRow ? "bg-[#f7f9ff]" : idx === 0 ? "bg-[#fffef9]" : "bg-white hover:bg-surface-sunken"}`}>
                     <td className="px-4 py-3 text-left">
                       <div className="flex items-center gap-2">
                         {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">Latest</span>}
-                        <span className="font-[Manrope] text-sm font-semibold text-ink-900">{row.entry.week_ending}</span>
+                        <span className="font-[Manrope] text-sm font-semibold text-ink-900">{weekLabel}</span>
                       </div>
                     </td>
                     <td className="max-w-[180px] px-3 py-3 text-left">
@@ -1314,7 +1317,7 @@ function LiveStoreHistory({
                     {/* ⋯ action menu */}
                     <td className="px-2 py-3 text-right">
                       <ActionMenu
-                        ariaLabel={`Actions for ${row.entry.week_ending}`}
+                        ariaLabel={`Actions for ${weekLabel}`}
                         items={[
                           {
                             label: "Edit",
@@ -1368,7 +1371,7 @@ function LiveStoreHistory({
                       <td colSpan={COL_COUNT} className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <p className="text-sm text-ink-500">
-                            Delete the entry for <strong>{row.entry.week_ending}</strong>? This cannot be undone.
+                            Delete the entry for <strong>{weekLabel}</strong>? This cannot be undone.
                           </p>
                           <button
                             type="button"

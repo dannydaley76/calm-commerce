@@ -319,7 +319,7 @@ export function InlineWorksheetCard({
         if (!res.ok) throw new Error("Save failed");
         clearPendingValues(worksheetId, Object.keys(scopedResponses));
         setStatus("saved");
-        setTimeout(() => setStatus("idle"), 1500);
+        setTimeout(() => setStatus("idle"), 3000);
       } catch {
         setStatus("error");
         setTimeout(() => setStatus("idle"), 2500);
@@ -345,10 +345,21 @@ export function InlineWorksheetCard({
   return (
     <div className="mt-8 rounded-[1.5rem] border border-[#d9def2] bg-[#f7f9ff] p-6">
       {/* Header */}
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
-          Worksheet: capture your answer
-        </p>
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+            Worksheet: capture your answer
+          </p>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-ink-500">
+            {status === "saving"
+              ? "Saving your answer now."
+              : status === "saved"
+                ? "Saved. You can move on when you are ready."
+                : status === "error"
+                  ? "Your latest change was not saved. Please try again before moving on."
+                  : "Your answers save automatically as you type."}
+          </p>
+        </div>
         <StatusBadge status={status} filledCount={filledCount} totalCount={totalCount} />
       </div>
 

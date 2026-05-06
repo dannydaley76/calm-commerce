@@ -136,7 +136,7 @@ export default async function MetricsPage() {
     <LearnerShell
       items={breadcrumbs}
       title="Weekly Metrics"
-      subtitle="Your store's performance over time. Numbers update each week as you log your metrics."
+      subtitle="Track marketplace tests and own-store performance as each idea moves from validation to trading."
     >
       <MetricsClient
         entries={entries}

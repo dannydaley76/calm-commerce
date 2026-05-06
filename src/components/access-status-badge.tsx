@@ -26,7 +26,13 @@ export function AccessStatusBadge({
     ? "Paid access active"
     : isInactive
       ? "Access inactive"
-      : "Preview access";
+      : "Preview mode";
+
+  const helper = isPaid
+    ? "Paid access is active for this account."
+    : isInactive
+      ? "Paid access is inactive for this account."
+      : "Preview mode: payment access is not active for this account yet.";
 
   /* inverse variant: override colours for dark backgrounds */
   const inverseClass = inverse
@@ -37,6 +43,8 @@ export function AccessStatusBadge({
     <span
       className={`cc-status-pill ${compact ? "" : "px-4 py-1"} ${inverseClass}`}
       data-state={pillState}
+      title={helper}
+      aria-label={helper}
     >
       {label}
     </span>

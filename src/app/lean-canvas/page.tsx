@@ -619,7 +619,7 @@ async function getCanvasData(): Promise<{
 function getAccessBadge(status: string | null, level: string | null) {
   if (status === "active" && level === "full") return { label: "Paid access active", pillState: "paid" };
   if (status === "expired" || status === "cancelled") return { label: "Access inactive", pillState: "not-started" };
-  return { label: "Preview access", pillState: "in-progress" };
+  return { label: "Preview mode", pillState: "in-progress" };
 }
 
 /* ─────────────────────────────────────────────────────────────────────

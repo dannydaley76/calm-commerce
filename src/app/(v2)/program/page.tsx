@@ -81,13 +81,13 @@ export default async function ProgramPage() {
               access.entitlementStatus === "expired" ||
               access.entitlementStatus === "cancelled"
                 ? "Your paid access is inactive"
-                : "Preview access active"
+                : "Preview mode active"
             }
             body={
               access.entitlementStatus === "expired" ||
               access.entitlementStatus === "cancelled"
                 ? "You can still use the dashboard, but the full program is locked until you reactivate your access."
-                : "You are inside the product with preview access, but the full program view remains part of the paid experience."
+                : "You are inside the product in preview mode. The full program view remains part of the paid experience."
             }
           />
         </div>
