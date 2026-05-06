@@ -45,6 +45,10 @@ export type ProductIdeaMetricEntry = {
   weekEnding: string;
   entryType: "validation" | "live_store";
   summary: string;
+  orders: number | null;
+  profitPerSale: number | null;
+  revenue: number | null;
+  revenuePerOrder: number | null;
 };
 
 export type ProductIdeaNextAction = {
@@ -379,15 +383,32 @@ function metricSummary(entry: RawMetricEntry): string {
   return parts.join(", ") || "store metrics added";
 }
 
+function parseMetricNumber(value: string | undefined): number | null {
+  if (!value) return null;
+  const cleaned = value.replace(/[^0-9.\-]/g, "");
+  if (!cleaned) return null;
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function metricsForIdea(metrics: RawMetricEntry[], ideaId: string): ProductIdeaMetricEntry[] {
   return metrics
     .filter((entry) => normalize(entry.data_json.product_idea_id) === ideaId)
-    .map((entry) => ({
-      id: entry.id,
-      weekEnding: entry.week_ending,
-      entryType: entry.data_json.entry_type === "validation" ? "validation" : "live_store",
-      summary: metricSummary(entry),
-    }));
+    .map((entry) => {
+      const entryType = entry.data_json.entry_type === "validation" ? "validation" : "live_store";
+      const orders = parseMetricNumber(entry.data_json.orders);
+      const revenue = entryType === "live_store" ? parseMetricNumber(entry.data_json.revenue) : null;
+      return {
+        id: entry.id,
+        weekEnding: entry.week_ending,
+        entryType,
+        summary: metricSummary(entry),
+        orders,
+        profitPerSale: entryType === "validation" ? parseMetricNumber(entry.data_json.profit_per_sale) : null,
+        revenue,
+        revenuePerOrder: revenue !== null && orders !== null && orders > 0 ? revenue / orders : null,
+      };
+    });
 }
 
 function notesForIdea(notes: NoteRow[], ideaId: string): ProductIdeaNote[] {

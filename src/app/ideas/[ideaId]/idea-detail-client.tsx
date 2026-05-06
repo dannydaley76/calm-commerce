@@ -15,6 +15,7 @@ import type {
   ProductIdeaLifecycle,
   ProductIdeaLifecycleStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
+import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 
 type ResponseMap = Record<string, string>;
 type InstanceRow = Record<string, string | undefined>;
@@ -65,6 +66,19 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
     return "bg-[#eef4ff] text-cobalt-600";
   }
   return "bg-surface-sunken text-ink-500";
+}
+
+function formatCurrency(value: number | null): string {
+  if (value === null) return "Not logged";
+  return `£${value.toLocaleString("en-GB", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) return "Not known";
+  return `${value.toFixed(1)}%`;
 }
 
 function findEconomicsRow(rows: InstanceRow[], idea: ProductIdeaLifecycle, ideaIndex: number): {
@@ -259,6 +273,81 @@ function MetricsSection({ idea }: { idea: ProductIdeaLifecycle }) {
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+function ProjectedActualSection({
+  idea,
+  economics,
+}: {
+  idea: ProductIdeaLifecycle;
+  economics: InstanceRow;
+}) {
+  const projection = calculateUnitEconomics(economics);
+  const actualProfitEntry = idea.metricEntries.find((entry) => entry.profitPerSale !== null);
+  const actualRevenueEntry = idea.metricEntries.find((entry) => entry.revenuePerOrder !== null);
+  const actualProfitPerSale = actualProfitEntry?.profitPerSale ?? null;
+  const actualRevenuePerOrder = actualRevenueEntry?.revenuePerOrder ?? null;
+  const profitGap =
+    projection.margin !== null && actualProfitPerSale !== null
+      ? actualProfitPerSale - projection.margin
+      : null;
+
+  const signal = (() => {
+    if (projection.margin === null) return "Add the Chapter 5 economics to set the projection.";
+    if (actualProfitPerSale === null) return "Log marketplace profit per sale to compare against the projection.";
+    if (profitGap === null) return "Actual profit is not ready yet.";
+    if (profitGap >= 0) return "Actual marketplace profit is meeting or beating the plan.";
+    return "Actual marketplace profit is below the plan. Review price, fees, or fulfilment cost.";
+  })();
+
+  return (
+    <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Projected vs actual</h2>
+          <p className="mt-2 text-sm leading-6 text-ink-500">
+            Compares the Chapter 5 economics with metrics linked to this idea.
+          </p>
+        </div>
+        <SecondaryButton href="/lean-canvas" className="shrink-0">
+          Lean Canvas
+        </SecondaryButton>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-ink-100 bg-white p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Projected margin</p>
+          <p className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">{formatCurrency(projection.margin)}</p>
+          <p className="mt-1 text-xs text-ink-500">{formatPercent(projection.marginPercent)} of selling price</p>
+        </div>
+        <div className="rounded-xl border border-ink-100 bg-white p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actual profit / sale</p>
+          <p className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">{formatCurrency(actualProfitPerSale)}</p>
+          <p className="mt-1 text-xs text-ink-500">
+            {profitGap !== null ? `${profitGap >= 0 ? "+" : ""}${formatCurrency(profitGap)} vs projection` : "From marketplace metrics"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-ink-100 bg-white p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Planned price</p>
+          <p className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">{formatCurrency(projection.sellingPrice)}</p>
+          <p className="mt-1 text-xs text-ink-500">From Chapter 5 economics</p>
+        </div>
+        <div className="rounded-xl border border-ink-100 bg-white p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actual revenue / order</p>
+          <p className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">{formatCurrency(actualRevenuePerOrder)}</p>
+          <p className="mt-1 text-xs text-ink-500">
+            {actualRevenueEntry?.orders !== null && actualRevenueEntry?.orders !== undefined
+              ? `${actualRevenueEntry.orders} orders in latest store metric`
+              : "From live store metrics"}
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-4 rounded-xl bg-surface-sunken px-4 py-3 text-sm leading-6 text-ink-600">
+        {signal}
+      </p>
     </section>
   );
 }
@@ -509,6 +598,7 @@ export function IdeaDetailClient({
           <SecondaryButton href="#idea-evidence" className="px-4 py-2">Idea evidence</SecondaryButton>
           <SecondaryButton href="#economics" className="px-4 py-2">Economics</SecondaryButton>
           <SecondaryButton href="#marketplace-test" className="px-4 py-2">Marketplace test</SecondaryButton>
+          <SecondaryButton href="#projected-actual" className="px-4 py-2">Projected vs actual</SecondaryButton>
           <SecondaryButton href="#notes" className="px-4 py-2">Decision log</SecondaryButton>
           <SecondaryButton href="#history" className="px-4 py-2">History</SecondaryButton>
         </div>
@@ -659,6 +749,9 @@ export function IdeaDetailClient({
         </div>
 
         <aside id="history" className="space-y-6">
+          <div id="projected-actual">
+            <ProjectedActualSection idea={idea} economics={economicsDraft} />
+          </div>
           <NotesSection
             idea={idea}
             noteDraft={noteDraft}

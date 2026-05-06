@@ -72,6 +72,12 @@ function formatWeekEnding(raw: string): string {
   return raw; // legacy format — show as stored
 }
 
+function ideaLabelForEntry(entry: MetricEntry, productIdeas: ProductIdeaOption[]): string {
+  const ideaId = (entry.data_json.product_idea_id ?? "").trim();
+  if (!ideaId) return "No idea selected";
+  return productIdeas.find((idea) => idea.id === ideaId)?.label ?? "Unknown idea";
+}
+
 /**
  * Converts any stored week_ending value to "YYYY-MM-DD" for the date input.
  * Tries parsing; falls back to today.
@@ -492,7 +498,7 @@ function ProductIdeaQuestion({
     <Question
       eyebrow="Product"
       question="Which product idea does this week belong to?"
-      context="This keeps metrics attached to the product history in Ideas."
+      context="Testing more than one idea? Add one metrics entry per idea for the same week."
     >
       <select
         className={inputBase}
@@ -546,13 +552,13 @@ function ValidationForm({
       });
       if (!res.ok) throw new Error("Save failed");
       setStatus("success");
-      setForm({ week_ending: todayISO() });
+      setForm({ week_ending: todayISO(), product_idea_id: defaultProductIdeaId });
       timerRef.current = setTimeout(() => { setStatus("idle"); onSaved(); }, 1200);
     } catch {
       setStatus("error");
       timerRef.current = setTimeout(() => setStatus("idle"), 3000);
     }
-  }, [form, onSaved]);
+  }, [defaultProductIdeaId, form, onSaved]);
 
   const isSubmitting = status === "submitting";
 
@@ -799,7 +805,15 @@ function ValidationInlineEdit({
    Validation history table
 ───────────────────────────────────────────────────────────── */
 
-function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onRefresh: () => void }) {
+function ValidationHistory({
+  entries,
+  productIdeas,
+  onRefresh,
+}: {
+  entries: MetricEntry[];
+  productIdeas: ProductIdeaOption[];
+  onRefresh: () => void;
+}) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -834,7 +848,7 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
   })();
 
   // How many columns total (used for colSpan in expanded rows)
-  const COL_COUNT = 8;
+  const COL_COUNT = 9;
 
   return (
     <div className="space-y-6">
@@ -900,10 +914,16 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
 
       {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-[#e2e6f5] bg-white">
+        {productIdeas.length > 1 && (
+          <p className="border-b border-[#eef0f7] bg-[#fffef9] px-4 py-3 text-xs leading-5 text-ink-500">
+            Testing more than one idea in the same week? Keep a separate row for each idea so the idea history stays clean.
+          </p>
+        )}
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-[#eef0f7] bg-surface-sunken">
               <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Week</th>
+              <th className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Idea</th>
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Orders</th>
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Profit / sale</th>
               <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99]">Impressions</th>
@@ -936,6 +956,11 @@ function ValidationHistory({ entries, onRefresh }: { entries: MetricEntry[]; onR
                           {formatWeekEnding(row.entry.week_ending)}
                         </span>
                       </div>
+                    </td>
+                    <td className="max-w-[180px] px-3 py-3 text-left">
+                      <span className="line-clamp-2 text-xs font-semibold leading-5 text-ink-600">
+                        {ideaLabelForEntry(row.entry, productIdeas)}
+                      </span>
                     </td>
                     {/* Data cells */}
                     <Cell variant={wowVariant(row.ordersWow)}>
@@ -1081,13 +1106,13 @@ function LiveStoreForm({
       });
       if (!res.ok) throw new Error("Save failed");
       setStatus("success");
-      setForm({ week_ending: todayISO() });
+      setForm({ week_ending: todayISO(), product_idea_id: defaultProductIdeaId });
       timerRef.current = setTimeout(() => { setStatus("idle"); onSaved(); }, 1200);
     } catch {
       setStatus("error");
       timerRef.current = setTimeout(() => setStatus("idle"), 3000);
     }
-  }, [form, onSaved]);
+  }, [defaultProductIdeaId, form, onSaved]);
 
   const isSubmitting = status === "submitting";
   const canSubmit = !isSubmitting && (form.week_ending ?? "").trim() && (form.revenue ?? "").trim();
@@ -1153,7 +1178,17 @@ function LiveStoreForm({
    Live store history table
 ───────────────────────────────────────────────────────────── */
 
-function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry[]; isDev: boolean; onSeedDone: () => void }) {
+function LiveStoreHistory({
+  entries,
+  productIdeas,
+  isDev,
+  onSeedDone,
+}: {
+  entries: MetricEntry[];
+  productIdeas: ProductIdeaOption[];
+  isDev: boolean;
+  onSeedDone: () => void;
+}) {
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [editingId, setEditingId]     = useState<string | null>(null);
   const [deletingId, setDeletingId]   = useState<string | null>(null);
@@ -1193,6 +1228,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
     if (dir === "down") return "▼ down on last week";
     return null;
   };
+  const COL_COUNT = 9;
 
   return (
     <div className="space-y-6">
@@ -1234,11 +1270,16 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
 
       {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-[#e2e6f5] bg-white">
+        {productIdeas.length > 1 && (
+          <p className="border-b border-[#eef0f7] bg-[#fffef9] px-4 py-3 text-xs leading-5 text-ink-500">
+            Running several products? Link each weekly row to the right idea so projections and actuals stay comparable.
+          </p>
+        )}
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-[#eef0f7] bg-surface-sunken">
-              {["Week", "Revenue", "Orders", "Traffic", "Conv %", "Ad Spend", "ROAS"].map((h, i) => (
-                <th key={h} className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : "text-right"}`}>{h}</th>
+              {["Week", "Idea", "Revenue", "Orders", "Traffic", "Conv %", "Ad Spend", "ROAS"].map((h, i) => (
+                <th key={h} className={`px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b8d99] ${i === 0 ? "px-4 text-left" : i === 1 ? "text-left" : "text-right"}`}>{h}</th>
               ))}
               <th className="w-10 px-3 py-3" aria-label="Actions"></th>
             </tr>
@@ -1258,6 +1299,11 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                         {idx === 0 && <span className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">Latest</span>}
                         <span className="font-[Manrope] text-sm font-semibold text-ink-900">{row.entry.week_ending}</span>
                       </div>
+                    </td>
+                    <td className="max-w-[180px] px-3 py-3 text-left">
+                      <span className="line-clamp-2 text-xs font-semibold leading-5 text-ink-600">
+                        {ideaLabelForEntry(row.entry, productIdeas)}
+                      </span>
                     </td>
                     <Cell variant={wowVariant(row.revenueWow)}>{row.revenue !== null ? (<>£{row.revenue.toLocaleString("en-GB")}<WowArrow dir={row.revenueWow} /></>) : <span className="text-[#c8cad4]">—</span>}</Cell>
                     <Cell variant={wowVariant(row.ordersWow)}>{row.orders !== null ? (<>{row.orders}<WowArrow dir={row.ordersWow} /></>) : <span className="text-[#c8cad4]">—</span>}</Cell>
@@ -1306,7 +1352,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                   {/* Expanded: edit form */}
                   {isEditing && (
                     <tr className="bg-[#f7f9ff]">
-                      <td colSpan={8} className="px-4 pb-5 pt-2">
+                      <td colSpan={COL_COUNT} className="px-4 pb-5 pt-2">
                         <LiveStoreInlineEdit
                           entry={row.entry}
                           onSaved={() => { setEditingId(null); onSeedDone(); }}
@@ -1319,7 +1365,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                   {/* Expanded: delete confirm */}
                   {isConfirmingDelete && !isEditing && (
                     <tr className="bg-[#fff8f8]">
-                      <td colSpan={8} className="px-6 py-4">
+                      <td colSpan={COL_COUNT} className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <p className="text-sm text-ink-500">
                             Delete the entry for <strong>{row.entry.week_ending}</strong>? This cannot be undone.
@@ -1348,7 +1394,7 @@ function LiveStoreHistory({ entries, isDev, onSeedDone }: { entries: MetricEntry
                   {/* Expanded: notes */}
                   {isNotesExpanded && !isEditing && !isConfirmingDelete && (
                     <tr className="bg-[#f7f9ff]">
-                      <td colSpan={8} className="px-6 pb-5 pt-2">
+                      <td colSpan={COL_COUNT} className="px-6 pb-5 pt-2">
                         <div className="grid gap-4 sm:grid-cols-3">
                           {row.entry.data_json.what_worked && <NoteCard label="What worked" text={row.entry.data_json.what_worked} variant="green" />}
                           {row.entry.data_json.what_to_change && <NoteCard label="What to change" text={row.entry.data_json.what_to_change} variant="amber" />}
@@ -1559,9 +1605,9 @@ export function MetricsClient({
           </p>
         </div>
       ) : phase === "validation" ? (
-        <ValidationHistory entries={phaseEntries} onRefresh={() => router.refresh()} />
+        <ValidationHistory entries={phaseEntries} productIdeas={productIdeas ?? []} onRefresh={() => router.refresh()} />
       ) : (
-        <LiveStoreHistory entries={phaseEntries} isDev={isDev} onSeedDone={() => router.refresh()} />
+        <LiveStoreHistory entries={phaseEntries} productIdeas={productIdeas ?? []} isDev={isDev} onSeedDone={() => router.refresh()} />
       )}
     </div>
   );

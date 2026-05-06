@@ -120,14 +120,48 @@ describe("getProductIdeaLifecycles", () => {
             impressions: "100",
             listing_clicks: "8",
             orders: "1",
+            profit_per_sale: "£7.50",
           },
         },
       ],
     );
 
     expect(lifecycle.metricEntries).toHaveLength(1);
+    expect(lifecycle.metricEntries[0]).toMatchObject({
+      orders: 1,
+      profitPerSale: 7.5,
+      revenue: null,
+      revenuePerOrder: null,
+    });
     expect(lifecycle.timeline.at(-1)?.key).toBe("metric-metric-1");
     expect(lifecycle.timeline.at(-1)?.detail).toContain("100 impressions");
+  });
+
+  it("derives revenue per order for linked live-store metrics", () => {
+    const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
+    const [lifecycle] = getProductIdeaLifecycles(
+      {
+        product_ideas: JSON.stringify(ideas),
+      },
+      [
+        {
+          id: "metric-1",
+          week_ending: "2026-05-10",
+          data_json: {
+            entry_type: "live_store",
+            product_idea_id: ideas[0].idea_id,
+            revenue: "£120",
+            orders: "3",
+          },
+        },
+      ],
+    );
+
+    expect(lifecycle.metricEntries[0]).toMatchObject({
+      orders: 3,
+      revenue: 120,
+      revenuePerOrder: 40,
+    });
   });
 
   it("adds idea notes to the idea timeline when linked by idea ID", () => {
