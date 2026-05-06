@@ -404,6 +404,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "By now you should have several possibilities. For each idea, capture the evidence you found: what demand signals you spotted, what the competition looks like, and whether demand is year-round or seasonal.",
           },
           {
+            type: "callout",
+            style: "tip",
+            content:
+              "When you save these ideas, they become product candidates in the Ideas section. You can open each candidate later to edit the evidence, add notes, check its numbers, record test results, and see the full history of what happened.",
+          },
+          {
             type: "paragraph",
             content:
               "You are not making a final decision yet. You are building a shortlist of ideas that have earned further investigation. The next chapter puts these ideas through the numbers to see which ones can actually make you money.",
@@ -437,6 +443,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "paragraph",
             content:
               "Most people who try to sell online never do this research. They pick something based on a hunch and hope for the best. You are already ahead of them.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "Your shortlist now has a home in Ideas. Think of that page as the operating record for each candidate, not just a place to store answers. As you run the numbers, test, learn, and make decisions, the idea history will build up there.",
           },
           {
             type: "callout",
@@ -840,6 +851,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "paragraph",
             content:
+              "Each row below is linked to an idea from Chapter 3. When you save the numbers, the matching idea in Ideas is updated too, so you can see which candidates have been checked and which still need work.",
+          },
+          {
+            type: "paragraph",
+            content:
               "Once you have run the numbers, you will likely find that some ideas have strong margins and some do not. The ones with thin or negative margins get eliminated here, regardless of how promising the demand signals were.",
           },
           {
@@ -892,6 +908,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "Not which idea sounds best. Not which idea you like most. Which idea has real demand (Chapter 3) and real margins (this chapter). If you have one or more ideas that passed both filters, you are in a strong position.",
           },
           {
+            type: "paragraph",
+            content:
+              "Open Ideas after this chapter to review the candidate you chose. Its detail page now shows the Chapter 3 evidence, the Chapter 5 economics, and the next best action. If you change your mind later, update the candidate there rather than hunting through old lesson pages.",
+          },
+          {
             type: "callout",
             style: "insight",
             content:
@@ -936,6 +957,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             style: "tip",
             content:
               "Before you choose the marketplace, confirm which idea you are testing in the worksheet below. This keeps the test attached to the same product candidate you researched in Chapter 3 and checked in Chapter 5.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "This matters because the test result should belong to the idea, not just to this chapter. Once you select the idea here, its Ideas detail page will show the marketplace plan, results, decision notes, and later metrics in one place.",
           },
           { type: "heading", level: 2, content: "Why marketplaces first" },
           {
@@ -1009,6 +1035,12 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
               "Decide in advance how long you will run this test before judging the results. A reasonable test duration is 2 to 4 weeks. Write it down before you list: this prevents you from pulling the listing after three days because you are impatient, or leaving it up for months because you are avoiding a decision.",
           },
           {
+            type: "callout",
+            style: "tip",
+            content:
+              "After the listing is live, use Metrics to log weekly marketplace numbers against this product idea. Those entries will appear in the idea timeline, so you can see the test history without rebuilding it from memory.",
+          },
+          {
             type: "paragraph",
             content:
               "For low-cost products or fast-moving categories, two weeks may be enough to see a signal. For higher-priced or more niche products, four weeks is usually fairer. The goal is not to force a sale. The goal is to collect enough evidence to make the next decision calmly.",
@@ -1072,6 +1104,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             content:
               "Use the result fields below when the test period ends. If the test is still running, leave the result open and keep logging weekly metrics until the agreed end date.",
           },
+          {
+            type: "paragraph",
+            content:
+              "If something important happened during the test, such as a supplier change, repeated customer question, or pricing concern, add it to the Decision log on the idea detail page. That note becomes part of the timeline and will help future-you understand why you made the decision.",
+          },
           { type: "heading", level: 2, content: "Make your decision" },
           {
             type: "paragraph",
@@ -1087,7 +1124,7 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
           {
             type: "loop",
             message:
-              "If your first product test did not work out, remember where you are. You have researched demand signals, run unit economics, and learned from a real marketplace test. Pick your next idea and run the test again. The loop gets faster every time.",
+              "If your first product test did not work out, remember where you are. You have researched demand signals, run unit economics, and learned from a real marketplace test. Record what you learned on the idea detail page, then pick your next candidate from Ideas and run the loop again. The loop gets faster every time.",
             targets: [
               { chapterSlug: "brainstorm-with-discipline", label: "Back to Chapter 3: Brainstorm with Discipline" },
             ],
@@ -1109,6 +1146,11 @@ export const calmCommerceChapterContent: Record<string, ChapterContent> = {
             type: "paragraph",
             content:
               "What it does not prove is that you can build a profitable, repeatable business around it. That depends on whether you can drive your own traffic, acquire customers at a sustainable cost, and encourage repeat purchases: skills you will build in the chapters ahead.",
+          },
+          {
+            type: "paragraph",
+            content:
+              "Before moving on, check the idea detail page. It should now tell the story so far: the original evidence, the economics, the marketplace test, any decision notes, and the next move. This is the point where the course starts behaving more like an operating system.",
           },
           {
             type: "callout",
