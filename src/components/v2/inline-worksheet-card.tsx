@@ -83,6 +83,7 @@ function buildValuesForWorksheet(
 }
 
 type InstanceRow = Record<string, string>;
+type PendingWorksheetCache = Record<string, Record<string, string>>;
 
 /* ─────────────────────────────────────────────────────────────
    Helpers
@@ -122,6 +123,71 @@ function withDurableRowId(groupKey: string, row: InstanceRow, index: number): In
     ...row,
     [PRODUCT_ID_FIELD]: getProductIdeaId(row, index),
   };
+}
+
+const PENDING_CACHE_KEY = "calm-commerce:pending-worksheet-values";
+
+function readPendingCache(): PendingWorksheetCache {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(PENDING_CACHE_KEY) ?? "{}");
+    return parsed && typeof parsed === "object" ? parsed as PendingWorksheetCache : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePendingValue(worksheetId: string | null, key: string, value: string) {
+  if (!worksheetId || typeof window === "undefined") return;
+  try {
+    const cache = readPendingCache();
+    cache[worksheetId] = { ...(cache[worksheetId] ?? {}), [key]: value };
+    window.localStorage.setItem(PENDING_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Local cache is a reliability helper; failed browser storage should not block typing.
+  }
+}
+
+function clearPendingValues(worksheetId: string | null, keys: string[]) {
+  if (!worksheetId || typeof window === "undefined") return;
+  try {
+    const cache = readPendingCache();
+    if (!cache[worksheetId]) return;
+    for (const key of keys) {
+      delete cache[worksheetId][key];
+    }
+    if (Object.keys(cache[worksheetId]).length === 0) {
+      delete cache[worksheetId];
+    }
+    window.localStorage.setItem(PENDING_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore cache cleanup failures; server persistence already succeeded.
+  }
+}
+
+function mergePendingCache(
+  values: Record<string, string>,
+  worksheetId: string | null,
+): Record<string, string> {
+  const pending = readPendingCache();
+  const merged = { ...values };
+  for (const [pendingWorksheetId, fields] of Object.entries(pending)) {
+    if (pendingWorksheetId === worksheetId) continue;
+    for (const [key, value] of Object.entries(fields)) {
+      if (!(key in merged)) merged[key] = value;
+    }
+  }
+  if (worksheetId) Object.assign(merged, pending[worksheetId] ?? {});
+  return merged;
+}
+
+function applyWorksheetDefaults(
+  values: Record<string, string>,
+  worksheetId: string | null,
+): Record<string, string> {
+  if (worksheetId !== "pre-store-test-worksheet") return values;
+  if ((values.test_idea ?? "").trim() || !(values.chosen_idea ?? "").trim()) return values;
+  return { ...values, test_idea: values.chosen_idea };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -213,7 +279,7 @@ export function InlineWorksheetCard({
         const values = data.responsesByWorksheet
           ? buildValuesForWorksheet(data.responsesByWorksheet, worksheetId)
           : (data.worksheetResponses ?? {});
-        setValues(values);
+        setValues(applyWorksheetDefaults(mergePendingCache(values, worksheetId), worksheetId));
         setStatus(data.auth ? "idle" : "error");
       } catch {
         if (!active) return;
@@ -251,6 +317,7 @@ export function InlineWorksheetCard({
           }),
         });
         if (!res.ok) throw new Error("Save failed");
+        clearPendingValues(worksheetId, Object.keys(scopedResponses));
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 1500);
       } catch {
@@ -263,6 +330,7 @@ export function InlineWorksheetCard({
 
   const handleChange = (key: string, value: string) => {
     const next = { ...values, [key]: value };
+    writePendingValue(worksheetId, key, value);
     setValues(next);
     const { filledCount: nextFilled, totalCount: nextTotal } = countCompletion(orderedItems, next);
     const pct = nextTotal > 0 ? Math.round((nextFilled / nextTotal) * 100) : 0;

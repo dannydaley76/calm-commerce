@@ -68,11 +68,11 @@ function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
     test_reviewed: 1,
     test_running: 2,
     test_planned: 3,
-    selected: 4,
-    retest: 5,
-    economics_checked: 6,
-    draft: 7,
-    proceed: 8,
+    proceed: 4,
+    selected: 5,
+    retest: 6,
+    economics_checked: 7,
+    draft: 8,
     pivot: 9,
   };
   return priority[status];
@@ -225,7 +225,7 @@ export default async function IdeasPage() {
           <div className="flex flex-wrap gap-3">
             {actionIdea ? (
               <PrimaryButton href={ideaDetailHref(actionIdea)}>
-                Open next idea
+                Open priority idea
               </PrimaryButton>
             ) : null}
             <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">

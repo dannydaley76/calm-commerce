@@ -8,6 +8,7 @@ import { calmCommerceChapterContent } from "@/lib/v2/content";
 import {
   findProductIdeaByIdOrLabel,
   getProductIdeaId,
+  getProductIdeaLabel,
 } from "@/lib/v2/worksheets/product-idea-identity";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
@@ -249,6 +250,24 @@ type UnitEconomicsRow = {
   selling_price?: string;
 };
 
+type MetricRow = {
+  id: string;
+  week_ending: string;
+  data_json: Record<string, string>;
+};
+
+type ChosenIdeaMeta = {
+  id: string;
+  label: string;
+};
+
+type IdeaMetricSummary = {
+  latestMetricDate: string | null;
+  actualProfitPerSale: number | null;
+  actualRevenuePerOrder: number | null;
+  latestOrders: number | null;
+};
+
 /* ─────────────────────────────────────────────────────────────────────
    Text helpers (unchanged from original)
    ───────────────────────────────────────────────────────────────────── */
@@ -439,9 +458,62 @@ function getChosenIdeaEconomics(responses: ResponseMap): UnitEconomicsRow | null
   return row && Object.keys(row).length > 0 ? row : null;
 }
 
+function getChosenIdeaMeta(responses: ResponseMap): ChosenIdeaMeta | null {
+  const chosenIdea = normalizeText(responses.chosen_idea);
+  if (!chosenIdea) return null;
+  const ideas = parseFieldGroup<Record<string, string | undefined>>(responses.product_ideas);
+  const chosenIdeaRow = findProductIdeaByIdOrLabel(ideas, chosenIdea);
+  if (!chosenIdeaRow) return { id: chosenIdea, label: chosenIdea };
+  const index = ideas.findIndex((row, rowIndex) => getProductIdeaId(row, rowIndex) === chosenIdeaRow.idea_id);
+  return {
+    id: getProductIdeaId(chosenIdeaRow, Math.max(0, index)),
+    label: getProductIdeaLabel(chosenIdeaRow, Math.max(0, index)),
+  };
+}
+
 function formatCalculatedMoney(value: number | null, symbol: string): string | null {
   if (value === null) return null;
   return `${symbol}${value.toFixed(2)}`;
+}
+
+function parseMetricNumber(value: string | undefined): number | null {
+  if (!value) return null;
+  const cleaned = value.replace(/[^0-9.\-]/g, "");
+  if (!cleaned) return null;
+  const parsed = Number.parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getIdeaMetricSummary(metrics: MetricRow[], ideaId: string | null): IdeaMetricSummary {
+  const linked = ideaId
+    ? metrics.filter((entry) => normalizeText(entry.data_json.product_idea_id) === ideaId)
+    : [];
+
+  let actualProfitPerSale: number | null = null;
+  let actualRevenuePerOrder: number | null = null;
+  let latestOrders: number | null = null;
+
+  for (const entry of linked) {
+    const entryType = entry.data_json.entry_type;
+    if (actualProfitPerSale === null && entryType === "validation") {
+      actualProfitPerSale = parseMetricNumber(entry.data_json.profit_per_sale);
+    }
+    if (actualRevenuePerOrder === null && entryType === "live_store") {
+      const revenue = parseMetricNumber(entry.data_json.revenue);
+      const orders = parseMetricNumber(entry.data_json.orders);
+      if (revenue !== null && orders !== null && orders > 0) {
+        actualRevenuePerOrder = revenue / orders;
+        latestOrders = orders;
+      }
+    }
+  }
+
+  return {
+    latestMetricDate: linked[0]?.week_ending ?? null,
+    actualProfitPerSale,
+    actualRevenuePerOrder,
+    latestOrders,
+  };
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -515,24 +587,32 @@ function getSectionEditHref(
 async function getCanvasData(): Promise<{
   authenticated: boolean;
   responses: ResponseMap;
+  metrics: MetricRow[];
   currencyCode: string;
 }> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
-    if (!user || !projectId) return { authenticated: false, responses: {}, currencyCode: "GBP" };
-    const { data } = await supabase
-      .from("worksheet_responses")
-      .select("field_key, value_json")
-      .eq("project_id", projectId);
+    if (!user || !projectId) return { authenticated: false, responses: {}, metrics: [], currencyCode: "GBP" };
+    const [{ data }, { data: metricRows }] = await Promise.all([
+      supabase
+        .from("worksheet_responses")
+        .select("field_key, value_json")
+        .eq("project_id", projectId),
+      supabase
+        .from("weekly_metrics")
+        .select("id, week_ending, data_json")
+        .eq("project_id", projectId)
+        .order("week_ending", { ascending: false }),
+    ]);
     const responses = Object.fromEntries(
       (data ?? []).map((row) => [
         row.field_key,
         typeof row.value_json === "string" ? row.value_json : String(row.value_json ?? ""),
       ]),
     );
-    return { authenticated: true, responses, currencyCode: "GBP" };
+    return { authenticated: true, responses, metrics: (metricRows ?? []) as MetricRow[], currencyCode: "GBP" };
   } catch {
-    return { authenticated: false, responses: {}, currencyCode: "GBP" };
+    return { authenticated: false, responses: {}, metrics: [], currencyCode: "GBP" };
   }
 }
 
@@ -574,7 +654,7 @@ export default async function LeanCanvasPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const [{ authenticated, responses, currencyCode }, access, { tab }] = await Promise.all([
+  const [{ authenticated, responses, metrics, currencyCode }, access, { tab }] = await Promise.all([
     getCanvasData(),
     getAccessStateForCurrentUser(),
     searchParams,
@@ -590,7 +670,9 @@ export default async function LeanCanvasPage({
   const canvasSections       = buildLeanCanvasSections(responses);
   const canvasFilledCount    = getLeanCanvasFilledSectionCount(canvasSections);
   const chosenIdeaEconomics  = getChosenIdeaEconomics(responses);
-  const chosenIdea           = normalizeText(responses.chosen_idea);
+  const chosenIdeaMeta       = getChosenIdeaMeta(responses);
+  const chosenIdea           = chosenIdeaMeta?.label ?? "";
+  const chosenIdeaMetrics    = getIdeaMetricSummary(metrics, chosenIdeaMeta?.id ?? null);
   const fieldStepIndex       = buildFieldStepIndex();
 
   /* Combined canvas progress (both layers together) */
@@ -863,7 +945,9 @@ export default async function LeanCanvasPage({
               <div className="canvas-grid">
                 {canvasSections.map((section) => {
                   const isCostStructure = section.id === "cost_structure";
+                  const isRevenueStreams = section.id === "revenue_streams";
                   const hasEconomics    = isCostStructure && chosenIdeaEconomics !== null;
+                  const hasRevenueEconomics = isRevenueStreams && chosenIdeaEconomics !== null;
 
                   /* Area + variant from the section config map */
                   const cfg = SECTION_CONFIG[section.id] ?? { area: "prob", variant: "tall" as CardVariant };
@@ -887,14 +971,23 @@ export default async function LeanCanvasPage({
                     fieldKey:    f.key,
                     worksheetId: FIELD_WORKSHEET_MAP[f.key],
                   }));
-                  const calculatedMargin = chosenIdeaEconomics
-                    ? formatCalculatedMoney(
-                        calculateUnitEconomics(
-                          chosenIdeaEconomics as Record<string, string | undefined>,
-                        ).margin,
-                        currency.symbol,
-                      )
+                  const calculatedEconomics = chosenIdeaEconomics
+                    ? calculateUnitEconomics(chosenIdeaEconomics as Record<string, string | undefined>)
                     : null;
+                  const calculatedMargin = calculatedEconomics
+                    ? formatCalculatedMoney(calculatedEconomics.margin, currency.symbol)
+                    : null;
+                  const calculatedPrice = calculatedEconomics
+                    ? formatCalculatedMoney(calculatedEconomics.sellingPrice, currency.symbol)
+                    : null;
+                  const actualProfitPerSale = formatCalculatedMoney(
+                    chosenIdeaMetrics.actualProfitPerSale,
+                    currency.symbol,
+                  );
+                  const actualRevenuePerOrder = formatCalculatedMoney(
+                    chosenIdeaMetrics.actualRevenuePerOrder,
+                    currency.symbol,
+                  );
 
                   /* Cost structure gets unit-economics block as children */
                   const costEconomicsBlock =
@@ -942,6 +1035,51 @@ export default async function LeanCanvasPage({
                       </div>
                     ) : null;
 
+                  const revenueEconomicsBlock =
+                    isRevenueStreams && chosenIdeaEconomics ? (
+                      <div className="rounded-[0.75rem] bg-surface-sunken p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5b48d6]">
+                          Projected vs actual
+                        </p>
+                        <dl className="mt-2 space-y-1">
+                          {calculatedPrice ? (
+                            <div className="flex items-baseline justify-between gap-2">
+                              <dt className="text-xs text-ink-500">Planned price</dt>
+                              <dd className="text-xs font-semibold text-ink-900">{calculatedPrice}</dd>
+                            </div>
+                          ) : null}
+                          {calculatedMargin ? (
+                            <div className="flex items-baseline justify-between gap-2">
+                              <dt className="text-xs text-ink-500">Projected margin</dt>
+                              <dd className="text-xs font-semibold text-ink-900">{calculatedMargin}</dd>
+                            </div>
+                          ) : null}
+                          {actualProfitPerSale ? (
+                            <div className="flex items-baseline justify-between gap-2">
+                              <dt className="text-xs text-ink-500">Actual profit / sale</dt>
+                              <dd className="text-xs font-semibold text-ink-900">{actualProfitPerSale}</dd>
+                            </div>
+                          ) : null}
+                          {actualRevenuePerOrder ? (
+                            <div className="flex items-baseline justify-between gap-2">
+                              <dt className="text-xs text-ink-500">Actual revenue / order</dt>
+                              <dd className="text-xs font-semibold text-ink-900">{actualRevenuePerOrder}</dd>
+                            </div>
+                          ) : null}
+                        </dl>
+                        {chosenIdeaMetrics.latestMetricDate ? (
+                          <p className="mt-2 text-[11px] leading-5 text-ink-500">
+                            Latest linked metric: {chosenIdeaMetrics.latestMetricDate}
+                            {chosenIdeaMetrics.latestOrders !== null ? ` · ${chosenIdeaMetrics.latestOrders} orders` : ""}
+                          </p>
+                        ) : (
+                          <p className="mt-2 text-[11px] leading-5 text-ink-500">
+                            Link marketplace or store metrics to this idea to compare actuals.
+                          </p>
+                        )}
+                      </div>
+                    ) : null;
+
                   return (
                     <BusinessModelCard
                       key={section.id}
@@ -949,11 +1087,12 @@ export default async function LeanCanvasPage({
                       title={section.title}
                       description={section.description}
                       state={sectionState}
-                      subFields={section.hasSomeData || hasEconomics ? subFields : undefined}
+                      subFields={section.hasSomeData || hasEconomics || hasRevenueEconomics ? subFields : undefined}
                       variant={cfg.variant}
                       className={`area-${cfg.area}`}
                     >
                       {costEconomicsBlock}
+                      {revenueEconomicsBlock}
                     </BusinessModelCard>
                   );
                 })}
