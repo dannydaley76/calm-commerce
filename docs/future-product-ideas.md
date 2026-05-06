@@ -1,8 +1,8 @@
 # Future Product Ideas
 
-Last updated: 2026-05-01
+Last updated: 2026-05-06
 
-This file holds useful ideas that are not the current focus. The current focus is Chapter 5 idea review and scoring.
+This file holds useful ideas that are not the current focus. The current near-term focus is multi-idea metrics and a projected-versus-actual economics bridge.
 
 ## Product Idea Lifecycle
 
@@ -77,6 +77,133 @@ UX ideas:
 - "Duplicate and adjust" for a related idea or narrower version.
 
 The learner should feel that each cycle makes the business smarter, even when an individual idea does not continue.
+
+### Later Chapter Idea Attachment
+
+Current implementation makes ideas durable through the early validation loop:
+
+- Chapter 3 ideas.
+- Chapter 5 economics.
+- Chapter 6 marketplace test.
+- Linked metrics.
+- Idea detail notes and timeline.
+
+Later chapters are still mostly project-level rather than idea-level. Customer profile, offer, pricing, listing, store setup, free traffic, paid ads, email, iteration, and growth strategy effectively describe the current business context.
+
+Future question:
+
+- Should Chapters 7-13 attach their worksheet outputs to the active `idea_id`?
+- Should the user explicitly select which idea/product later offer and marketing decisions belong to?
+- Should one live store be allowed to contain multiple product ideas?
+
+Possible first step:
+
+- Keep one active idea as the default.
+- Show the active idea name on later chapter worksheets.
+- Add a lightweight "change active idea" control only when users have more than one viable candidate.
+
+Defer until the early loop feels stable.
+
+### Multi-Idea Metrics
+
+Users may test more than one idea at the same time. Metrics should support that without muddying the history.
+
+Near-term direction:
+
+- Keep each metrics entry tied to one `product_idea_id`.
+- If testing two ideas in the same week, the learner logs two entries: one per idea.
+- Metrics forms should make this explicit: "Testing more than one idea? Add one entry per idea."
+- Metrics history should show the idea label on each row.
+- Idea detail pages should show only metrics linked to that idea.
+
+Why this is preferable now:
+
+- Keeps timelines clean.
+- Avoids complicated multi-product metric rows.
+- Fits the existing `weekly_metrics.data_json.product_idea_id` model.
+- Makes comparison possible later.
+
+Longer-term possibility:
+
+- Add `metric_entries` and `metric_entry_items` tables.
+- Support one reporting period with multiple product rows.
+- Compare product-level conversion, margin, CPA, and trend over time.
+- Group metrics by marketplace, listing, product, or store channel.
+
+Do not introduce that table structure until we know users genuinely need multi-product reporting.
+
+### Projected Versus Actual Economics
+
+The product needs a clearer bridge between planned economics, real metrics, and the Lean Canvas.
+
+Current pieces:
+
+- Chapter 5 captures projected economics: selling price, costs, fees, margin signal, and viability.
+- Metrics captures actual numbers: impressions, clicks, orders, profit per sale, revenue, traffic, ad spend, and notes.
+- Lean Canvas shows business model assumptions.
+
+Useful first version:
+
+- Add a "Projected vs actual" panel on the idea detail page.
+- Compare projected margin from Chapter 5 with actual profit per sale from metrics.
+- Compare intended selling price with actual revenue per order where possible.
+- Show whether actual performance is above, close to, or below the viability signal.
+- Link the panel back to the relevant Lean Canvas economics section.
+
+Lean Canvas bridge:
+
+- Show projected economics from worksheet data.
+- Show actual economics from linked metrics.
+- Add a confidence label such as "Projected", "Tested", or "Live data".
+- Make it obvious when the canvas is based on assumptions versus observed performance.
+
+This should be derived from existing worksheet and metrics data first. Avoid new storage unless the model becomes too complex.
+
+### Idea-Level Comparison
+
+Once multiple ideas can have metrics, the learner will need a simple comparison view.
+
+Possible locations:
+
+- Ideas page summary table.
+- Metrics page grouped by idea.
+- Dashboard next action module.
+
+Useful comparisons:
+
+- Status.
+- Projected margin.
+- Actual profit per sale.
+- Test orders.
+- Marketplace clicks.
+- Latest decision.
+- Next action.
+
+Keep this plain and decision-led. The goal is not analytics for its own sake; it is helping the learner decide which candidate deserves attention.
+
+### Dedicated Product Data Model
+
+The current worksheet-backed compatibility layer is useful, but there is a natural ceiling.
+
+Consider dedicated tables when we need:
+
+- Multiple tests per idea.
+- Multiple listings per idea.
+- Multiple products live in one store.
+- Rich notes with edit/delete/categories.
+- Product-level metrics and reporting.
+- Clean audit history independent of worksheet JSON.
+
+Possible future tables:
+
+- `product_ideas`
+- `product_idea_economics`
+- `product_idea_tests`
+- `product_idea_notes`
+- `metric_entries`
+- `metric_entry_items`
+
+This is a later architecture step. The current approach is still appropriate while the product shape is settling.
 
 ## AI And MCP Ideas
 
