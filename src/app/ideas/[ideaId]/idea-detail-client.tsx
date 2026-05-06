@@ -284,14 +284,11 @@ function NotesSection({
           void onSave();
         }}
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Decision log</h2>
-            <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
-              Add dated notes when something changes, surprises you, or affects the next decision.
-            </p>
-          </div>
-          <SaveButton state={status} />
+        <div>
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Decision log</h2>
+          <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+            Add dated notes when something changes, surprises you, or affects the next decision.
+          </p>
         </div>
         <label className="mt-5 block">
           <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
@@ -302,6 +299,9 @@ function NotesSection({
             placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
           />
         </label>
+        <div className="mt-4">
+          <SaveButton state={status} />
+        </div>
       </form>
 
       {idea.notes.length === 0 ? (
