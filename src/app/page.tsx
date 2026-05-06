@@ -254,7 +254,7 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
               {actionIdea.nextAction.note}
             </p>
           </div>
-          <PrimaryButton href={actionIdea.nextAction.href} className="shrink-0">
+          <PrimaryButton href={ideaDetailHref(actionIdea)} className="shrink-0">
             {actionIdea.nextAction.label}
           </PrimaryButton>
         </div>
@@ -277,7 +277,7 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
             <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
               {idea.statusLabel}
             </span>
-            <SecondaryButton href={idea.nextAction.href} className="shrink-0 px-4 py-2">
+            <SecondaryButton href={ideaDetailHref(idea)} className="shrink-0 px-4 py-2">
               {idea.nextAction.label}
             </SecondaryButton>
           </div>

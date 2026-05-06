@@ -116,10 +116,10 @@ export function PrimaryButton({
   const cls = [
     BTN_BASE,
     'px-6 py-3',
-    'bg-cobalt-600 text-white border border-transparent',
+    'bg-cobalt-600 !text-white border border-transparent',
     'shadow-[0_1px_2px_rgba(11,42,57,0.08)]',
     // hover
-    'hover:bg-cobalt-700',
+    'hover:bg-cobalt-700 hover:!text-white',
     'motion-safe:hover:-translate-y-px',
     'hover:shadow-[0_6px_14px_rgba(0,73,207,0.30)]',
     // active
@@ -162,9 +162,9 @@ export function SecondaryButton({
   const cls = [
     BTN_BASE,
     'px-6 py-3',
-    'bg-surface-raised text-ink-900 border border-ink-100',
+    'bg-surface-raised !text-ink-900 border border-ink-100',
     // hover
-    'hover:bg-surface-sunken hover:border-cobalt-500',
+    'hover:bg-surface-sunken hover:border-cobalt-500 hover:!text-ink-900',
     'motion-safe:hover:-translate-y-px',
     'hover:shadow-[0_4px_10px_rgba(11,42,57,0.08)]',
     // active
@@ -207,10 +207,10 @@ export function GhostButton({
   const cls = [
     BTN_BASE,
     'px-3 py-1.5',
-    'bg-transparent text-cobalt-600 border border-transparent',
+    'bg-transparent !text-cobalt-600 border border-transparent',
     'underline-offset-4',
     // hover: underline + cobalt pill bg + subtle lift
-    'hover:text-cobalt-700 hover:underline hover:bg-cobalt-100',
+    'hover:!text-cobalt-700 hover:underline hover:bg-cobalt-100',
     'hover:rounded-full',
     'motion-safe:hover:-translate-y-px',
     // active

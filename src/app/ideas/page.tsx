@@ -1,5 +1,5 @@
 import { LearnerShell } from "@/components/learner-shell";
-import { GhostButton, PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
+import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import {
   getProductIdeaLifecycles,
@@ -63,6 +63,25 @@ function ideaDetailHref(idea: ProductIdeaLifecycle): string {
   return `/ideas/${encodeURIComponent(idea.ideaId)}`;
 }
 
+function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
+  const priority: Record<ProductIdeaLifecycleStatus, number> = {
+    test_reviewed: 1,
+    test_running: 2,
+    test_planned: 3,
+    selected: 4,
+    retest: 5,
+    economics_checked: 6,
+    draft: 7,
+    proceed: 8,
+    pivot: 9,
+  };
+  return priority[status];
+}
+
+function nextIdea(ideas: ProductIdeaLifecycle[]): ProductIdeaLifecycle | null {
+  return [...ideas].sort((a, b) => ideaActionPriority(a.status) - ideaActionPriority(b.status))[0] ?? null;
+}
+
 function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
@@ -83,9 +102,12 @@ function IdeaTimeline({ idea }: { idea: ProductIdeaLifecycle }) {
           <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+            <a
+              href={event.href}
+              className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
+            >
               {event.chapter}
-            </span>
+            </a>
           </div>
           <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
         </li>
@@ -163,22 +185,16 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
               {idea.nextAction.note}
             </p>
           </div>
-          <PrimaryButton href={idea.nextAction.href} className="shrink-0">
+          <PrimaryButton href={ideaDetailHref(idea)} className="shrink-0">
             {idea.nextAction.label}
           </PrimaryButton>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <GhostButton href={ideaDetailHref(idea)}>
+        <SecondaryButton href={ideaDetailHref(idea)} className="px-4 py-2">
           Open detail
-        </GhostButton>
-        <GhostButton href="/chapter/know-your-numbers/steps?step=chapter-5-step-4-score-with-real-numbers">
-          Review economics
-        </GhostButton>
-        <GhostButton href="/chapter/test-before-you-build/steps?step=chapter-6-step-4-read-results-and-decide">
-          Review test
-        </GhostButton>
+        </SecondaryButton>
       </div>
     </article>
   );
@@ -186,6 +202,7 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
 
 export default async function IdeasPage() {
   const data = await getIdeaData();
+  const actionIdea = data.authenticated ? nextIdea(data.ideas) : null;
 
   return (
     <LearnerShell
@@ -206,11 +223,13 @@ export default async function IdeasPage() {
           description="Track each product idea from shortlist to economics check, marketplace test, and next decision."
         >
           <div className="flex flex-wrap gap-3">
-            <SecondaryButton href="/chapter/brainstorm-with-discipline/steps">
-              Add or edit ideas
-            </SecondaryButton>
-            <SecondaryButton href="/chapter/know-your-numbers/steps">
-              Run the numbers
+            {actionIdea ? (
+              <PrimaryButton href={ideaDetailHref(actionIdea)}>
+                Open next idea
+              </PrimaryButton>
+            ) : null}
+            <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">
+              {data.authenticated && data.ideas.length > 0 ? "Add another idea" : "Add first idea"}
             </SecondaryButton>
           </div>
         </PageHero>

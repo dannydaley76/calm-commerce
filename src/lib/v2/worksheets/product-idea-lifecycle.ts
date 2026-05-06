@@ -63,6 +63,7 @@ export type ProductIdeaTimelineEvent = {
   label: string;
   detail: string;
   chapter: string;
+  href: string;
 };
 
 type EconomicsRow = ProductIdeaRow & {
@@ -259,6 +260,7 @@ function buildTimeline({
         ? "Demand evidence was added in Chapter 3."
         : "Added to the Chapter 3 shortlist.",
       chapter: "Chapter 3",
+      href: CHAPTER_3_IDEAS_HREF,
     },
   ];
 
@@ -270,6 +272,7 @@ function buildTimeline({
         ? `Decision: ${economics.viable}.`
         : "Unit economics were entered in Chapter 5.",
       chapter: "Chapter 5",
+      href: CHAPTER_5_ECONOMICS_HREF,
     });
   }
 
@@ -279,6 +282,7 @@ function buildTimeline({
       label: "Selected candidate",
       detail: `${label} was chosen as the strongest candidate to progress.`,
       chapter: "Chapter 5",
+      href: CHAPTER_5_ECONOMICS_HREF,
     });
   }
 
@@ -290,6 +294,7 @@ function buildTimeline({
         ? `Marketplace: ${responses.test_marketplace}.`
         : "Selected for the Chapter 6 marketplace test.",
       chapter: "Chapter 6",
+      href: CHAPTER_6_PLAN_HREF,
     });
 
     if (normalize(responses.result)) {
@@ -300,6 +305,7 @@ function buildTimeline({
           ? `${responses.result}. Units sold: ${responses.units_sold}.`
           : normalize(responses.result),
         chapter: "Chapter 6",
+        href: CHAPTER_6_RESULTS_HREF,
       });
     }
 
@@ -309,6 +315,7 @@ function buildTimeline({
         label: "Next decision made",
         detail: normalize(responses.decision),
         chapter: "Chapter 6",
+        href: CHAPTER_6_RESULTS_HREF,
       });
     }
   }
@@ -319,6 +326,7 @@ function buildTimeline({
       label: entry.entryType === "validation" ? "Marketplace metrics logged" : "Store metrics logged",
       detail: `${entry.weekEnding}: ${entry.summary}.`,
       chapter: entry.entryType === "validation" ? "Metrics" : "Dashboard",
+      href: entry.entryType === "validation" ? "/metrics" : "/",
     });
   }
 
