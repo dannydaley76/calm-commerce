@@ -511,6 +511,15 @@ function LinkedFieldGroupSection({
   const stored = parseGroupValue(rawValue, 0);
 
   if (visibleSource.length === 0) {
+    if (disabled) {
+      return (
+        <div className="rounded-[1.5rem] border border-dashed border-ink-100 bg-surface-sunken px-5 py-6 text-sm leading-6 text-ink-500">
+          <p className="font-semibold text-ink-900">Loading your shortlisted ideas…</p>
+          <p className="mt-1">We are checking Chapter 3 before showing the idea-linked fields.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="rounded-[1.5rem] border border-dashed border-ink-100 bg-surface-sunken px-5 py-6 text-sm leading-6 text-ink-500">
         <p className="font-semibold text-ink-900">Add your product ideas in Chapter 3 first.</p>
@@ -671,6 +680,10 @@ function FieldSection({
               );
             })}
           </select>
+        ) : disabled ? (
+          <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
+            Loading your shortlisted ideas…
+          </div>
         ) : (
           <div className="mt-2 rounded-xl border border-dashed border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500">
             Complete the Chapter 3 worksheet first. Your shortlisted ideas will appear here as options.

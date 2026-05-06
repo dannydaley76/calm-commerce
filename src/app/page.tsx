@@ -203,6 +203,12 @@ function ideaDetailHref(idea: ProductIdeaLifecycle): string {
   return `/ideas/${encodeURIComponent(idea.ideaId)}`;
 }
 
+function ideaPrimaryActionHref(idea: ProductIdeaLifecycle): string {
+  return idea.nextAction.label === "Define customer"
+    ? idea.nextAction.href
+    : ideaDetailHref(idea);
+}
+
 function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
   if (ideas.length === 0) {
     return (
@@ -254,7 +260,7 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
               {actionIdea.nextAction.note}
             </p>
           </div>
-          <PrimaryButton href={ideaDetailHref(actionIdea)} className="shrink-0">
+          <PrimaryButton href={ideaPrimaryActionHref(actionIdea)} className="shrink-0">
             {actionIdea.nextAction.label}
           </PrimaryButton>
         </div>
@@ -277,7 +283,7 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
             <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
               {idea.statusLabel}
             </span>
-            <SecondaryButton href={ideaDetailHref(idea)} className="shrink-0 px-4 py-2">
+            <SecondaryButton href={ideaPrimaryActionHref(idea)} className="shrink-0 px-4 py-2">
               {idea.nextAction.label}
             </SecondaryButton>
           </div>

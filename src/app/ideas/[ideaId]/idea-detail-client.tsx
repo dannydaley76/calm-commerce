@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { GhostButton, PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
@@ -41,6 +41,11 @@ const marketplaceOptions = ["", "eBay", "Etsy", "Amazon", "Vinted", "Facebook Ma
 const resultOptions = ["", "Sold: strong demand", "Interest but no sale", "Views but no engagement", "Very few views", "Still running"];
 const decisionOptions = ["", "Proceed: build the store", "Iterate and retest: adjust listing or price", "Pivot: try a different product"];
 
+const CHAPTER_5_ECONOMICS_HREF = "/chapter/know-your-numbers/steps?step=chapter-5-step-4-score-with-real-numbers";
+const CHAPTER_6_PLAN_HREF = "/chapter/test-before-you-build/steps?step=chapter-6-step-1-your-first-sale-and-choose-marketplace";
+const CHAPTER_6_RESULTS_HREF = "/chapter/test-before-you-build/steps?step=chapter-6-step-4-read-results-and-decide";
+const CHAPTER_7_CUSTOMER_HREF = "/chapter/pick-your-customer/steps?step=chapter-7-step-2-define-niche-customer";
+
 function parseRows(raw: string | undefined): InstanceRow[] {
   if (!raw) return [];
   try {
@@ -74,6 +79,11 @@ function formatCurrency(value: number | null): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+function formatSignedCurrencyDelta(value: number): string {
+  const normalised = Math.abs(value) < 0.005 ? 0 : value;
+  return `${normalised > 0 ? "+" : ""}${formatCurrency(normalised)} vs projection`;
 }
 
 function formatPercent(value: number | null): string {
@@ -111,6 +121,7 @@ function Field({
     <label className="block">
       <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</span>
       <input
+        aria-label={label}
         type={type}
         className={inputBase}
         value={value}
@@ -133,6 +144,7 @@ function TextArea({
     <label className="block md:col-span-2">
       <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</span>
       <textarea
+        aria-label={label}
         className={`${inputBase} min-h-28`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -155,7 +167,12 @@ function SelectField({
   return (
     <label className="block">
       <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</span>
-      <select className={selectBase} value={value} onChange={(event) => onChange(event.target.value)}>
+      <select
+        aria-label={label}
+        className={selectBase}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
         {options.map((option) => (
           <option key={option || "empty"} value={option}>
             {option || "Not selected"}
@@ -293,12 +310,14 @@ function ProjectedActualSection({
     projection.margin !== null && actualProfitPerSale !== null
       ? actualProfitPerSale - projection.margin
       : null;
+  const normalisedProfitGap = profitGap !== null && Math.abs(profitGap) < 0.005 ? 0 : profitGap;
 
   const signal = (() => {
     if (projection.margin === null) return "Add the Chapter 5 economics to set the projection.";
     if (actualProfitPerSale === null) return "Log marketplace profit per sale to compare against the projection.";
-    if (profitGap === null) return "Actual profit is not ready yet.";
-    if (profitGap >= 0) return "Actual marketplace profit is meeting or beating the plan.";
+    if (normalisedProfitGap === null) return "Actual profit is not ready yet.";
+    if (normalisedProfitGap === 0) return "Actual marketplace profit matches the plan.";
+    if (normalisedProfitGap > 0) return "Actual marketplace profit is beating the plan.";
     return "Actual marketplace profit is below the plan. Review price, fees, or fulfilment cost.";
   })();
 
@@ -326,7 +345,7 @@ function ProjectedActualSection({
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actual profit / sale</p>
           <p className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">{formatCurrency(actualProfitPerSale)}</p>
           <p className="mt-1 text-xs text-ink-500">
-            {profitGap !== null ? `${profitGap >= 0 ? "+" : ""}${formatCurrency(profitGap)} vs projection` : "From marketplace metrics"}
+            {normalisedProfitGap !== null ? formatSignedCurrencyDelta(normalisedProfitGap) : "From marketplace metrics"}
           </p>
         </div>
         <div className="rounded-xl border border-ink-100 bg-white p-4">
@@ -427,6 +446,75 @@ function localNextActionHref(idea: ProductIdeaLifecycle): string {
   return idea.nextAction.href;
 }
 
+function statusLabel(status: ProductIdeaLifecycleStatus): string {
+  switch (status) {
+    case "draft":
+      return "Draft idea";
+    case "economics_checked":
+      return "Economics checked";
+    case "selected":
+      return "Selected";
+    case "test_planned":
+      return "Test planned";
+    case "test_running":
+      return "Test running";
+    case "test_reviewed":
+      return "Test reviewed";
+    case "proceed":
+      return "Proceed";
+    case "retest":
+      return "Retest";
+    case "pivot":
+      return "Pivot";
+  }
+}
+
+function nextActionForStatus(status: ProductIdeaLifecycleStatus) {
+  switch (status) {
+    case "draft":
+      return { label: "Add economics", href: CHAPTER_5_ECONOMICS_HREF, note: "Check margin, costs, and first-test risk before committing." };
+    case "economics_checked":
+      return { label: "Review and choose", href: CHAPTER_5_ECONOMICS_HREF, note: "Compare the economics and select the idea to test first." };
+    case "selected":
+      return { label: "Plan marketplace test", href: CHAPTER_6_PLAN_HREF, note: "Turn the selected idea into a simple real-world test." };
+    case "test_planned":
+      return { label: "Log test metrics", href: "/metrics", note: "Track impressions, clicks, and orders while the test is running." };
+    case "test_running":
+      return { label: "Update test results", href: CHAPTER_6_RESULTS_HREF, note: "Record what happened when the test period ends." };
+    case "test_reviewed":
+      return { label: "Make test decision", href: CHAPTER_6_RESULTS_HREF, note: "Choose whether to proceed, adjust and retest, or pivot." };
+    case "proceed":
+      return { label: "Define customer", href: CHAPTER_7_CUSTOMER_HREF, note: "Move the validated idea into customer, offer, and store planning." };
+    case "retest":
+      return { label: "Plan retest", href: CHAPTER_6_PLAN_HREF, note: "Adjust the listing, price, or offer and run another evidence loop." };
+    case "pivot":
+      return { label: "Add next idea", href: "/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist", note: "Use what you learned to shortlist another candidate." };
+  }
+}
+
+function latestSignalForLocalStatus(status: ProductIdeaLifecycleStatus, economicsDecision: string, testDecision: string, testResult: string): string {
+  if (status === "economics_checked") {
+    return economicsDecision ? `Chapter 5 decision: ${economicsDecision}.` : "Numbers added in Chapter 5.";
+  }
+  if (status === "test_planned") return "Selected for a marketplace test.";
+  if (status === "test_running") return "Marketplace test is still running.";
+  if (status === "test_reviewed") return testResult ? `Test result: ${testResult}.` : "Marketplace test reviewed.";
+  if (status === "proceed") return "Decision: build the store.";
+  if (status === "retest") return "Decision: adjust and retest.";
+  if (status === "pivot") return "Decision: try a different product.";
+  return "Chosen after the Chapter 5 economics check.";
+}
+
+function localStatusFromTestDraft(testDraft: Record<string, string>): ProductIdeaLifecycleStatus {
+  if (testDraft.decision === "Proceed: build the store") return "proceed";
+  if (testDraft.decision === "Iterate and retest: adjust listing or price") return "retest";
+  if (testDraft.decision === "Pivot: try a different product") return "pivot";
+  if (testDraft.result === "Still running") return "test_running";
+  if (testDraft.result) return "test_reviewed";
+  if (testDraft.test_marketplace || testDraft.product_listed || testDraft.listing_price || testDraft.test_duration) return "test_planned";
+  return "selected";
+}
+
 export function IdeaDetailClient({
   idea,
   responses,
@@ -476,12 +564,32 @@ export function IdeaDetailClient({
     decision: idea.isTestIdea ? responses.decision ?? "" : "",
   });
   const [noteDraft, setNoteDraft] = useState("");
+  const [localIdeaView, setLocalIdeaView] = useState({
+    status: idea.status,
+    statusLabel: idea.statusLabel,
+    latestSignal: idea.latestSignal,
+    nextAction: idea.nextAction,
+  });
   const [status, setStatus] = useState<Record<string, SaveState>>({
     idea: "idle",
     economics: "idle",
     test: "idle",
     notes: "idle",
   });
+
+  useEffect(() => {
+    setLocalIdeaView({
+      status: idea.status,
+      statusLabel: idea.statusLabel,
+      latestSignal: idea.latestSignal,
+      nextAction: idea.nextAction,
+    });
+  }, [idea.latestSignal, idea.nextAction, idea.status, idea.statusLabel]);
+
+  const displayIdea: ProductIdeaLifecycle = {
+    ...idea,
+    ...localIdeaView,
+  };
 
   const setSectionStatus = (section: string, value: SaveState) => {
     setStatus((prev) => ({ ...prev, [section]: value }));
@@ -518,7 +626,19 @@ export function IdeaDetailClient({
       "unit-economics-worksheet",
     );
     setSectionStatus("economics", result.ok ? "saved" : "error");
-    if (result.ok) router.refresh();
+    if (result.ok) {
+      setLocalIdeaView((prev) => {
+        if (prev.status !== "draft" && prev.status !== "economics_checked") return prev;
+        const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
+        return {
+          status: nextStatus,
+          statusLabel: statusLabel(nextStatus),
+          latestSignal: latestSignalForLocalStatus(nextStatus, economicsDraft.viable, "", ""),
+          nextAction: nextActionForStatus(nextStatus),
+        };
+      });
+      router.refresh();
+    }
   };
 
   const saveTest = async () => {
@@ -532,7 +652,16 @@ export function IdeaDetailClient({
     );
     const ok = results.every((result) => result.ok);
     setSectionStatus("test", ok ? "saved" : "error");
-    if (ok) router.refresh();
+    if (ok) {
+      const nextStatus = localStatusFromTestDraft(testDraft);
+      setLocalIdeaView({
+        status: nextStatus,
+        statusLabel: statusLabel(nextStatus),
+        latestSignal: latestSignalForLocalStatus(nextStatus, economicsDraft.viable, testDraft.decision, testDraft.result),
+        nextAction: nextActionForStatus(nextStatus),
+      });
+      router.refresh();
+    }
   };
 
   const saveNote = async () => {
@@ -567,14 +696,14 @@ export function IdeaDetailClient({
       <PageHero
         label="Product candidate"
         title={ideaDraft.idea_description || idea.label}
-        description={idea.latestSignal}
+        description={displayIdea.latestSignal}
       >
         <div className="flex flex-wrap items-center gap-3">
-          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
-            {idea.statusLabel}
+          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
+            {displayIdea.statusLabel}
           </span>
-          <PrimaryButton href={localNextActionHref(idea)}>
-            {idea.nextAction.label}
+          <PrimaryButton href={localNextActionHref(displayIdea)}>
+            {displayIdea.nextAction.label}
           </PrimaryButton>
         </div>
       </PageHero>
@@ -585,10 +714,10 @@ export function IdeaDetailClient({
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
               Next best action
             </p>
-            <p className="mt-2 text-sm leading-6 text-ink-700">{idea.nextAction.note}</p>
+            <p className="mt-2 text-sm leading-6 text-ink-700">{displayIdea.nextAction.note}</p>
           </div>
-          <PrimaryButton href={localNextActionHref(idea)} className="shrink-0">
-            {idea.nextAction.label}
+          <PrimaryButton href={localNextActionHref(displayIdea)} className="shrink-0">
+            {displayIdea.nextAction.label}
           </PrimaryButton>
         </div>
       </section>

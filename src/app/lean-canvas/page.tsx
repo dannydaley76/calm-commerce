@@ -476,6 +476,15 @@ function formatCalculatedMoney(value: number | null, symbol: string): string | n
   return `${symbol}${value.toFixed(2)}`;
 }
 
+function formatDisplayDate(raw: string | null): string | null {
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(`${raw}T12:00:00`);
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+  return raw;
+}
+
 function parseMetricNumber(value: string | undefined): number | null {
   if (!value) return null;
   const cleaned = value.replace(/[^0-9.\-]/g, "");
@@ -668,11 +677,20 @@ export default async function LeanCanvasPage({
   const currency             = getCurrencyMeta(currencyCode);
   const insights             = buildCanvasInsights(responses, currency.symbol);
   const canvasSections       = buildLeanCanvasSections(responses);
-  const canvasFilledCount    = getLeanCanvasFilledSectionCount(canvasSections);
   const chosenIdeaEconomics  = getChosenIdeaEconomics(responses);
   const chosenIdeaMeta       = getChosenIdeaMeta(responses);
   const chosenIdea           = chosenIdeaMeta?.label ?? "";
   const chosenIdeaMetrics    = getIdeaMetricSummary(metrics, chosenIdeaMeta?.id ?? null);
+  const hasDerivedCostSection = chosenIdeaEconomics !== null && !canvasSections.find((section) => section.id === "cost_structure")?.hasSomeData;
+  const hasDerivedRevenueSection =
+    (chosenIdeaEconomics !== null ||
+      chosenIdeaMetrics.actualProfitPerSale !== null ||
+      chosenIdeaMetrics.actualRevenuePerOrder !== null) &&
+    !canvasSections.find((section) => section.id === "revenue_streams")?.hasSomeData;
+  const canvasFilledCount    =
+    getLeanCanvasFilledSectionCount(canvasSections) +
+    (hasDerivedCostSection ? 1 : 0) +
+    (hasDerivedRevenueSection ? 1 : 0);
   const fieldStepIndex       = buildFieldStepIndex();
 
   /* Combined canvas progress (both layers together) */
@@ -735,7 +753,7 @@ export default async function LeanCanvasPage({
           <div className="mt-4">
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="text-[11px] font-medium text-ink-700">
-                Canvas progress: {totalFilledCount} of {TOTAL_SECTION_COUNT} sections complete
+                Canvas progress: {totalFilledCount} of {TOTAL_SECTION_COUNT} sections started
               </p>
               <p className="text-[10px] text-ink-500">
                 Operating {operatingFilledCount}/{OPERATING_SECTIONS.length} · Business {canvasFilledCount}/{LEAN_CANVAS_SECTIONS.length}
@@ -948,29 +966,6 @@ export default async function LeanCanvasPage({
                   const isRevenueStreams = section.id === "revenue_streams";
                   const hasEconomics    = isCostStructure && chosenIdeaEconomics !== null;
                   const hasRevenueEconomics = isRevenueStreams && chosenIdeaEconomics !== null;
-
-                  /* Area + variant from the section config map */
-                  const cfg = SECTION_CONFIG[section.id] ?? { area: "prob", variant: "tall" as CardVariant };
-
-                  const editHref = getSectionEditHref(
-                    section.fields,
-                    section.chapterHref,
-                    fieldStepIndex,
-                  );
-
-                  const sectionState = getSectionState({
-                    filledCount: section.filledCount,
-                    totalCount:  section.fields.length,
-                    editHref,
-                    sourceLabel: section.chapterLabel,
-                  });
-
-                  const subFields: SubField[] = section.fieldData.map((f) => ({
-                    label: f.label,
-                    value: f.filled ? (f.value ?? null) : null,
-                    fieldKey:    f.key,
-                    worksheetId: FIELD_WORKSHEET_MAP[f.key],
-                  }));
                   const calculatedEconomics = chosenIdeaEconomics
                     ? calculateUnitEconomics(chosenIdeaEconomics as Record<string, string | undefined>)
                     : null;
@@ -988,6 +983,55 @@ export default async function LeanCanvasPage({
                     chosenIdeaMetrics.actualRevenuePerOrder,
                     currency.symbol,
                   );
+                  const latestMetricDate = formatDisplayDate(chosenIdeaMetrics.latestMetricDate);
+                  const derivedCostFields: SubField[] =
+                    isCostStructure && chosenIdeaEconomics
+                      ? [
+                          { label: "Product cost", value: normalizeText(chosenIdeaEconomics.product_cost) || null },
+                          { label: "Shipping", value: normalizeText(chosenIdeaEconomics.shipping_to_customer) || null },
+                          { label: "Platform fees", value: normalizeText(chosenIdeaEconomics.platform_fees) || null },
+                          { label: "Margin / unit", value: calculatedMargin },
+                        ]
+                      : [];
+                  const derivedRevenueFields: SubField[] =
+                    isRevenueStreams && chosenIdeaEconomics
+                      ? [
+                          { label: "Planned price", value: calculatedPrice },
+                          { label: "Projected margin", value: calculatedMargin },
+                          { label: "Actual profit / sale", value: actualProfitPerSale },
+                          { label: "Actual revenue / order", value: actualRevenuePerOrder },
+                        ]
+                      : [];
+                  const derivedFilledCount = [...derivedCostFields, ...derivedRevenueFields]
+                    .filter((field) => field.value !== null).length;
+                  const effectiveFilledCount = Math.max(
+                    section.filledCount,
+                    derivedFilledCount > 0 ? 1 : 0,
+                  );
+
+                  /* Area + variant from the section config map */
+                  const cfg = SECTION_CONFIG[section.id] ?? { area: "prob", variant: "tall" as CardVariant };
+
+                  const editHref = getSectionEditHref(
+                    section.fields,
+                    section.chapterHref,
+                    fieldStepIndex,
+                  );
+
+                  const sectionState = getSectionState({
+                    filledCount: effectiveFilledCount,
+                    totalCount:  section.fields.length,
+                    editHref,
+                    sourceLabel: section.chapterLabel,
+                  });
+
+                  const baseSubFields: SubField[] = section.fieldData.map((f) => ({
+                    label: f.label,
+                    value: f.filled ? (f.value ?? null) : null,
+                    fieldKey:    f.key,
+                    worksheetId: FIELD_WORKSHEET_MAP[f.key],
+                  }));
+                  const subFields: SubField[] = baseSubFields;
 
                   /* Cost structure gets unit-economics block as children */
                   const costEconomicsBlock =
@@ -1067,9 +1111,9 @@ export default async function LeanCanvasPage({
                             </div>
                           ) : null}
                         </dl>
-                        {chosenIdeaMetrics.latestMetricDate ? (
+                        {latestMetricDate ? (
                           <p className="mt-2 text-[11px] leading-5 text-ink-500">
-                            Latest linked metric: {chosenIdeaMetrics.latestMetricDate}
+                            Latest linked metric: {latestMetricDate}
                             {chosenIdeaMetrics.latestOrders !== null ? ` · ${chosenIdeaMetrics.latestOrders} orders` : ""}
                           </p>
                         ) : (

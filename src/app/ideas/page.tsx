@@ -63,6 +63,12 @@ function ideaDetailHref(idea: ProductIdeaLifecycle): string {
   return `/ideas/${encodeURIComponent(idea.ideaId)}`;
 }
 
+function ideaPrimaryActionHref(idea: ProductIdeaLifecycle): string {
+  return idea.nextAction.label === "Define customer"
+    ? idea.nextAction.href
+    : ideaDetailHref(idea);
+}
+
 function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
   const priority: Record<ProductIdeaLifecycleStatus, number> = {
     test_reviewed: 1,
@@ -185,7 +191,7 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
               {idea.nextAction.note}
             </p>
           </div>
-          <PrimaryButton href={ideaDetailHref(idea)} className="shrink-0">
+          <PrimaryButton href={ideaPrimaryActionHref(idea)} className="shrink-0">
             {idea.nextAction.label}
           </PrimaryButton>
         </div>

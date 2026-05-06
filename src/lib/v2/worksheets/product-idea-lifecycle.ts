@@ -112,6 +112,14 @@ function normalize(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
+function formatDisplayDate(raw: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(`${raw}T12:00:00`);
+    return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+  return raw;
+}
+
 function statusLabel(status: ProductIdeaLifecycleStatus): string {
   switch (status) {
     case "draft":
@@ -355,7 +363,7 @@ function buildTimeline({
     events.push({
       key: `note-${note.id}`,
       label: "Decision note added",
-      detail: `${note.createdAt}: ${note.note}`,
+      detail: `${formatDisplayDate(note.createdAt)}: ${note.note}`,
       chapter: "Idea notes",
       href: "#notes",
     });
@@ -400,7 +408,7 @@ function metricsForIdea(metrics: RawMetricEntry[], ideaId: string): ProductIdeaM
       const revenue = entryType === "live_store" ? parseMetricNumber(entry.data_json.revenue) : null;
       return {
         id: entry.id,
-        weekEnding: entry.week_ending,
+        weekEnding: formatDisplayDate(entry.week_ending),
         entryType,
         summary: metricSummary(entry),
         orders,
