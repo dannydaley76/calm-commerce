@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/browser";
+
+function getEmailRedirectTo() {
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.origin}/auth/callback`;
+}
 
 function normalizeAuthError(message: string) {
   const lower = message.toLowerCase();
@@ -19,11 +25,14 @@ function normalizeAuthError(message: string) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -32,6 +41,7 @@ export default function LoginPage() {
     if (error) {
       setErrorMessage(normalizeAuthError(error));
       setMessage("");
+      setCanResendConfirmation(error.toLowerCase().includes("email not confirmed"));
     }
   }, []);
 
@@ -40,6 +50,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     setMessage("");
     setErrorMessage("");
+    setCanResendConfirmation(false);
 
     try {
       const supabase = createClient();
@@ -57,12 +68,46 @@ export default function LoginPage() {
       }
 
       setMessage("Signed in successfully. Redirecting...");
-      window.location.href = "/";
+      router.replace("/");
+      router.refresh();
     } catch (error) {
       const resolved = error instanceof Error ? error.message : "Unable to sign in.";
       setErrorMessage(normalizeAuthError(resolved));
+      setCanResendConfirmation(resolved.toLowerCase().includes("email not confirmed"));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      setErrorMessage("Enter your email address first, then resend the confirmation email.");
+      return;
+    }
+
+    setIsResending(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: {
+          emailRedirectTo: getEmailRedirectTo(),
+        },
+      });
+
+      if (error) throw error;
+      setCanResendConfirmation(true);
+      setMessage("Confirmation email sent. Check your inbox and spam folder, then try signing in again.");
+    } catch (error) {
+      const resolved = error instanceof Error ? error.message : "Unable to resend confirmation email.";
+      setErrorMessage(normalizeAuthError(resolved));
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -115,6 +160,22 @@ export default function LoginPage() {
 
         {message ? <p className="mt-4 text-sm text-muted">{message}</p> : null}
         {errorMessage ? <p className="mt-4 text-sm text-red-600">{errorMessage}</p> : null}
+        {canResendConfirmation ? (
+          <div className="mt-4 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
+            <p className="font-semibold">Need a new confirmation email?</p>
+            <p className="mt-2 leading-6">
+              Confirm your email before signing in. If the first email did not arrive, check spam or send it again.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleResendConfirmation()}
+              disabled={isResending}
+              className="mt-3 rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#23408e] transition hover:bg-[#edf3ff] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isResending ? "Sending…" : "Resend confirmation email"}
+            </button>
+          </div>
+        ) : null}
       </div>
     </main>
   );

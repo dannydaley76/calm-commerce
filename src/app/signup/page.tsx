@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { createClient } from "../../lib/supabase/browser";
 
+function getEmailRedirectTo() {
+  if (typeof window === "undefined") return undefined;
+  return `${window.location.origin}/auth/callback`;
+}
+
 function normalizeAuthError(message: string) {
   const lower = message.toLowerCase();
 
@@ -25,12 +30,15 @@ export default function SignupPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage("");
     setErrorMessage("");
+    setNeedsConfirmation(false);
 
     if (password !== confirmPassword) {
       setErrorMessage("Your password confirmation does not match.");
@@ -43,6 +51,9 @@ export default function SignupPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: getEmailRedirectTo(),
+        },
       });
 
       if (error) throw error;
@@ -59,12 +70,45 @@ export default function SignupPage() {
         return;
       }
 
-      setMessage("Account created. If email confirmation is required, check your inbox. Otherwise you can sign in now.");
+      setNeedsConfirmation(true);
+      setMessage("Account created. Check your email to confirm your account, then return here to sign in.");
     } catch (error) {
       const resolved = error instanceof Error ? error.message : "Unable to create account.";
       setErrorMessage(normalizeAuthError(resolved));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    const targetEmail = email.trim();
+    if (!targetEmail) {
+      setErrorMessage("Enter your email address first, then resend the confirmation email.");
+      return;
+    }
+
+    setIsResending(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: {
+          emailRedirectTo: getEmailRedirectTo(),
+        },
+      });
+
+      if (error) throw error;
+      setNeedsConfirmation(true);
+      setMessage("Confirmation email sent. Check your inbox and spam folder, then return here to sign in.");
+    } catch (error) {
+      const resolved = error instanceof Error ? error.message : "Unable to resend confirmation email.";
+      setErrorMessage(normalizeAuthError(resolved));
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -109,10 +153,30 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
-          <p className="font-semibold">What you get with an account</p>
-          <p className="mt-2 leading-6">Your Chapter 3 progress, worksheet responses, and next-step flow stay attached to your learner account instead of disappearing between sessions.</p>
-        </div>
+        {needsConfirmation ? (
+          <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
+            <p className="font-semibold">Confirm your email</p>
+            <p className="mt-2 leading-6">
+              We sent a confirmation link to {email}. Open that email first, then come back and sign in.
+            </p>
+            <p className="mt-2 leading-6">
+              No email yet? Check spam or resend the confirmation email.
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleResendConfirmation()}
+              disabled={isResending}
+              className="mt-3 rounded-xl border border-[#d9def2] bg-white px-4 py-2 text-sm font-semibold text-[#23408e] transition hover:bg-[#edf3ff] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isResending ? "Sending…" : "Resend confirmation email"}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
+            <p className="font-semibold">What you get with an account</p>
+            <p className="mt-2 leading-6">Your Chapter 3 progress, worksheet responses, and next-step flow stay attached to your learner account instead of disappearing between sessions.</p>
+          </div>
+        )}
 
         <div className="mt-5 text-sm">
           <Link href="/login" className="text-cobalt-600 hover:underline">
