@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IdeaChoicePicker } from "@/components/v2/idea-choice-picker";
 import { UnitEconomicsReviewPanel, UnitEconomicsViabilityCard } from "@/components/v2/unit-economics-review-panel";
 import {
   PRODUCT_ID_FIELD,
@@ -649,6 +650,21 @@ function FieldSection({
           return { optionValue, label };
         })
         .find((opt) => value === opt.optionValue || value === opt.label)?.optionValue ?? value;
+
+    if (field.key === "chosen_idea") {
+      return (
+        <IdeaChoicePicker
+          label={field.label}
+          helpText={field.helpText}
+          value={selectedValue}
+          allValues={allValues}
+          disabled={disabled}
+          onChange={onChange}
+          labelSize="base"
+          required={field.required}
+        />
+      );
+    }
 
     return (
       <div>

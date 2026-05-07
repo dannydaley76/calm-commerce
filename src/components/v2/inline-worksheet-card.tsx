@@ -8,6 +8,7 @@ import {
   getProductIdeaId,
   getProductIdeaLabel,
 } from "@/lib/v2/worksheets/product-idea-identity";
+import { IdeaChoicePicker } from "./idea-choice-picker";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -686,6 +687,19 @@ function FieldRenderer({
           return { optionValue, label };
         })
         .find((opt) => value === opt.optionValue || value === opt.label)?.optionValue ?? value;
+
+    if (field.key === "chosen_idea") {
+      return (
+        <IdeaChoicePicker
+          label={field.label}
+          helpText={field.helpText}
+          value={selectedValue}
+          allValues={allValues}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      );
+    }
 
     return (
       <div>
