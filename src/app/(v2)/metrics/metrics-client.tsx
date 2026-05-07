@@ -430,6 +430,21 @@ function PhaseSelector({ phase, onChange }: { phase: Phase; onChange: (p: Phase)
   );
 }
 
+function PhaseGuidance({ phase }: { phase: Phase }) {
+  return (
+    <div className="rounded-2xl border border-[#d9def2] bg-[#fbfcff] px-5 py-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
+        {phase === "validation" ? "Marketplace validation" : "Own-store trading"}
+      </p>
+      <p className="mt-2 text-sm leading-6 text-ink-500">
+        {phase === "validation"
+          ? "Use this while you are testing demand on Etsy, eBay, Amazon, or another marketplace. Log one row per idea each week so every product keeps its own history."
+          : "Use this once your own store is live and taking orders. If you are still validating demand on a marketplace, switch back to Marketplace testing."}
+      </p>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────────
    Find-help toggle (platform-agnostic guidance)
 ───────────────────────────────────────────────────────────── */
@@ -570,6 +585,9 @@ function ValidationForm({
         {status === "success" && <span className="rounded-full bg-success-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#005e3f]">Saved ✓</span>}
         {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
+      <p className="-mt-3 mb-6 max-w-2xl text-sm leading-6 text-ink-500">
+        Use this while you are validating demand before building or relying on your own store.
+      </p>
       <div className="space-y-6">
         <ProductIdeaQuestion
           productIdeas={productIdeas}
@@ -1125,7 +1143,7 @@ function LiveStoreForm({
         {status === "error" && <span className="rounded-full bg-[#fff1f1] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-error-700">Not saved</span>}
       </div>
       <p className="-mt-3 mb-6 max-w-2xl text-sm leading-6 text-ink-500">
-        Use this once your own store is live. If you are still testing on a marketplace, stay in Marketplace testing.
+        Use this once your own store is live and taking orders. If you are still testing on a marketplace, stay in Marketplace testing.
       </p>
 
       <div className="space-y-6">
@@ -1572,6 +1590,8 @@ export function MetricsClient({
           )}
         </div>
       </div>
+
+      <PhaseGuidance phase={phase} />
 
       {/* ── Entry form (toggleable) ── */}
       {showForm && (
