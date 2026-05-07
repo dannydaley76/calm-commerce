@@ -54,10 +54,10 @@ describe('CanvasTabs', () => {
       expect(screen.getByText('Business model')).toBeInTheDocument();
     });
 
-    it('renders "X of Y filled" badge text via FillBadge', () => {
+    it('renders "X of Y started" badge text via FillBadge', () => {
       render(<CanvasTabs tabs={TABS} initialTab="operating" />);
-      expect(screen.getByText('5 of 8 filled')).toBeInTheDocument();
-      expect(screen.getByText('3 of 8 filled')).toBeInTheDocument();
+      expect(screen.getByText('5 of 8 started')).toBeInTheDocument();
+      expect(screen.getByText('3 of 8 started')).toBeInTheDocument();
     });
 
     it('does not render badges when counts are omitted', () => {

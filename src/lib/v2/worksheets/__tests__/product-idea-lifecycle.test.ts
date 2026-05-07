@@ -128,12 +128,14 @@ describe("getProductIdeaLifecycles", () => {
 
     expect(lifecycle.metricEntries).toHaveLength(1);
     expect(lifecycle.metricEntries[0]).toMatchObject({
+      weekEnding: "3 May 2026",
       orders: 1,
       profitPerSale: 7.5,
       revenue: null,
       revenuePerOrder: null,
     });
     expect(lifecycle.timeline.at(-1)?.key).toBe("metric-metric-1");
+    expect(lifecycle.timeline.at(-1)?.detail).toContain("3 May 2026");
     expect(lifecycle.timeline.at(-1)?.detail).toContain("100 impressions");
   });
 
@@ -180,6 +182,7 @@ describe("getProductIdeaLifecycles", () => {
 
     expect(lifecycle.notes).toHaveLength(1);
     expect(lifecycle.timeline.at(-1)?.key).toBe("note-note-1");
+    expect(lifecycle.timeline.at(-1)?.detail).toContain("6 May 2026");
     expect(lifecycle.timeline.at(-1)?.detail).toContain("Supplier confirmed lower MOQ");
   });
 

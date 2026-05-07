@@ -23,6 +23,7 @@
 export interface FillBadgeProps {
   filled: number;
   total: number;
+  label?: "filled" | "started";
   /**
    * Tailwind colour classes forwarded to the wrapping <span>.
    * The badge controls its own layout (padding, border-radius, text size,
@@ -31,12 +32,12 @@ export interface FillBadgeProps {
   className?: string;
 }
 
-export function FillBadge({ filled, total, className = '' }: FillBadgeProps) {
+export function FillBadge({ filled, total, label = "filled", className = '' }: FillBadgeProps) {
   return (
     <span
       className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${className}`}
     >
-      {filled} of {total} filled
+      {filled} of {total} {label}
     </span>
   );
 }

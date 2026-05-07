@@ -281,6 +281,7 @@ export function CanvasTabs({
                 <FillBadge
                   filled={tab.filledCount!}
                   total={tab.totalCount!}
+                  label="started"
                   className={
                     isSelected
                       ? 'bg-white/15 text-white'
