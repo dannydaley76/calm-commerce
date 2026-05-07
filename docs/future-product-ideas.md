@@ -6,6 +6,30 @@ This file holds useful ideas that are not the current focus. The current near-te
 
 ## Product Idea Lifecycle
 
+### Scanner And Research Workspace Import
+
+Calm Commerce should connect to the Chrome extension/research product ladder:
+
+- Tier 1: one-time paid scanner for Amazon and AliExpress product pages.
+- Tier 2: subscription research workspace with saved ideas, categories, notes, comparison, and MCP/AI research support.
+- Tier 3: Calm Commerce OS users get the extension bundled and can send research into the OS.
+
+The strategic ladder is:
+
+```txt
+Scanner -> Research Workspace -> Calm Commerce OS
+```
+
+The OS should receive scanned/researched products through a review-first import flow, not direct silent writes:
+
+1. Extension or research workspace opens `/ideas/import` with a structured payload.
+2. OS shows a review/edit screen.
+3. User confirms "Add to Ideas".
+4. OS creates a durable Chapter 3 idea row and optional Chapter 5 draft economics row.
+5. User lands on the new idea detail page.
+
+See `docs/scanner-research-os-architecture.md` for payload shape, field mapping, and implementation phases.
+
 ### Idea Pipeline
 
 Treat each Chapter 3 product idea as a durable candidate that can move through the whole Calm Commerce OS.

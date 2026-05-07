@@ -1,7 +1,7 @@
 # Digital Product — Product Vision Brief
 
-_Status: Draft v0.5 (living document)_
-_Last updated: 2026-05-01_
+_Status: Draft v0.6 (living document)_
+_Last updated: 2026-05-07_
 _Owner: Product team_
 
 ## 1) Why this exists
@@ -28,6 +28,24 @@ The intended idea lifecycle is:
 8. Idea can be continued, improved, paused, retired, or replaced.
 
 This is what makes the product an OS rather than a course. The learner should not only complete chapters. They should build an auditable history of product decisions, evidence, tests, and outcomes.
+
+### Product ecosystem direction
+
+Calm Commerce should sit at the centre of a small product ladder:
+
+1. **Scanner** — a low-friction Chrome extension that helps users inspect Amazon and AliExpress products and decide whether an idea deserves closer research.
+2. **Research Workspace** — a paid extension/subscription tier for saving scanned ideas, categorising them, adding notes, comparing candidates, and using MCP/AI-assisted research summaries.
+3. **Calm Commerce OS** — the full operating system for turning a shortlisted idea into a validated, tested, launched, and measured product business.
+
+The scanner and research workspace are not separate distractions. They are acquisition and activation surfaces for Calm Commerce. They should help users build a useful research backlog, then naturally lead them to the OS when they need a structured process for validation, economics, testing, launch, and metrics.
+
+The product boundary is important:
+
+- Scanner answers: "Is this product worth a closer look?"
+- Research Workspace answers: "Which ideas should I seriously consider?"
+- Calm Commerce OS answers: "How do I turn one idea into a real, tested business?"
+
+Tier 2 should not become a full OS. It should organise product research, notes, categories, comparisons, and AI/MCP research support, then create a clear upgrade moment into Calm Commerce.
 
 ## 3) Problem we are solving
 - Solo founders consume startup frameworks but struggle to turn them into sequenced, concrete actions.
@@ -75,6 +93,7 @@ For **first-time online sellers**, Calm Commerce OS provides **a guided product 
 - Source-copy parity workflow and release gate for chapter content.
 - Baseline analytics: activation, first-output completion, 7-day return.
 - Product idea continuity from Chapter 3 into Chapter 5 and Chapter 6, starting with stable idea identity and clear selected-candidate state.
+- Scanner/research import path so externally researched ideas can become durable Calm Commerce product candidates after user review.
 
 ### Out of scope (for now)
 - Team collaboration, roles, or permissions.
@@ -132,6 +151,7 @@ For **first-time online sellers**, Calm Commerce OS provides **a guided product 
 - What is the simplest data model that gives product ideas stable identity without overbuilding a full product management system too early?
 - Where should the user see idea history first: a dedicated Ideas page, the Lean Canvas, the dashboard, or within chapter worksheets?
 - Which events should be captured in an idea timeline automatically, and which should require explicit user confirmation?
+- How much research workspace functionality should live inside the extension versus a companion web surface before the user upgrades to Calm Commerce OS?
 
 ## 12) How to use / update this brief
 - Treat this as a living document and default decision anchor.
@@ -144,3 +164,4 @@ For **first-time online sellers**, Calm Commerce OS provides **a guided product 
 - **2026-03-03 (v0.3):** Narrowed to one explicit ICP: solo founders; tightened scope, principles, success metrics, and milestones accordingly.
 - **2026-03-03 (v0.4):** Added canonical priority demographics within the solo-founder ICP: older adults supplementing income + recent grads/young adults seeking a career path.
 - **2026-05-01 (v0.5):** Added Calm Commerce OS direction: product ideas should become durable tracked candidates with evidence, economics, tests, decisions, and metrics history.
+- **2026-05-07 (v0.6):** Added product ecosystem direction: Scanner → Research Workspace → Calm Commerce OS, with scanner/research import as a strategic acquisition and activation path.
