@@ -254,6 +254,7 @@ export function InlineWorksheetCard({
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"loading" | "idle" | "saving" | "saved" | "error">("loading");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resolve items in fieldKeys order, matching both scalar fields and field groups
@@ -318,6 +319,7 @@ export function InlineWorksheetCard({
         });
         if (!res.ok) throw new Error("Save failed");
         clearPendingValues(worksheetId, Object.keys(scopedResponses));
+        setLastSavedAt(new Date());
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 3000);
       } catch {
@@ -391,6 +393,8 @@ export function InlineWorksheetCard({
           ),
         )}
       </div>
+
+      <AutosaveFooter status={status} lastSavedAt={lastSavedAt} />
     </div>
   );
 }
@@ -835,5 +839,45 @@ function StatusBadge({
     <span className="shrink-0 rounded-full bg-surface-sunken px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
       {remaining} {remaining === 1 ? "field" : "fields"} to fill
     </span>
+  );
+}
+
+function AutosaveFooter({
+  status,
+  lastSavedAt,
+}: {
+  status: "loading" | "idle" | "saving" | "saved" | "error";
+  lastSavedAt: Date | null;
+}) {
+  const savedTime = lastSavedAt?.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const message =
+    status === "loading"
+      ? "Loading your saved answers."
+      : status === "saving"
+        ? "Saving your latest change..."
+        : status === "error"
+          ? "Autosave could not confirm the latest change. Check your connection before leaving."
+          : savedTime
+            ? `Autosaved at ${savedTime}.`
+            : "Autosave is ready.";
+
+  const dotClass =
+    status === "saving"
+      ? "bg-cobalt-600"
+      : status === "error"
+        ? "bg-error-700"
+        : status === "loading"
+          ? "bg-ink-300"
+          : "bg-[#005e3f]";
+
+  return (
+    <div className="mt-6 flex items-center gap-2 border-t border-[#e2e6f5] pt-4 text-xs leading-5 text-ink-500">
+      <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} aria-hidden="true" />
+      <span>{message}</span>
+    </div>
   );
 }
