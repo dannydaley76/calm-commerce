@@ -35,7 +35,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
         { href: `/chapter/${slug}/worksheet`, label: "Worksheet", active: true },
       ]}
       title={worksheetDefinition.worksheet.title}
-      subtitle="Complete the worksheet and return here at any time to update your answers."
+      subtitle="Review the answers you captured during the chapter, and update anything that has changed."
     >
       <div className="mx-auto max-w-[960px] space-y-10">
         <PageHero
@@ -58,13 +58,13 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
             <Card>
               <Eyebrow>What this work does</Eyebrow>
               <p className="mt-3 text-sm leading-7 text-ink-900">
-                Turns Chapter {chapter.number} from reading into decisions you can act on.
+                Pulls the decisions from Chapter {chapter.number} into one editable place.
               </p>
             </Card>
             <Card>
               <Eyebrow>How to approach it</Eyebrow>
               <p className="mt-3 text-sm leading-7 text-ink-900">
-                Be specific and honest. Answers that reflect your actual situation are more useful than answers that sound good.
+                Use this page to review, tighten, or update answers after working through the chapter.
               </p>
             </Card>
             <Card>

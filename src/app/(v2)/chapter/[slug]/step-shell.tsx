@@ -17,6 +17,7 @@ type StepShellProps = {
   allSteps: StepShellStep[];
   previousStepId?: string;
   nextStepId?: string;
+  worksheetHref?: string;
   children: React.ReactNode;
 };
 
@@ -44,6 +45,7 @@ export function StepShell({
   allSteps,
   previousStepId,
   nextStepId,
+  worksheetHref,
   children,
 }: StepShellProps) {
   const progressPercent = Math.round(((currentIndex + 1) / totalSteps) * 100);
@@ -171,6 +173,10 @@ export function StepShell({
               {nextStepId ? (
                 <Link href={`?step=${nextStepId}`} className={BTN_PRIMARY}>
                   Next →
+                </Link>
+              ) : worksheetHref ? (
+                <Link href={worksheetHref} className={BTN_PRIMARY}>
+                  Review answers →
                 </Link>
               ) : (
                 <Link href="/program" className={BTN_PRIMARY}>

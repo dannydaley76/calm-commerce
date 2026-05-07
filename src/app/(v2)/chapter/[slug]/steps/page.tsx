@@ -86,6 +86,7 @@ export default async function ChapterStepsPage({
         allSteps={chapter.steps.map((item) => ({ id: item.id, title: item.title }))}
         previousStepId={previousStep?.id}
         nextStepId={nextStep?.id}
+        worksheetHref={chapter.chapter.worksheetId ? `/chapter/${slug}/worksheet` : undefined}
       >
         <div className="space-y-8">
           {currentStep.blocks.map((block, index) => (
