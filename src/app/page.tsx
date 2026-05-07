@@ -30,6 +30,13 @@ type ChapterEntry = {
   steps: unknown[];
 };
 
+type CanvasProgress = {
+  operatingStarted: number;
+  operatingTotal: number;
+  businessStarted: number;
+  businessTotal: number;
+};
+
 type DashboardData =
   | { authenticated: false }
   | {
@@ -42,7 +49,30 @@ type DashboardData =
       worksheetPct: number;
       allDone: boolean;
       ideaLifecycles: ProductIdeaLifecycle[];
+      canvasProgress: CanvasProgress;
     };
+
+const OPERATING_CANVAS_KEYS = [
+  "time_budget_hours_per_week",
+  "money_cap_per_month",
+  "minimum_experiment_duration",
+  "success_metrics",
+  "continue_criteria",
+  "escalation_criteria",
+  "kill_criteria",
+  "red_line_rules",
+] as const;
+
+const BUSINESS_CANVAS_SECTIONS = [
+  ["core_problem", "what_they_value_most"],
+  ["customer_description", "where_they_gather", "what_builds_trust"],
+  ["positioning_statement", "key_differentiator"],
+  ["chosen_idea", "offer_summary", "minimum_viable_version", "product_title"],
+  ["free_channels_chosen", "ad_platform", "first_week_actions"],
+  ["final_price", "margin_after_all_costs", "repeat_purchase_strategy", "email_collection_method"],
+  ["sourcing_model", "estimated_startup_cost"],
+  ["key_differentiator", "what_builds_trust"],
+] as const;
 
 /* ─────────────────────────────────────────────────────────────
    Data
@@ -69,10 +99,11 @@ async function getDashboardData(): Promise<DashboardData> {
         worksheetPct: 0,
         allDone: false,
         ideaLifecycles: [],
+        canvasProgress: getCanvasProgress({}),
       };
     }
 
-    const [{ data: rows }, { data: worksheetRows }] = await Promise.all([
+    const [{ data: rows }, { data: worksheetRows }, { data: metricRows }] = await Promise.all([
       supabase
         .from("chapter_progress")
         .select("chapter_id, status, worksheet_completion_percent")
@@ -81,6 +112,11 @@ async function getDashboardData(): Promise<DashboardData> {
         .from("worksheet_responses")
         .select("field_key, value_json")
         .eq("project_id", projectId),
+      supabase
+        .from("weekly_metrics")
+        .select("id, week_ending, data_json")
+        .eq("project_id", projectId)
+        .order("submitted_at", { ascending: false }),
     ]);
 
     const byId = Object.fromEntries(
@@ -115,11 +151,27 @@ async function getDashboardData(): Promise<DashboardData> {
       currentStatus: (currentRow?.status as ChapterStatus | undefined) ?? "not_started",
       worksheetPct: Math.round(currentRow?.worksheet_completion_percent ?? 0),
       allDone: completedCount === chapters.length,
-      ideaLifecycles: getProductIdeaLifecycles(worksheetResponses),
+      ideaLifecycles: getProductIdeaLifecycles(worksheetResponses, metricRows ?? []),
+      canvasProgress: getCanvasProgress(worksheetResponses),
     };
   } catch {
     return { authenticated: false };
   }
+}
+
+function hasValue(value: string | undefined): boolean {
+  return (value ?? "").trim().length > 0;
+}
+
+function getCanvasProgress(responses: Record<string, string | undefined>): CanvasProgress {
+  return {
+    operatingStarted: OPERATING_CANVAS_KEYS.filter((key) => hasValue(responses[key])).length,
+    operatingTotal: OPERATING_CANVAS_KEYS.length,
+    businessStarted: BUSINESS_CANVAS_SECTIONS.filter((keys) =>
+      keys.some((key) => hasValue(responses[key])),
+    ).length,
+    businessTotal: BUSINESS_CANVAS_SECTIONS.length,
+  };
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -293,6 +345,103 @@ function IdeaPipelinePanel({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
   );
 }
 
+function findEvidenceMilestone(ideas: ProductIdeaLifecycle[]): ProductIdeaLifecycle | null {
+  return ideas.find((idea) =>
+    !!idea.economicsDecision &&
+    !!idea.testMarketplace &&
+    idea.metricEntries.length > 0,
+  ) ?? null;
+}
+
+function ProgressPayoffPanel({
+  canvasProgress,
+  ideas,
+}: {
+  canvasProgress: CanvasProgress;
+  ideas: ProductIdeaLifecycle[];
+}) {
+  const totalStarted = canvasProgress.operatingStarted + canvasProgress.businessStarted;
+  const totalSections = canvasProgress.operatingTotal + canvasProgress.businessTotal;
+  const milestoneIdea = findEvidenceMilestone(ideas);
+  const canvasHasStarted = totalStarted > 0;
+
+  return (
+    <section className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+            Progress payoff
+          </p>
+          <h3 className="mt-2 font-[Manrope] text-lg font-bold text-ink-900">
+            {canvasHasStarted ? "Your OS is taking shape" : "Your OS will build as you work"}
+          </h3>
+          <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+            {canvasHasStarted
+              ? "The answers you capture are becoming a business model, not just course notes."
+              : "As you complete chapters, your answers will collect into the Lean Canvas, Ideas history, and Metrics log."}
+          </p>
+        </div>
+        <SecondaryButton href="/lean-canvas">Open Lean Canvas</SecondaryButton>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-[#e2e6f5] bg-[#fbfcff] p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+            Canvas sections
+          </p>
+          <p className="mt-2 font-[Manrope] text-2xl font-bold text-ink-900">
+            {totalStarted}/{totalSections}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-ink-500">
+            Sections started across operating rules and business model.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#e2e6f5] bg-[#fbfcff] p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+            Operating layer
+          </p>
+          <p className="mt-2 font-[Manrope] text-2xl font-bold text-ink-900">
+            {canvasProgress.operatingStarted}/{canvasProgress.operatingTotal}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-ink-500">
+            Time, money, decision, and stop rules captured.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#e2e6f5] bg-[#fbfcff] p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+            Business model
+          </p>
+          <p className="mt-2 font-[Manrope] text-2xl font-bold text-ink-900">
+            {canvasProgress.businessStarted}/{canvasProgress.businessTotal}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-ink-500">
+            Customer, offer, channel, cost, and revenue sections started.
+          </p>
+        </div>
+      </div>
+
+      {milestoneIdea && (
+        <div className="rounded-2xl border border-success-100 bg-success-100/60 p-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#005e3f]">
+            Evidence milestone
+          </p>
+          <h4 className="mt-2 font-[Manrope] text-base font-bold text-ink-900">
+            You now have evidence for {milestoneIdea.label}
+          </h4>
+          <p className="mt-1 text-sm leading-6 text-ink-600">
+            This idea has economics, a marketplace test plan, and at least one linked metric entry.
+          </p>
+          <div className="mt-4">
+            <SecondaryButton href={ideaDetailHref(milestoneIdea)}>
+              View idea history
+            </SecondaryButton>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────────
    Page
 ───────────────────────────────────────────────────────────── */
@@ -370,6 +519,13 @@ export default async function DashboardPage() {
 
         {"ideaLifecycles" in data && (
           <IdeaPipelinePanel ideas={data.ideaLifecycles} />
+        )}
+
+        {"canvasProgress" in data && (
+          <ProgressPayoffPanel
+            canvasProgress={data.canvasProgress}
+            ideas={data.ideaLifecycles}
+          />
         )}
 
         {/* ── Quick links ── */}
