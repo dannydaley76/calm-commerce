@@ -137,6 +137,18 @@ function evidenceLine(label: string, value: string | number | undefined): string
   return `${label}: ${value}`;
 }
 
+export function sourceLabelForUrl(value: string | undefined, fallback = "Source product"): string {
+  if (!value) return fallback;
+  try {
+    const host = new URL(value).hostname.replace(/^www\./, "");
+    if (host.includes("aliexpress")) return "AliExpress";
+    if (host.includes("amazon")) return "Amazon";
+    return host;
+  } catch {
+    return fallback;
+  }
+}
+
 export function buildScannerImportDraft(payload: ScannerImportPayload | null): ScannerImportDraft {
   const scannedAt = payload?.scannedAt || new Date().toISOString().slice(0, 10);
   const observed = [
@@ -145,7 +157,7 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
     evidenceLine("Observed rating", payload?.observedRating),
     evidenceLine("Observed reviews", payload?.observedReviewCount),
     evidenceLine("Observed BSR", payload?.observedBsr),
-    evidenceLine("Source", payload?.sourceUrl),
+    evidenceLine("Source", sourceLabelForUrl(payload?.sourceUrl, payload?.sourcePlatform || "Product page")),
   ].filter((line): line is string => !!line);
   const competition = [
     evidenceLine("Competition score", payload?.competitionScore !== undefined ? `${payload.competitionScore}/100` : undefined),

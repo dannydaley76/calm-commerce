@@ -6,6 +6,7 @@ import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-sy
 import {
   buildScannerImportDraft,
   parseScannerImportPayloadParam,
+  sourceLabelForUrl,
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
 
@@ -68,6 +69,43 @@ function SummaryMetric({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-ink-100 bg-surface-sunken px-4 py-3">
       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</p>
       <p className="mt-1 break-words text-sm font-semibold text-ink-900">{value || "Not captured"}</p>
+    </div>
+  );
+}
+
+function scoreTone(value: number | undefined): string {
+  if (value === undefined) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (value >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (value >= 40) return "border-amber-100 bg-amber-100 text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
+function scoreLabel(value: number | undefined): string {
+  if (value === undefined) return "Not scored";
+  if (value >= 70) return "Strong";
+  if (value >= 40) return "Mixed";
+  return "Weak";
+}
+
+function ScoreMetric({
+  label,
+  value,
+  suffix = "/100",
+}: {
+  label: string;
+  value: number | undefined;
+  suffix?: string;
+}) {
+  const valueText = value === undefined ? "No data" : `${value}${suffix}`;
+  return (
+    <div className={`rounded-lg border px-4 py-3 ${scoreTone(value)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em]">{label}</p>
+        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+          {scoreLabel(value)}
+        </span>
+      </div>
+      <p className="mt-2 text-lg font-bold">{valueText}</p>
     </div>
   );
 }
@@ -180,6 +218,7 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
   const [editingResearch, setEditingResearch] = useState(!parsedPayload);
   const [editingEconomics, setEditingEconomics] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  const sourceLabel = sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product");
 
   function updateField(key: keyof ScannerImportDraft, value: string) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -270,9 +309,10 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
                     href={draft.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex text-sm font-semibold text-cobalt-600 underline-offset-4 hover:underline"
+                    title={draft.sourceUrl}
+                    className="mt-3 inline-flex max-w-full items-center rounded-full bg-cobalt-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-cobalt-600 underline-offset-4 hover:underline"
                   >
-                    View source product
+                    View on {sourceLabel}
                   </a>
                 ) : null}
               </div>
@@ -290,6 +330,13 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
               <SummaryMetric label="Selling price" value={draft.sellingPrice} />
               <SummaryMetric label="Product cost" value={draft.productCost} />
               <SummaryMetric label="Confidence" value={draft.numbersConfidence} />
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <ScoreMetric label="Opportunity" value={parsedPayload?.opportunityScore} suffix="/100" />
+              <ScoreMetric label="Demand" value={parsedPayload?.demandScore} />
+              <ScoreMetric label="Competition" value={parsedPayload?.competitionScore} />
+              <ScoreMetric label="Confidence" value={parsedPayload?.confidenceScore} />
             </div>
           </div>
         </div>

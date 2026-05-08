@@ -3,6 +3,7 @@ import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import {
   buildScannerImportDraft,
   normalizeScannerImportPayload,
+  sourceLabelForUrl,
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
 
@@ -98,6 +99,8 @@ export async function POST(req: Request) {
         idea_id: ideaId,
         idea_description: title,
         product_image_url: draft.productImageUrl,
+        source_url: draft.sourceUrl,
+        source_label: sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product"),
         demand_evidence: draft.demandEvidence,
         competition_notes: draft.competitionNotes,
         seasonality: draft.seasonality,
@@ -138,7 +141,7 @@ export async function POST(req: Request) {
 
     const sourceLines = [
       `Imported from ${draft.sourcePlatform || "scanner"} on ${draft.scannedAt || todayISO()}.`,
-      draft.sourceUrl ? `Source: ${draft.sourceUrl}` : "",
+      draft.sourceUrl ? `Source: ${sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product")}` : "",
       draft.notes,
     ].filter(Boolean);
 
