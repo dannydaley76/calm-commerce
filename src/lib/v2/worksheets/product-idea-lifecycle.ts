@@ -21,6 +21,8 @@ export type ProductIdeaLifecycle = {
   ideaId: string;
   label: string;
   productImageUrl: string | null;
+  sourceUrl: string | null;
+  sourceLabel: string | null;
   status: ProductIdeaLifecycleStatus;
   statusLabel: string;
   latestSignal: string;
@@ -466,6 +468,8 @@ export function getProductIdeaLifecycles(
       ideaId,
       label,
       productImageUrl: normalize(idea.product_image_url) || null,
+      sourceUrl: normalize(idea.source_url) || null,
+      sourceLabel: normalize(idea.source_label) || null,
       status,
       statusLabel: statusLabel(status),
       latestSignal: deriveLatestSignal({ status, economics, responses }),

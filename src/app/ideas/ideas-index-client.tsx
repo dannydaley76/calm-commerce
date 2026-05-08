@@ -197,6 +197,17 @@ export function IdeasIndexClient({ ideas }: { ideas: ProductIdeaLifecycle[] }) {
                         <p className="mt-1 line-clamp-2 max-w-[280px] text-xs leading-5 text-ink-500">
                           {idea.latestSignal}
                         </p>
+                        {idea.sourceUrl ? (
+                          <a
+                            href={idea.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={idea.sourceUrl}
+                            className="mt-2 inline-flex text-[10px] font-bold uppercase tracking-[0.12em] text-cobalt-600 underline-offset-4 hover:underline"
+                          >
+                            View on {idea.sourceLabel || "source"}
+                          </a>
+                        ) : null}
                       </div>
                     </div>
                   </td>

@@ -539,6 +539,8 @@ export function IdeaDetailClient({
   const [ideaDraft, setIdeaDraft] = useState({
     idea_description: getProductIdeaLabel(sourceIdea, ideaIndex),
     product_image_url: sourceIdea.product_image_url ?? "",
+    source_url: sourceIdea.source_url ?? "",
+    source_label: sourceIdea.source_label ?? "",
     demand_evidence: sourceIdea.demand_evidence ?? "",
     competition_notes: sourceIdea.competition_notes ?? "",
     seasonality: sourceIdea.seasonality ?? "",
@@ -714,6 +716,17 @@ export function IdeaDetailClient({
             <PrimaryButton href={localNextActionHref(displayIdea)}>
               {displayIdea.nextAction.label}
             </PrimaryButton>
+            {ideaDraft.source_url ? (
+              <a
+                href={ideaDraft.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={ideaDraft.source_url}
+                className="inline-flex rounded-full bg-cobalt-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600 underline-offset-4 hover:underline"
+              >
+                View on {ideaDraft.source_label || displayIdea.sourceLabel || "source"}
+              </a>
+            ) : null}
           </div>
         </div>
       </PageHero>
@@ -761,6 +774,16 @@ export function IdeaDetailClient({
               label="Product image URL"
               value={ideaDraft.product_image_url}
               onChange={(value) => setIdeaDraft((prev) => ({ ...prev, product_image_url: value }))}
+            />
+            <Field
+              label="Source URL"
+              value={ideaDraft.source_url}
+              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_url: value }))}
+            />
+            <Field
+              label="Source label"
+              value={ideaDraft.source_label}
+              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_label: value }))}
             />
             <Field
               label="Seasonality"
