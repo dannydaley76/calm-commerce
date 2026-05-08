@@ -97,6 +97,7 @@ export async function POST(req: Request) {
       {
         idea_id: ideaId,
         idea_description: title,
+        product_image_url: draft.productImageUrl,
         demand_evidence: draft.demandEvidence,
         competition_notes: draft.competitionNotes,
         seasonality: draft.seasonality,

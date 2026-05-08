@@ -44,6 +44,7 @@ const ECONOMICS_FIELDS: FieldConfig[] = [
 function emptyDraft(): ScannerImportDraft {
   return {
     productTitle: "",
+    productImageUrl: "",
     sourcePlatform: "other",
     sourceUrl: "",
     scannedAt: new Date().toISOString().slice(0, 10),
@@ -60,6 +61,25 @@ function emptyDraft(): ScannerImportDraft {
     numbersConfidence: "Low: mostly guesses",
     notes: "",
   };
+}
+
+function SummaryMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-ink-100 bg-surface-sunken px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</p>
+      <p className="mt-1 break-words text-sm font-semibold text-ink-900">{value || "Not captured"}</p>
+    </div>
+  );
+}
+
+function EvidenceBlock({ title, value }: { title: string; value: string }) {
+  if (!value.trim()) return null;
+  return (
+    <div className="rounded-lg border border-ink-100 bg-surface-raised p-4">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{title}</p>
+      <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink-700">{value}</p>
+    </div>
+  );
 }
 
 function Field({
@@ -157,6 +177,9 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
   ));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingResearch, setEditingResearch] = useState(!parsedPayload);
+  const [editingEconomics, setEditingEconomics] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
 
   function updateField(key: keyof ScannerImportDraft, value: string) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -193,7 +216,7 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
       <PageHero
         label="Scanner import"
         title="Review this product idea"
-        description="Check the research before it becomes part of your Calm Commerce idea history. The import will create an idea, attach any economics it has, and save the scanner notes."
+        description="Check the product, evidence, and economics before it becomes part of your Calm Commerce idea history."
       >
         <div className="flex flex-wrap gap-3">
           <PrimaryButton onClick={saveImport} disabled={saving || !draft.productTitle.trim()}>
@@ -218,34 +241,155 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
         </div>
       ) : null}
 
-      <FieldSection
-        title="Product research"
-        description="This becomes the Chapter 3 idea record and carries the evidence behind the opportunity."
-        fields={PRODUCT_FIELDS}
-        draft={draft}
-        updateField={updateField}
-      />
+      <section className="overflow-hidden rounded-xl border border-ink-100 bg-surface-raised shadow-card">
+        <div className="grid gap-0 md:grid-cols-[240px_1fr]">
+          <div className="bg-surface-sunken">
+            {draft.productImageUrl ? (
+              <img
+                src={draft.productImageUrl}
+                alt=""
+                className="h-full min-h-[220px] w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full min-h-[220px] items-center justify-center px-6 text-center text-sm leading-6 text-ink-500">
+                No product image captured
+              </div>
+            )}
+          </div>
+          <div className="p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
+                  Product snapshot
+                </p>
+                <h2 className="mt-2 font-[Manrope] text-2xl font-bold leading-tight text-ink-900">
+                  {draft.productTitle || "Untitled product"}
+                </h2>
+                {draft.sourceUrl ? (
+                  <a
+                    href={draft.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex text-sm font-semibold text-cobalt-600 underline-offset-4 hover:underline"
+                  >
+                    View source product
+                  </a>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingResearch((value) => !value)}
+                className="rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken"
+              >
+                {editingResearch ? "Hide fields" : "Edit research"}
+              </button>
+            </div>
 
-      <FieldSection
-        title="Economics draft"
-        description="These values become the Chapter 5 economics draft. The OS still leaves the final viability decision to the learner."
-        fields={ECONOMICS_FIELDS}
-        draft={draft}
-        updateField={updateField}
-      />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <SummaryMetric label="Platform" value={draft.sourcePlatform} />
+              <SummaryMetric label="Selling price" value={draft.sellingPrice} />
+              <SummaryMetric label="Product cost" value={draft.productCost} />
+              <SummaryMetric label="Confidence" value={draft.numbersConfidence} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {editingResearch ? (
+        <FieldSection
+          title="Product research"
+          description="Edit only the details that look wrong. The source evidence below is saved to the idea history."
+          fields={[{ key: "productTitle", label: "Product idea" }, { key: "productImageUrl", label: "Product image URL" }, ...PRODUCT_FIELDS.filter((field) => field.key !== "productTitle")]}
+          draft={draft}
+          updateField={updateField}
+        />
+      ) : (
+        <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="font-[Manrope] text-xl font-semibold text-ink-900">Research evidence</h2>
+              <p className="mt-2 max-w-[680px] text-sm leading-6 text-ink-600">
+                Saved into the Chapter 3 idea record.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditingResearch(true)}
+              className="rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken"
+            >
+              Edit
+            </button>
+          </div>
+          <div className="mt-6 grid gap-4">
+            <EvidenceBlock title="Demand evidence" value={draft.demandEvidence} />
+            <EvidenceBlock title="Competition notes" value={draft.competitionNotes} />
+            <EvidenceBlock title="Seasonality" value={draft.seasonality} />
+          </div>
+        </section>
+      )}
+
+      {editingEconomics ? (
+        <FieldSection
+          title="Economics draft"
+          description="These values become the Chapter 5 economics draft. The OS still leaves the final viability decision to the learner."
+          fields={ECONOMICS_FIELDS}
+          draft={draft}
+          updateField={updateField}
+        />
+      ) : (
+        <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="font-[Manrope] text-xl font-semibold text-ink-900">Economics draft</h2>
+              <p className="mt-2 max-w-[680px] text-sm leading-6 text-ink-600">
+                Saved into Chapter 5 so the idea can be compared with other contenders.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditingEconomics(true)}
+              className="rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken"
+            >
+              Edit
+            </button>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {ECONOMICS_FIELDS.map((field) => (
+              <SummaryMetric key={field.key} label={field.label} value={draft[field.key]} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-        <h2 className="font-[Manrope] text-xl font-semibold text-ink-900">Notes</h2>
-        <p className="mt-2 max-w-[680px] text-sm leading-6 text-ink-600">
-          Add any extra context from the scanner, research workspace, or your own judgement.
-        </p>
-        <div className="mt-6">
-          <Field
-            config={{ key: "notes", label: "Import note", type: "textarea" }}
-            value={draft.notes}
-            onChange={(value) => updateField("notes", value)}
-          />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-[Manrope] text-xl font-semibold text-ink-900">Notes</h2>
+            <p className="mt-2 max-w-[680px] text-sm leading-6 text-ink-600">
+              Add any extra context from the scanner, research workspace, or your own judgement.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditingNotes((value) => !value)}
+            className="rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-sm font-semibold text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken"
+          >
+            {editingNotes ? "Hide fields" : "Edit note"}
+          </button>
         </div>
+        {editingNotes ? (
+          <div className="mt-6">
+            <Field
+              config={{ key: "notes", label: "Import note", type: "textarea" }}
+              value={draft.notes}
+              onChange={(value) => updateField("notes", value)}
+            />
+          </div>
+        ) : (
+          <p className="mt-6 whitespace-pre-line rounded-lg border border-ink-100 bg-surface-sunken p-4 text-sm leading-6 text-ink-700">
+            {draft.notes || "No extra notes captured."}
+          </p>
+        )}
       </section>
     </div>
   );

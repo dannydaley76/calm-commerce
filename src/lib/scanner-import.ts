@@ -33,6 +33,7 @@ export type ScannerImportPayload = {
 
 export type ScannerImportDraft = {
   productTitle: string;
+  productImageUrl: string;
   sourcePlatform: string;
   sourceUrl: string;
   scannedAt: string;
@@ -113,7 +114,11 @@ export function normalizeScannerImportPayload(raw: unknown): ScannerImportPayloa
 
 function decodeBase64Url(value: string): string {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
-  if (typeof atob === "function") return atob(padded);
+  if (typeof atob === "function") {
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  }
   throw new Error("Base64 decoding is unavailable in this runtime.");
 }
 
@@ -155,6 +160,7 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
 
   return {
     productTitle: payload?.productTitle || "",
+    productImageUrl: payload?.productImageUrl || "",
     sourcePlatform: payload?.sourcePlatform || "other",
     sourceUrl: payload?.sourceUrl || "",
     scannedAt,

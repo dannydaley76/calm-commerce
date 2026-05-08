@@ -538,6 +538,7 @@ export function IdeaDetailClient({
 
   const [ideaDraft, setIdeaDraft] = useState({
     idea_description: getProductIdeaLabel(sourceIdea, ideaIndex),
+    product_image_url: sourceIdea.product_image_url ?? "",
     demand_evidence: sourceIdea.demand_evidence ?? "",
     competition_notes: sourceIdea.competition_notes ?? "",
     seasonality: sourceIdea.seasonality ?? "",
@@ -698,13 +699,22 @@ export function IdeaDetailClient({
         title={ideaDraft.idea_description || idea.label}
         description={displayIdea.latestSignal}
       >
-        <div className="flex flex-wrap items-center gap-3">
-          <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
-            {displayIdea.statusLabel}
-          </span>
-          <PrimaryButton href={localNextActionHref(displayIdea)}>
-            {displayIdea.nextAction.label}
-          </PrimaryButton>
+        <div className="flex flex-wrap items-center gap-5">
+          {ideaDraft.product_image_url ? (
+            <img
+              src={ideaDraft.product_image_url}
+              alt=""
+              className="h-24 w-24 rounded-lg border border-ink-100 object-cover"
+            />
+          ) : null}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
+              {displayIdea.statusLabel}
+            </span>
+            <PrimaryButton href={localNextActionHref(displayIdea)}>
+              {displayIdea.nextAction.label}
+            </PrimaryButton>
+          </div>
         </div>
       </PageHero>
 
@@ -746,6 +756,11 @@ export function IdeaDetailClient({
               label="Idea name"
               value={ideaDraft.idea_description}
               onChange={(value) => setIdeaDraft((prev) => ({ ...prev, idea_description: value }))}
+            />
+            <Field
+              label="Product image URL"
+              value={ideaDraft.product_image_url}
+              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, product_image_url: value }))}
             />
             <Field
               label="Seasonality"

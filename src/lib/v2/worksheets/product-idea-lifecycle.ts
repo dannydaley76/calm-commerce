@@ -20,6 +20,7 @@ export type ProductIdeaLifecycleStatus =
 export type ProductIdeaLifecycle = {
   ideaId: string;
   label: string;
+  productImageUrl: string | null;
   status: ProductIdeaLifecycleStatus;
   statusLabel: string;
   latestSignal: string;
@@ -30,6 +31,12 @@ export type ProductIdeaLifecycle = {
   competitionNotes: string | null;
   seasonality: string | null;
   economicsDecision: string | null;
+  productCost: string | null;
+  shippingToCustomer: string | null;
+  platformFees: string | null;
+  sellingPrice: string | null;
+  variantComplexity: string | null;
+  numbersConfidence: string | null;
   testMarketplace: string | null;
   testResult: string | null;
   testDecision: string | null;
@@ -458,6 +465,7 @@ export function getProductIdeaLifecycles(
     return {
       ideaId,
       label,
+      productImageUrl: normalize(idea.product_image_url) || null,
       status,
       statusLabel: statusLabel(status),
       latestSignal: deriveLatestSignal({ status, economics, responses }),
@@ -468,6 +476,12 @@ export function getProductIdeaLifecycles(
       competitionNotes: normalize(idea.competition_notes) || null,
       seasonality: normalize(idea.seasonality) || null,
       economicsDecision: normalize(economics?.viable) || null,
+      productCost: normalize(economics?.product_cost) || null,
+      shippingToCustomer: normalize(economics?.shipping_to_customer) || null,
+      platformFees: normalize(economics?.platform_fees) || null,
+      sellingPrice: normalize(economics?.selling_price) || null,
+      variantComplexity: normalize(economics?.variant_complexity) || null,
+      numbersConfidence: normalize(economics?.numbers_confidence) || null,
       testMarketplace: isTestIdea ? normalize(responses.test_marketplace) || null : null,
       testResult: isTestIdea ? normalize(responses.result) || null : null,
       testDecision: isTestIdea ? normalize(responses.decision) || null : null,

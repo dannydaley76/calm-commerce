@@ -6,6 +6,7 @@ import {
   type ProductIdeaLifecycle,
   type ProductIdeaLifecycleStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
+import { IdeasIndexClient } from "./ideas-index-client";
 
 type ResponseMap = Record<string, string>;
 type MetricEntry = {
@@ -247,11 +248,7 @@ export default async function IdeasPage() {
         ) : data.ideas.length === 0 ? (
           <EmptyIdeas />
         ) : (
-          <div className="space-y-5">
-            {data.ideas.map((idea) => (
-              <IdeaCard key={idea.ideaId} idea={idea} />
-            ))}
-          </div>
+          <IdeasIndexClient ideas={data.ideas} />
         )}
       </div>
     </LearnerShell>
