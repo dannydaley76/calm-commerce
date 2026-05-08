@@ -60,6 +60,19 @@ function hasEconomicsDraft(draft: ScannerImportDraft): boolean {
   ].some((value) => value.trim().length > 0);
 }
 
+function mergeDraftWithPayload(
+  payloadDraft: ScannerImportDraft,
+  requestDraft: ScannerImportDraft | undefined,
+): ScannerImportDraft {
+  if (!requestDraft) return payloadDraft;
+  return Object.fromEntries(
+    (Object.keys(payloadDraft) as Array<keyof ScannerImportDraft>).map((key) => [
+      key,
+      requestDraft[key]?.trim() ? requestDraft[key] : payloadDraft[key],
+    ]),
+  ) as ScannerImportDraft;
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as {
@@ -73,7 +86,7 @@ export async function POST(req: Request) {
     }
 
     const normalizedPayload = normalizeScannerImportPayload(body.payload);
-    const draft = body.draft ?? buildScannerImportDraft(normalizedPayload);
+    const draft = mergeDraftWithPayload(buildScannerImportDraft(normalizedPayload), body.draft);
     const title = draft.productTitle.trim();
 
     if (!title) {
