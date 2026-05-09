@@ -200,7 +200,7 @@ export default async function IdeasPage({
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
                 {notice.tone === "error" ? (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-error-700 shadow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-error-700 bg-white text-lg font-black text-error-700 shadow-sm">
                     !
                   </span>
                 ) : null}
