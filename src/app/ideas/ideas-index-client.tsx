@@ -285,9 +285,11 @@ function EmptyFilteredState() {
 export function IdeasIndexClient({
   ideas,
   canAccessOsContent,
+  highlightedIdeaId,
 }: {
   ideas: ProductIdeaLifecycle[];
   canAccessOsContent: boolean;
+  highlightedIdeaId?: string;
 }) {
   const [localIdeas, setLocalIdeas] = useState(ideas);
   const [query, setQuery] = useState("");
@@ -450,7 +452,13 @@ export function IdeasIndexClient({
             </thead>
             <tbody>
               {filteredIdeas.map((idea) => (
-                <tr key={idea.ideaId} className="border-b border-ink-100 align-top last:border-b-0">
+                <tr
+                  key={idea.ideaId}
+                  className={[
+                    "border-b border-ink-100 align-top last:border-b-0",
+                    idea.ideaId === highlightedIdeaId ? "bg-success-100/40" : "",
+                  ].join(" ")}
+                >
                   <td className="px-5 py-4">
                     <div className="flex gap-3">
                       <IdeaImage idea={idea} />

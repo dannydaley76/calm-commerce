@@ -166,6 +166,36 @@ function EmptyIdeas() {
   );
 }
 
+function importNotice(importStatus?: string, importError?: string) {
+  if (importStatus === "added") {
+    return {
+      title: "Added to Scout Workspace",
+      body: "The product was captured from Scout and is ready to sort, note, promote, or delete.",
+      tone: "success",
+    };
+  }
+  if (importStatus === "updated") {
+    return {
+      title: "Existing product updated",
+      body: "Scout found this source URL already in Workspace, so the saved product was refreshed instead of duplicated.",
+      tone: "success",
+    };
+  }
+  if (!importError) return null;
+  const messages: Record<string, string> = {
+    missing: "Scout did not include product data. Open Scout on a product page and try Save to Workspace again.",
+    invalid: "Scout sent product data we could not read. Reload the extension and try again.",
+    expired: "That Scout capture is too old. Scan the product again to save fresh data.",
+    scout_save_limit: "Your free Workspace saves are used up. Upgrade to save more product ideas.",
+    failed: "The Scout capture could not be saved. Try again from the extension.",
+  };
+  return {
+    title: "Scout import did not save",
+    body: messages[importError] ?? messages.failed,
+    tone: "error",
+  };
+}
+
 function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
     <article className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
@@ -229,9 +259,15 @@ function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
   );
 }
 
-export default async function IdeasPage() {
+export default async function IdeasPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ imported?: string; importStatus?: string; importError?: string }>;
+}) {
+  const params = await searchParams;
   const data = await getIdeaData();
   const actionIdea = data.authenticated ? nextIdea(data.ideas) : null;
+  const notice = importNotice(params?.importStatus, params?.importError);
 
   return (
     <LearnerShell
@@ -275,6 +311,20 @@ export default async function IdeasPage() {
           </div>
         </PageHero>
 
+        {notice ? (
+          <section
+            className={[
+              "rounded-xl border px-5 py-4 text-sm leading-6 shadow-card",
+              notice.tone === "error"
+                ? "border-error-100 bg-error-100 text-error-700"
+                : "border-success-100 bg-success-100 text-[#005e3f]",
+            ].join(" ")}
+          >
+            <h2 className="font-[Manrope] text-lg font-bold">{notice.title}</h2>
+            <p className="mt-1">{notice.body}</p>
+          </section>
+        ) : null}
+
         {data.error ? (
           <section className="rounded-xl border border-error-100 bg-surface-raised p-6 text-sm leading-6 text-ink-700">
             <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Ideas could not be loaded</h2>
@@ -285,7 +335,11 @@ export default async function IdeasPage() {
         ) : !data.authenticated ? null : data.ideas.length === 0 ? (
           <EmptyIdeas />
         ) : (
-          <IdeasIndexClient ideas={data.ideas} canAccessOsContent={data.canAccessOsContent} />
+          <IdeasIndexClient
+            ideas={data.ideas}
+            canAccessOsContent={data.canAccessOsContent}
+            highlightedIdeaId={params?.imported}
+          />
         )}
       </div>
     </LearnerShell>
