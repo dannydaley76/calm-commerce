@@ -1,5 +1,5 @@
 import { LearnerShell } from "@/components/learner-shell";
-import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
+import { PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
@@ -193,6 +193,7 @@ function importNotice(importStatus?: string, importError?: string) {
     title: "Scout import did not save",
     body: messages[importError] ?? messages.failed,
     tone: "error",
+    cta: importError === "scout_save_limit" ? "Upgrade Scout" : null,
   };
 }
 
@@ -282,12 +283,20 @@ export default async function IdeasPage({
       title="Ideas"
       showLogout={data.authenticated}
     >
-      <div className="space-y-8">
-        <PageHero
-          label="Product candidates"
-          title="Scout Workspace"
-          description="Review captured products, sort by signal strength, keep the promising ones visible, and clear out the noise."
-        >
+      <div className="space-y-5">
+        <section className="rounded-xl border border-ink-100 bg-surface-raised px-5 py-4 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
+                Product candidates
+              </p>
+              <h1 className="mt-1 font-[Manrope] text-2xl font-bold text-ink-900">
+                Scout Workspace
+              </h1>
+              <p className="mt-1 max-w-[720px] text-sm leading-6 text-ink-600">
+                Review captured products, sort by signal strength, keep the promising ones visible, and clear out the noise.
+              </p>
+            </div>
           <div className="flex flex-wrap gap-3">
             {!data.authenticated ? (
               <PrimaryButton href="/login?next=/ideas">
@@ -309,19 +318,29 @@ export default async function IdeasPage({
               </SecondaryButton>
             ) : null}
           </div>
-        </PageHero>
+          </div>
+        </section>
 
         {notice ? (
           <section
             className={[
               "rounded-xl border px-5 py-4 text-sm leading-6 shadow-card",
               notice.tone === "error"
-                ? "border-error-100 bg-error-100 text-error-700"
+                ? "border-error-100 bg-error-100 text-error-700 ring-2 ring-error-100"
                 : "border-success-100 bg-success-100 text-[#005e3f]",
             ].join(" ")}
           >
-            <h2 className="font-[Manrope] text-lg font-bold">{notice.title}</h2>
-            <p className="mt-1">{notice.body}</p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="font-[Manrope] text-lg font-bold">{notice.title}</h2>
+                <p className="mt-1">{notice.body}</p>
+              </div>
+              {notice.cta ? (
+                <PrimaryButton href="/upgrade?plan=scout_basic">
+                  {notice.cta}
+                </PrimaryButton>
+              ) : null}
+            </div>
           </section>
         ) : null}
 

@@ -39,6 +39,10 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function nowISO(): string {
+  return new Date().toISOString();
+}
+
 function scannerVerdictForScore(score: number | undefined): string {
   if (score === undefined) return "";
   if (score >= 70) return "Strong opportunity";
@@ -176,6 +180,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
   }
 
   const ideaId = isUpdatingDuplicate && duplicateIdeaId ? duplicateIdeaId : createIdeaId();
+  const capturedAt = nowISO();
   const ideaRow = {
     ...(duplicateIdea ?? {}),
     idea_id: ideaId,
@@ -197,14 +202,15 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
     scanner_demand_score: scoreValue(normalizedPayload?.demandScore),
     scanner_competition_score: scoreValue(normalizedPayload?.competitionScore),
     scanner_scored_at: draft.scannedAt,
+    scout_captured_at: capturedAt,
     demand_evidence: draft.demandEvidence,
     competition_notes: draft.competitionNotes,
     seasonality: draft.seasonality,
   };
 
   const nextProductIdeas = isUpdatingDuplicate && duplicateIndex >= 0
-    ? productIdeas.map((idea, index) => (index === duplicateIndex ? ideaRow : idea))
-    : [...productIdeas, ideaRow];
+    ? [ideaRow, ...productIdeas.filter((_, index) => index !== duplicateIndex)]
+    : [ideaRow, ...productIdeas];
 
   const upserts: UpsertRow[] = [
     {
@@ -350,6 +356,7 @@ export async function POST(req: Request) {
       ok: true,
       ideaId: result.ideaId,
       ideaHref: result.ideaHref,
+      duplicateUpdated: result.duplicateUpdated,
     });
   } catch (error) {
     return NextResponse.json(

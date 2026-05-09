@@ -9,7 +9,7 @@ import {
   type ProductIdeaWorkspaceStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 
-type SortKey = "priority" | "name" | "status" | "scanner_score" | "selling_price" | "metrics";
+type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "metrics";
 type ViewFilter = "active" | "promising" | "reviewing" | "rejected" | "archived" | "all";
 
 const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label: string }> = [
@@ -115,8 +115,15 @@ function scoreValue(value: number | null): number {
   return value === null ? Number.NEGATIVE_INFINITY : value;
 }
 
+function timeValue(value: string | null): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+}
+
 function sortIdeas(ideas: ProductIdeaLifecycle[], sortKey: SortKey): ProductIdeaLifecycle[] {
   return [...ideas].sort((a, b) => {
+    if (sortKey === "newest") return timeValue(b.scoutCapturedAt) - timeValue(a.scoutCapturedAt);
     if (sortKey === "name") return a.label.localeCompare(b.label);
     if (sortKey === "status") return a.statusLabel.localeCompare(b.statusLabel);
     if (sortKey === "scanner_score") return scoreValue(b.scannerScore) - scoreValue(a.scannerScore);
@@ -294,7 +301,7 @@ export function IdeasIndexClient({
   const [localIdeas, setLocalIdeas] = useState(ideas);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<ViewFilter>("active");
-  const [sortKey, setSortKey] = useState<SortKey>("priority");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -397,6 +404,7 @@ export function IdeasIndexClient({
               onChange={(event) => setSortKey(event.target.value as SortKey)}
               className="mt-2 w-full rounded-lg border border-ink-100 bg-surface-raised px-3 py-2 text-sm text-ink-900 outline-none transition focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100"
             >
+              <option value="newest">Newest captured</option>
               <option value="priority">Priority action</option>
               <option value="scanner_score">Product score</option>
               <option value="name">Product name</option>
