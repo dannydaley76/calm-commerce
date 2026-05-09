@@ -435,19 +435,19 @@ export function IdeasIndexClient({
             />
           ))}
         </div>
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[1040px] border-collapse text-left">
+        <div className="hidden overflow-x-hidden lg:block">
+          <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Product</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Score</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Workspace</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Economics</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Evidence</th>
+                <th className="w-[26%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Product</th>
+                <th className="w-[9%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Score</th>
+                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Workspace</th>
+                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Economics</th>
+                <th className="w-[17%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Evidence</th>
                 {canAccessOsContent ? (
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS stage</th>
+                  <th className="w-[10%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Action</th>
+                <th className="w-[12%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -459,18 +459,18 @@ export function IdeasIndexClient({
                     idea.ideaId === highlightedIdeaId ? "bg-success-100/40" : "",
                   ].join(" ")}
                 >
-                  <td className="px-5 py-4">
+                  <td className="px-3 py-4">
                     <div className="flex gap-3">
                       <IdeaImage idea={idea} />
                       <div className="min-w-0">
                         <a
                           href={ideaDetailHref(idea)}
                           title={idea.label}
-                          className="line-clamp-2 max-w-[280px] font-[Manrope] text-sm font-bold leading-5 text-ink-900 underline-offset-4 hover:text-cobalt-600 hover:underline"
+                          className="line-clamp-2 font-[Manrope] text-sm font-bold leading-5 text-ink-900 underline-offset-4 hover:text-cobalt-600 hover:underline"
                         >
                           {clippedIdeaName(idea.label)}
                         </a>
-                        <p className="mt-1 line-clamp-2 max-w-[280px] text-xs leading-5 text-ink-500">
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">
                           {idea.latestSignal}
                         </p>
                         {idea.sourceUrl ? (
@@ -487,46 +487,46 @@ export function IdeasIndexClient({
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-3 py-4">
                     <ScoreBadge idea={idea} />
                     {idea.scannerScoredAt ? (
                       <p className="mt-2 text-[10px] leading-4 text-ink-500">Scanned {idea.scannerScoredAt}</p>
                     ) : null}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-3 py-4">
                     <select
                       aria-label={`Workspace status for ${idea.label}`}
                       value={idea.workspaceStatus}
                       disabled={savingIdeaId === idea.ideaId}
                       onChange={(event) => void mutateIdea(idea, "set_status", event.target.value as ProductIdeaWorkspaceStatus)}
-                      className={`rounded-lg border border-transparent px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] outline-none transition focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60 ${workspaceTone(idea.workspaceStatus)}`}
+                      className={`w-full rounded-lg border border-transparent px-2 py-2 text-[10px] font-bold uppercase tracking-[0.08em] outline-none transition focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60 ${workspaceTone(idea.workspaceStatus)}`}
                     >
                       {WORKSPACE_STATUS_OPTIONS.map((item) => (
                         <option key={item.value} value={item.value}>{item.label}</option>
                       ))}
                     </select>
                   </td>
-                  <td className="px-5 py-4 text-sm leading-6 text-ink-700">
+                  <td className="px-3 py-4 text-xs leading-5 text-ink-700">
                     <p><span className="font-semibold text-ink-900">Sell:</span> {idea.sellingPrice ?? "-"}</p>
                     <p><span className="font-semibold text-ink-900">Cost:</span> {idea.productCost ?? "-"}</p>
                     <p className="text-xs text-ink-500">{idea.numbersConfidence ?? "No confidence set"}</p>
                   </td>
-                  <td className="px-5 py-4 text-sm leading-6 text-ink-700">
+                  <td className="px-3 py-4 text-sm leading-6 text-ink-700">
                     <div className="space-y-3">
                       <EvidenceText label="Demand" value={idea.demandEvidence} />
                       <EvidenceText label="Competition" value={idea.competitionNotes} />
                     </div>
                   </td>
                   {canAccessOsContent ? (
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-4">
                       <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
                         {idea.statusLabel}
                       </span>
                       <p className="mt-2 text-xs text-ink-500">{idea.metricEntries.length} metrics</p>
                     </td>
                   ) : null}
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
+                  <td className="px-3 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
                       {canAccessOsContent ? (
                         <PrimaryButton href={ideaPrimaryActionHref(idea)} className="px-4 py-2">
                           {compactActionLabel(idea.nextAction.label)}
@@ -534,7 +534,7 @@ export function IdeasIndexClient({
                       ) : null}
                       <a
                         href={ideaDetailHref(idea)}
-                        className="rounded-lg border border-ink-100 bg-surface-raised px-3 py-2 text-xs font-semibold text-cobalt-600 underline-offset-4 transition hover:border-cobalt-500 hover:bg-surface-sunken hover:underline"
+                        className="rounded-lg border border-ink-100 bg-surface-raised px-2 py-2 text-xs font-semibold text-cobalt-600 underline-offset-4 transition hover:border-cobalt-500 hover:bg-surface-sunken hover:underline"
                       >
                         Open
                       </a>
