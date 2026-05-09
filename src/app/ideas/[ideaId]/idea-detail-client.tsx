@@ -20,6 +20,7 @@ import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economic
 type ResponseMap = Record<string, string>;
 type InstanceRow = Record<string, string | undefined>;
 type SaveState = "idle" | "saving" | "saved" | "error";
+type EditSection = "idea" | "economics" | "test" | null;
 type NoteRow = {
   note_id?: string;
   idea_id?: string;
@@ -73,6 +74,20 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
   return "bg-surface-sunken text-ink-500";
 }
 
+function scoreTone(score: number | null): string {
+  if (score === null) return "bg-surface-sunken text-ink-500";
+  if (score >= 70) return "bg-success-100 text-[#005e3f]";
+  if (score >= 40) return "bg-[#fff8e6] text-[#835700]";
+  return "bg-error-100 text-error-700";
+}
+
+function compactScoreLabel(score: number | null): string {
+  if (score === null) return "Not scored";
+  if (score >= 70) return "Strong";
+  if (score >= 40) return "Review";
+  return "Weak";
+}
+
 function formatCurrency(value: number | null): string {
   if (value === null) return "Not logged";
   return `£${value.toLocaleString("en-GB", {
@@ -89,6 +104,11 @@ function formatSignedCurrencyDelta(value: number): string {
 function formatPercent(value: number | null): string {
   if (value === null) return "Not known";
   return `${value.toFixed(1)}%`;
+}
+
+function optionLabel(value: string): string {
+  if (!value) return "Not selected";
+  return value.split(":")[0]?.trim() || value;
 }
 
 function findEconomicsRow(rows: InstanceRow[], idea: ProductIdeaLifecycle, ideaIndex: number): {
@@ -175,7 +195,7 @@ function SelectField({
       >
         {options.map((option) => (
           <option key={option || "empty"} value={option}>
-            {option || "Not selected"}
+            {optionLabel(option)}
           </option>
         ))}
       </select>
@@ -201,6 +221,7 @@ function EditableSection({
   description,
   state,
   onSubmit,
+  onCancel,
   children,
 }: {
   id: string;
@@ -208,6 +229,7 @@ function EditableSection({
   description: string;
   state: SaveState;
   onSubmit: () => Promise<void>;
+  onCancel: () => void;
   children: ReactNode;
 }) {
   return (
@@ -224,10 +246,127 @@ function EditableSection({
           <h2 className="font-[Manrope] text-lg font-bold text-ink-900">{title}</h2>
           <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">{description}</p>
         </div>
-        <SaveButton state={state} />
+        <div className="flex flex-wrap items-center gap-3">
+          <SaveButton state={state} />
+          <SecondaryButton type="button" onClick={onCancel} className="px-4 py-2">
+            Cancel
+          </SecondaryButton>
+        </div>
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">{children}</div>
+      <div className="mt-5 border-t border-ink-100 pt-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <SaveButton state={state} />
+          <SecondaryButton type="button" onClick={onCancel} className="px-4 py-2">
+            Cancel
+          </SecondaryButton>
+        </div>
+      </div>
     </form>
+  );
+}
+
+function ReviewValue({
+  label,
+  value,
+  wide = false,
+}: {
+  label: string;
+  value: string | null | undefined;
+  wide?: boolean;
+}) {
+  return (
+    <div className={wide ? "md:col-span-2" : undefined}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">{label}</p>
+      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-ink-800">{value?.trim() || "Not added"}</p>
+    </div>
+  );
+}
+
+function ReviewSection({
+  id,
+  title,
+  description,
+  onEdit,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  onEdit: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">{title}</h2>
+          <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">{description}</p>
+        </div>
+        <SecondaryButton type="button" onClick={onEdit} className="px-4 py-2">
+          Edit
+        </SecondaryButton>
+      </div>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  detail,
+  tone = "bg-white text-ink-900",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: string;
+}) {
+  return (
+    <div className={`rounded-xl border border-ink-100 p-4 ${tone}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-75">{label}</p>
+      <p className="mt-2 font-[Manrope] text-xl font-bold leading-tight">{value}</p>
+      <p className="mt-1 text-xs leading-5 opacity-80">{detail}</p>
+    </div>
+  );
+}
+
+function IdeaSummarySection({
+  idea,
+  economics,
+}: {
+  idea: ProductIdeaLifecycle;
+  economics: InstanceRow;
+}) {
+  const projection = calculateUnitEconomics(economics);
+  const latestMetric = idea.metricEntries[0] ?? null;
+  const testSummary = idea.testResult || idea.testDecision || idea.testMarketplace || "No test logged";
+
+  return (
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <SummaryCard
+        label="Product score"
+        value={idea.scannerScore === null ? "-" : String(idea.scannerScore)}
+        detail={idea.scannerScoredAt ? `${compactScoreLabel(idea.scannerScore)} on ${idea.scannerScoredAt}` : compactScoreLabel(idea.scannerScore)}
+        tone={scoreTone(idea.scannerScore)}
+      />
+      <SummaryCard
+        label="Projected margin"
+        value={formatCurrency(projection.margin)}
+        detail={projection.marginPercent === null ? "Add economics to calculate margin" : `${formatPercent(projection.marginPercent)} of selling price`}
+      />
+      <SummaryCard
+        label="Marketplace test"
+        value={idea.statusLabel}
+        detail={testSummary}
+      />
+      <SummaryCard
+        label="Linked metrics"
+        value={String(idea.metricEntries.length)}
+        detail={latestMetric ? `${latestMetric.entryType === "validation" ? "Marketplace" : "Store"}: ${latestMetric.weekEnding}` : "No linked metrics yet"}
+      />
+    </section>
   );
 }
 
@@ -385,7 +524,7 @@ function NotesSection({
   onSave: () => Promise<void>;
 }) {
   return (
-    <section id="notes" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+    <section id="history" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -393,9 +532,9 @@ function NotesSection({
         }}
       >
         <div>
-          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Decision log</h2>
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">History and decision log</h2>
           <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
-            Add dated notes when something changes, surprises you, or affects the next decision.
+            Add dated notes and review the main events for this idea in one place.
           </p>
         </div>
         <label className="mt-5 block">
@@ -428,6 +567,27 @@ function NotesSection({
           ))}
         </div>
       )}
+
+      <div className="mt-6 border-t border-ink-100 pt-5">
+        <h3 className="font-[Manrope] text-sm font-bold text-ink-900">Programme timeline</h3>
+        <ol className="mt-4 space-y-4 border-l border-ink-100 pl-4">
+          {idea.timeline.map((event) => (
+            <li key={event.key} className="relative">
+              <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
+                <a
+                  href={event.href}
+                  className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
+                >
+                  {event.chapter}
+                </a>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
     </section>
   );
 }
@@ -518,9 +678,11 @@ function localStatusFromTestDraft(testDraft: Record<string, string>): ProductIde
 export function IdeaDetailClient({
   idea,
   responses,
+  canAccessOsContent,
 }: {
   idea: ProductIdeaLifecycle;
   responses: ResponseMap;
+  canAccessOsContent: boolean;
 }) {
   const router = useRouter();
   const productIdeas = useMemo(
@@ -579,6 +741,7 @@ export function IdeaDetailClient({
     test: "idle",
     notes: "idle",
   });
+  const [editSection, setEditSection] = useState<EditSection>(null);
 
   useEffect(() => {
     setLocalIdeaView({
@@ -593,6 +756,8 @@ export function IdeaDetailClient({
     ...idea,
     ...localIdeaView,
   };
+  const nextActionHref = canAccessOsContent ? localNextActionHref(displayIdea) : "/upgrade";
+  const nextActionLabel = canAccessOsContent ? displayIdea.nextAction.label : "Upgrade";
 
   const setSectionStatus = (section: string, value: SaveState) => {
     setStatus((prev) => ({ ...prev, [section]: value }));
@@ -611,7 +776,10 @@ export function IdeaDetailClient({
       "ideas-worksheet",
     );
     setSectionStatus("idea", result.ok ? "saved" : "error");
-    if (result.ok) router.refresh();
+    if (result.ok) {
+      setEditSection(null);
+      router.refresh();
+    }
   };
 
   const saveEconomics = async () => {
@@ -630,6 +798,7 @@ export function IdeaDetailClient({
     );
     setSectionStatus("economics", result.ok ? "saved" : "error");
     if (result.ok) {
+      setEditSection(null);
       setLocalIdeaView((prev) => {
         if (prev.status !== "draft" && prev.status !== "economics_checked") return prev;
         const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
@@ -656,6 +825,7 @@ export function IdeaDetailClient({
     const ok = results.every((result) => result.ok);
     setSectionStatus("test", ok ? "saved" : "error");
     if (ok) {
+      setEditSection(null);
       const nextStatus = localStatusFromTestDraft(testDraft);
       setLocalIdeaView({
         status: nextStatus,
@@ -708,14 +878,18 @@ export function IdeaDetailClient({
               alt=""
               className="h-24 w-24 rounded-lg border border-ink-100 object-cover"
             />
-          ) : null}
+          ) : (
+            <div
+              aria-label="No product image"
+              className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-ink-100 bg-surface-sunken text-[10px] font-bold uppercase tracking-[0.1em] text-ink-300"
+            >
+              Image
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
               {displayIdea.statusLabel}
             </span>
-            <PrimaryButton href={localNextActionHref(displayIdea)}>
-              {displayIdea.nextAction.label}
-            </PrimaryButton>
             {ideaDraft.source_url ? (
               <a
                 href={ideaDraft.source_url}
@@ -737,188 +911,267 @@ export function IdeaDetailClient({
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
               Next best action
             </p>
-            <p className="mt-2 text-sm leading-6 text-ink-700">{displayIdea.nextAction.note}</p>
+            <p className="mt-2 text-sm leading-6 text-ink-700">
+              {canAccessOsContent
+                ? displayIdea.nextAction.note
+                : "Scout keeps the product idea and evidence here. Upgrade to Calm Commerce OS to run economics, tests, canvas, and metrics."}
+            </p>
           </div>
-          <PrimaryButton href={localNextActionHref(displayIdea)} className="shrink-0">
-            {displayIdea.nextAction.label}
+          <PrimaryButton href={nextActionHref} className="shrink-0">
+            {nextActionLabel}
           </PrimaryButton>
         </div>
       </section>
 
+      {canAccessOsContent ? (
+        <IdeaSummarySection idea={displayIdea} economics={economicsDraft} />
+      ) : null}
+
       <nav className="rounded-xl border border-ink-100 bg-surface-raised p-4 shadow-card">
         <div className="flex flex-wrap gap-3">
           <SecondaryButton href="#idea-evidence" className="px-4 py-2">Idea evidence</SecondaryButton>
-          <SecondaryButton href="#economics" className="px-4 py-2">Economics</SecondaryButton>
-          <SecondaryButton href="#marketplace-test" className="px-4 py-2">Marketplace test</SecondaryButton>
-          <SecondaryButton href="#projected-actual" className="px-4 py-2">Projected vs actual</SecondaryButton>
-          <SecondaryButton href="#notes" className="px-4 py-2">Decision log</SecondaryButton>
+          {canAccessOsContent ? (
+            <>
+              <SecondaryButton href="#economics" className="px-4 py-2">Economics</SecondaryButton>
+              <SecondaryButton href="#marketplace-test" className="px-4 py-2">Test</SecondaryButton>
+              <SecondaryButton href="#projected-actual" className="px-4 py-2">Projection</SecondaryButton>
+            </>
+          ) : null}
           <SecondaryButton href="#history" className="px-4 py-2">History</SecondaryButton>
         </div>
       </nav>
 
+      {canAccessOsContent ? (
+        <div id="projected-actual">
+          <ProjectedActualSection idea={idea} economics={economicsDraft} />
+        </div>
+      ) : null}
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <EditableSection
-            id="idea-evidence"
-            title="Idea evidence"
-            description="Edit the original demand signals and market notes from Chapter 3 without returning to the lesson."
-            state={status.idea}
-            onSubmit={saveIdea}
-          >
-            <Field
-              label="Idea name"
-              value={ideaDraft.idea_description}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, idea_description: value }))}
-            />
-            <Field
-              label="Product image URL"
-              value={ideaDraft.product_image_url}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, product_image_url: value }))}
-            />
-            <Field
-              label="Source URL"
-              value={ideaDraft.source_url}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_url: value }))}
-            />
-            <Field
-              label="Source label"
-              value={ideaDraft.source_label}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_label: value }))}
-            />
-            <Field
-              label="Seasonality"
-              value={ideaDraft.seasonality}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, seasonality: value }))}
-            />
-            <TextArea
-              label="Demand evidence"
-              value={ideaDraft.demand_evidence}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, demand_evidence: value }))}
-            />
-            <TextArea
-              label="Competition notes"
-              value={ideaDraft.competition_notes}
-              onChange={(value) => setIdeaDraft((prev) => ({ ...prev, competition_notes: value }))}
-            />
-          </EditableSection>
+          {editSection === "idea" ? (
+            <EditableSection
+              id="idea-evidence"
+              title="Idea evidence"
+              description="Edit the original demand signals and market notes from Chapter 3 without returning to the lesson."
+              state={status.idea}
+              onSubmit={saveIdea}
+              onCancel={() => setEditSection(null)}
+            >
+              <Field
+                label="Idea name"
+                value={ideaDraft.idea_description}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, idea_description: value }))}
+              />
+              <Field
+                label="Product image URL"
+                value={ideaDraft.product_image_url}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, product_image_url: value }))}
+              />
+              <Field
+                label="Source URL"
+                value={ideaDraft.source_url}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_url: value }))}
+              />
+              <Field
+                label="Source label"
+                value={ideaDraft.source_label}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_label: value }))}
+              />
+              <Field
+                label="Seasonality"
+                value={ideaDraft.seasonality}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, seasonality: value }))}
+              />
+              <TextArea
+                label="Demand evidence"
+                value={ideaDraft.demand_evidence}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, demand_evidence: value }))}
+              />
+              <TextArea
+                label="Competition notes"
+                value={ideaDraft.competition_notes}
+                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, competition_notes: value }))}
+              />
+            </EditableSection>
+          ) : (
+            <ReviewSection
+              id="idea-evidence"
+              title="Idea evidence"
+              description="Demand, competition, source, and seasonality captured for this candidate."
+              onEdit={() => setEditSection("idea")}
+            >
+              <ReviewValue label="Idea name" value={ideaDraft.idea_description} />
+              <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Not added"} />
+              <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
+              <ReviewValue label="Demand evidence" value={ideaDraft.demand_evidence} wide />
+              <ReviewValue label="Competition notes" value={ideaDraft.competition_notes} wide />
+            </ReviewSection>
+          )}
 
-          <EditableSection
-            id="economics"
-            title="Economics"
-            description="Edit the Chapter 5 numbers and viability decision for this candidate."
-            state={status.economics}
-            onSubmit={saveEconomics}
-          >
-            <Field
-              label="Product cost per unit"
-              value={economicsDraft.product_cost}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, product_cost: value }))}
-            />
-            <Field
-              label="Shipping to customer"
-              value={economicsDraft.shipping_to_customer}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
-            />
-            <Field
-              label="Platform fees"
-              value={economicsDraft.platform_fees}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, platform_fees: value }))}
-            />
-            <Field
-              label="Selling price"
-              value={economicsDraft.selling_price}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, selling_price: value }))}
-            />
-            <SelectField
-              label="Variant complexity"
-              value={economicsDraft.variant_complexity}
-              options={variantOptions}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, variant_complexity: value }))}
-            />
-            <SelectField
-              label="Upfront cost risk"
-              value={economicsDraft.upfront_cost_risk}
-              options={upfrontRiskOptions}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, upfront_cost_risk: value }))}
-            />
-            <SelectField
-              label="Test speed"
-              value={economicsDraft.test_speed}
-              options={testSpeedOptions}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, test_speed: value }))}
-            />
-            <SelectField
-              label="Confidence in numbers"
-              value={economicsDraft.numbers_confidence}
-              options={confidenceOptions}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, numbers_confidence: value }))}
-            />
-            <SelectField
-              label="Decision"
-              value={economicsDraft.viable}
-              options={viableOptions}
-              onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, viable: value }))}
-            />
-          </EditableSection>
+          {canAccessOsContent ? editSection === "economics" ? (
+            <EditableSection
+              id="economics"
+              title="Economics"
+              description="Edit the Chapter 5 numbers and viability decision for this candidate."
+              state={status.economics}
+              onSubmit={saveEconomics}
+              onCancel={() => setEditSection(null)}
+            >
+              <Field
+                label="Product cost per unit"
+                value={economicsDraft.product_cost}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, product_cost: value }))}
+              />
+              <Field
+                label="Shipping to customer"
+                value={economicsDraft.shipping_to_customer}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
+              />
+              <Field
+                label="Platform fees"
+                value={economicsDraft.platform_fees}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, platform_fees: value }))}
+              />
+              <Field
+                label="Selling price"
+                value={economicsDraft.selling_price}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, selling_price: value }))}
+              />
+              <SelectField
+                label="Variant complexity"
+                value={economicsDraft.variant_complexity}
+                options={variantOptions}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, variant_complexity: value }))}
+              />
+              <SelectField
+                label="Upfront cost risk"
+                value={economicsDraft.upfront_cost_risk}
+                options={upfrontRiskOptions}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, upfront_cost_risk: value }))}
+              />
+              <SelectField
+                label="Test speed"
+                value={economicsDraft.test_speed}
+                options={testSpeedOptions}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, test_speed: value }))}
+              />
+              <SelectField
+                label="Confidence in numbers"
+                value={economicsDraft.numbers_confidence}
+                options={confidenceOptions}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, numbers_confidence: value }))}
+              />
+              <SelectField
+                label="Decision"
+                value={economicsDraft.viable}
+                options={viableOptions}
+                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, viable: value }))}
+              />
+            </EditableSection>
+          ) : (
+            <ReviewSection
+              id="economics"
+              title="Economics"
+              description="The Chapter 5 numbers and viability decision for this candidate."
+              onEdit={() => setEditSection("economics")}
+            >
+              <ReviewValue label="Selling price" value={economicsDraft.selling_price} />
+              <ReviewValue label="Product cost" value={economicsDraft.product_cost} />
+              <ReviewValue label="Shipping" value={economicsDraft.shipping_to_customer} />
+              <ReviewValue label="Platform fees" value={economicsDraft.platform_fees} />
+              <ReviewValue label="Variant complexity" value={optionLabel(economicsDraft.variant_complexity)} />
+              <ReviewValue label="Upfront risk" value={optionLabel(economicsDraft.upfront_cost_risk)} />
+              <ReviewValue label="Test speed" value={optionLabel(economicsDraft.test_speed)} />
+              <ReviewValue label="Confidence" value={optionLabel(economicsDraft.numbers_confidence)} />
+              <ReviewValue label="Decision" value={optionLabel(economicsDraft.viable)} />
+            </ReviewSection>
+          ) : null}
 
-          <EditableSection
-            id="marketplace-test"
-            title="Marketplace test"
-            description="Edit the test plan, result, learning, and decision. Saving this section makes this idea the active Chapter 6 test idea."
-            state={status.test}
-            onSubmit={saveTest}
-          >
-            <SelectField
-              label="Marketplace"
-              value={testDraft.test_marketplace}
-              options={marketplaceOptions}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, test_marketplace: value }))}
-            />
-            <Field
-              label="Product listed"
-              value={testDraft.product_listed}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, product_listed: value }))}
-            />
-            <Field
-              label="Listing price"
-              value={testDraft.listing_price}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, listing_price: value }))}
-            />
-            <Field
-              label="Test duration"
-              value={testDraft.test_duration}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, test_duration: value }))}
-            />
-            <SelectField
-              label="Result"
-              value={testDraft.result}
-              options={resultOptions}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, result: value }))}
-            />
-            <Field
-              label="Units sold"
-              type="number"
-              value={testDraft.units_sold}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, units_sold: value }))}
-            />
-            <TextArea
-              label="What you learned"
-              value={testDraft.what_you_learned}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, what_you_learned: value }))}
-            />
-            <SelectField
-              label="Decision"
-              value={testDraft.decision}
-              options={decisionOptions}
-              onChange={(value) => setTestDraft((prev) => ({ ...prev, decision: value }))}
-            />
-          </EditableSection>
+          {canAccessOsContent ? editSection === "test" ? (
+            <EditableSection
+              id="marketplace-test"
+              title="Marketplace test"
+              description="Edit the test plan, result, learning, and decision. Saving this section makes this idea the active Chapter 6 test idea."
+              state={status.test}
+              onSubmit={saveTest}
+              onCancel={() => setEditSection(null)}
+            >
+              <SelectField
+                label="Marketplace"
+                value={testDraft.test_marketplace}
+                options={marketplaceOptions}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, test_marketplace: value }))}
+              />
+              <Field
+                label="Product listed"
+                value={testDraft.product_listed}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, product_listed: value }))}
+              />
+              <Field
+                label="Listing price"
+                value={testDraft.listing_price}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, listing_price: value }))}
+              />
+              <Field
+                label="Test duration"
+                value={testDraft.test_duration}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, test_duration: value }))}
+              />
+              <SelectField
+                label="Result"
+                value={testDraft.result}
+                options={resultOptions}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, result: value }))}
+              />
+              <Field
+                label="Units sold"
+                type="number"
+                value={testDraft.units_sold}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, units_sold: value }))}
+              />
+              <TextArea
+                label="What you learned"
+                value={testDraft.what_you_learned}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, what_you_learned: value }))}
+              />
+              <SelectField
+                label="Decision"
+                value={testDraft.decision}
+                options={decisionOptions}
+                onChange={(value) => setTestDraft((prev) => ({ ...prev, decision: value }))}
+              />
+            </EditableSection>
+          ) : (
+            <ReviewSection
+              id="marketplace-test"
+              title="Marketplace test"
+              description="The current test plan, result, learning, and decision for this candidate."
+              onEdit={() => setEditSection("test")}
+            >
+              <ReviewValue label="Marketplace" value={testDraft.test_marketplace} />
+              <ReviewValue label="Product listed" value={testDraft.product_listed} />
+              <ReviewValue label="Listing price" value={testDraft.listing_price} />
+              <ReviewValue label="Test duration" value={testDraft.test_duration} />
+              <ReviewValue label="Result" value={optionLabel(testDraft.result)} />
+              <ReviewValue label="Units sold" value={testDraft.units_sold} />
+              <ReviewValue label="Decision" value={optionLabel(testDraft.decision)} />
+              <ReviewValue label="What you learned" value={testDraft.what_you_learned} wide />
+            </ReviewSection>
+          ) : (
+            <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+              <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Calm Commerce OS workflow</h2>
+              <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+                Economics, marketplace tests, Lean Canvas, and metrics are available with full OS access.
+              </p>
+              <div className="mt-5">
+                <PrimaryButton href="/upgrade">Upgrade access</PrimaryButton>
+              </div>
+            </section>
+          )}
         </div>
 
-        <aside id="history" className="space-y-6">
-          <div id="projected-actual">
-            <ProjectedActualSection idea={idea} economics={economicsDraft} />
-          </div>
+        <aside className="space-y-6">
           <NotesSection
             idea={idea}
             noteDraft={noteDraft}
@@ -926,8 +1179,7 @@ export function IdeaDetailClient({
             onChange={setNoteDraft}
             onSave={saveNote}
           />
-          <MetricsSection idea={idea} />
-          <IdeaTimeline idea={idea} />
+          {canAccessOsContent ? <MetricsSection idea={idea} /> : null}
         </aside>
       </div>
     </div>

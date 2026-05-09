@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" width="520" height="160">
+    <g transform="translate(28,32)">
+    <rect x="6" y="6" width="84" height="84" rx="18" fill="#0049CF"/>
+    <circle cx="28" cy="28" r="5" fill="#FFFFFF"/>
+    <circle cx="68" cy="28" r="5" fill="#FFFFFF"/>
+    <circle cx="28" cy="68" r="5" fill="#FFFFFF"/>
+    <circle cx="68" cy="68" r="5" fill="#FFFFFF"/>
+    <path d="M28 28 L54 38 L68 28 M54 38 L42 56 L28 68 M42 56 L68 68" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18 18 L18 13 M18 18 L13 18 M18 18 L18 23 M18 18 L23 18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+    <path d="M78 16 L78 12 M78 16 L74 16 M78 16 L78 20 M78 16 L82 16" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+</g>
+    <text x="150" y="72" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="56" font-weight="700">Scout</text>
+    <text x="150" y="106" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="20" font-weight="500">by Calm Commerce</text>
+</svg>

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { AccessLockedCard } from "@/components/access-locked-card";
 import { LearnerShell } from "@/components/learner-shell";
 import { Card, Eyebrow, PageHero, Panel, SecondaryButton, SectionShell } from "@/components/design-system";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
 import { WORKSHEET_REGISTRY } from "@/lib/v2/worksheets/registry";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { WorksheetClient } from "./worksheet-client";
 import { GenericWorksheetClient } from "./generic-worksheet-client";
 
@@ -18,25 +20,37 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
 
   const worksheetDefinition = WORKSHEET_REGISTRY[chapter.worksheetId] ?? null;
   if (!worksheetDefinition) return notFound();
+  const access = await getAccessStateForCurrentUser();
 
   // Chapter 4 has a bespoke, hand-crafted worksheet page
   const isFounderRules = slug === "set-your-founder-rules";
+  const navItems = [
+    { href: "/", label: "Dashboard" },
+    { href: "/program", label: "Program" },
+    { href: "/ideas", label: "Ideas" },
+    { href: "/lean-canvas", label: "Lean Canvas" },
+    { href: "/metrics", label: "Metrics" },
+    { href: "/account", label: "Account" },
+    { href: `/chapter/${slug}`, label: `Chapter ${chapter.number}` },
+    { href: `/chapter/${slug}/worksheet`, label: "Worksheet", active: true },
+  ];
 
   return (
     <LearnerShell
-      items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
-        { href: "/ideas", label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
-        { href: `/chapter/${slug}`, label: `Chapter ${chapter.number}` },
-        { href: `/chapter/${slug}/worksheet`, label: "Worksheet", active: true },
-      ]}
+      items={navItems}
       title={worksheetDefinition.worksheet.title}
       subtitle="Review the answers you captured during the chapter, and update anything that has changed."
     >
+      {!access.canAccessOsContent ? (
+        <AccessLockedCard
+          title="Calm Commerce OS worksheet locked"
+          body={
+            access.canUseScannerImport
+              ? "Your current access covers Scout research tools, not the full Calm Commerce OS worksheets. Upgrade to continue the guided programme."
+              : "Upgrade to unlock worksheets, chapters, Lean Canvas, and Metrics."
+          }
+        />
+      ) : (
       <div className="mx-auto max-w-[960px] space-y-10">
         <PageHero
           label="Worksheet"
@@ -98,6 +112,7 @@ export default async function WorksheetPage({ params }: { params: Promise<{ slug
           )}
         </Panel>
       </div>
+      )}
     </LearnerShell>
   );
 }

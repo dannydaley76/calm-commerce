@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 220" width="420" height="220">
+    <rect x="1" y="1" width="418" height="218" rx="18" fill="#FFFFFF" stroke="#D4DEE3"/>
+    <g transform="translate(24,24)">
+    <rect x="6" y="6" width="84" height="84" rx="18" fill="#0049CF"/>
+    <circle cx="28" cy="28" r="5" fill="#FFFFFF"/>
+    <circle cx="68" cy="28" r="5" fill="#FFFFFF"/>
+    <circle cx="28" cy="68" r="5" fill="#FFFFFF"/>
+    <circle cx="68" cy="68" r="5" fill="#FFFFFF"/>
+    <path d="M28 28 L54 38 L68 28 M54 38 L42 56 L28 68 M42 56 L68 68" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M18 18 L18 13 M18 18 L13 18 M18 18 L18 23 M18 18 L23 18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+    <path d="M78 16 L78 12 M78 16 L74 16 M78 16 L78 20 M78 16 L82 16" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+</g>
+    <text x="112" y="60" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="40" font-weight="700">Scout</text>
+    <text x="112" y="98" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="20">Collect ideas.</text>
+    <text x="112" y="124" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="20">Score with AI.</text>
+    <text x="112" y="150" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="20">Add to your board.</text>
+    <line x1="24" y1="176" x2="396" y2="176" stroke="#D4DEE3"/>
+    <g transform="translate(24,184)">
+    
+    <path d="M18 10 H66 Q78 10 78 22 V28 H68 V22 Q68 20 66 20 H18 Q16 20 16 22 V74 Q16 76 18 76 H66 Q68 76 68 74 V68 H78 V74 Q78 86 66 86 H18 Q6 86 6 74 V22 Q6 10 18 10 Z M28 30 H58 Q60 30 60 32 V38 H50 V34 Q50 32 48 32 H30 Q28 32 28 34 V62 Q28 64 30 64 H48 Q50 64 50 62 V58 H60 V64 Q60 66 58 66 H28 Q18 66 18 56 V40 Q18 30 28 30 Z" fill="#0049CF" fill-rule="evenodd"/>
+    <path d="M33 58 L33 58 L33 44 L50 27 L50 58 Z" fill="#00756A"/>
+</g>
+    <text x="62" y="206" fill="#0B2A39" font-family="Manrope, Inter, Arial, sans-serif" font-size="16" font-weight="600">Calm Commerce</text>
+</svg>

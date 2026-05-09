@@ -1,15 +1,23 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { configuredPriceId, planForCode } from "@/lib/billing/products";
 
 export async function POST(request: Request) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
-  const priceId = process.env.STRIPE_6_MONTH_PRICE_ID;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const form = await request.formData().catch(() => null);
+  const requestedPlan = form?.get("plan");
+  const plan = planForCode(typeof requestedPlan === "string" ? requestedPlan : "calm_commerce_os");
+  const priceId = plan ? configuredPriceId(plan) : null;
+
+  if (!plan) {
+    return NextResponse.json({ error: "Unknown billing plan." }, { status: 400 });
+  }
 
   if (!secretKey || !priceId || !siteUrl) {
     return NextResponse.json(
-      { error: "Stripe checkout is not configured yet. Missing STRIPE_SECRET_KEY, STRIPE_6_MONTH_PRICE_ID, or NEXT_PUBLIC_SITE_URL." },
+      { error: `Stripe checkout is not configured yet. Missing STRIPE_SECRET_KEY, ${plan.priceEnv}, or NEXT_PUBLIC_SITE_URL.` },
       { status: 500 },
     );
   }
@@ -26,7 +34,7 @@ export async function POST(request: Request) {
     });
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: plan.mode,
       line_items: [
         {
           price: priceId,
@@ -34,12 +42,14 @@ export async function POST(request: Request) {
         },
       ],
       customer_email: user.email ?? undefined,
-      success_url: `${siteUrl.replace(/\/$/, "")}/?checkout=success`,
+      success_url: `${siteUrl.replace(/\/$/, "")}/ideas?checkout=success&plan=${plan.code}`,
       cancel_url: `${siteUrl.replace(/\/$/, "")}/upgrade?checkout=cancelled`,
       metadata: {
         learner_id: learnerId,
         project_id: projectId ?? "",
-        product_slug: "ecom-learning",
+        plan_code: plan.code,
+        product_code: plan.productCode,
+        billing_type: plan.billingType,
       },
     });
 

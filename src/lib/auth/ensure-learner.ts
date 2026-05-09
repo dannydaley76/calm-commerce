@@ -58,6 +58,8 @@ async function ensurePreviewEntitlement(
       learner_id: learnerId,
       status: "preview",
       access_level: "preview",
+      product_code: "calm_commerce_os",
+      billing_type: "preview",
       provider: "stripe",
     })
     .select("id")

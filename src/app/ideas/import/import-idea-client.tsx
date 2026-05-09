@@ -5,13 +5,19 @@ import { useRouter } from "next/navigation";
 import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import {
   buildScannerImportDraft,
-  parseScannerImportPayloadParam,
+  parseScannerImportPayloadParamDetailed,
   sourceLabelForUrl,
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
 
 type ImportIdeaClientProps = {
   payloadParam?: string;
+};
+
+type DuplicateImport = {
+  ideaHref: string;
+  ideaId: string;
+  ideaTitle: string;
 };
 
 type FieldConfig = {
@@ -23,6 +29,7 @@ type FieldConfig = {
 
 const PRODUCT_FIELDS: FieldConfig[] = [
   { key: "productTitle", label: "Product idea" },
+  { key: "rawProductTitle", label: "Raw Scout title" },
   { key: "sourcePlatform", label: "Source platform", type: "select", options: ["amazon", "aliexpress", "shopify", "other"] },
   { key: "sourceUrl", label: "Source URL" },
   { key: "scannedAt", label: "Research date" },
@@ -45,6 +52,7 @@ const ECONOMICS_FIELDS: FieldConfig[] = [
 function emptyDraft(): ScannerImportDraft {
   return {
     productTitle: "",
+    rawProductTitle: "",
     productImageUrl: "",
     sourcePlatform: "other",
     sourceUrl: "",
@@ -209,12 +217,14 @@ function FieldSection({
 
 export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
   const router = useRouter();
-  const parsedPayload = useMemo(() => parseScannerImportPayloadParam(payloadParam), [payloadParam]);
+  const payloadResult = useMemo(() => parseScannerImportPayloadParamDetailed(payloadParam), [payloadParam]);
+  const parsedPayload = payloadResult.ok ? payloadResult.payload : null;
   const [draft, setDraft] = useState<ScannerImportDraft>(() => (
     parsedPayload ? buildScannerImportDraft(parsedPayload) : emptyDraft()
   ));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState<DuplicateImport | null>(null);
   const [editingResearch, setEditingResearch] = useState(!parsedPayload);
   const [editingEconomics, setEditingEconomics] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
@@ -224,20 +234,34 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  async function saveImport() {
+  async function saveImport(updateExistingIdeaId?: string) {
     setSaving(true);
     setError(null);
+    setDuplicate(null);
 
     try {
       const response = await fetch("/api/ideas/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: parsedPayload, draft }),
+        body: JSON.stringify({ payload: parsedPayload, draft, updateExistingIdeaId }),
       });
       const result = (await response.json().catch(() => ({}))) as {
         error?: string;
         ideaHref?: string;
+        ideaId?: string;
+        ideaTitle?: string;
+        duplicate?: boolean;
       };
+
+      if (response.status === 409 && result.duplicate && result.ideaHref && result.ideaId) {
+        setDuplicate({
+          ideaHref: result.ideaHref,
+          ideaId: result.ideaId,
+          ideaTitle: result.ideaTitle || draft.productTitle,
+        });
+        setSaving(false);
+        return;
+      }
 
       if (!response.ok || !result.ideaHref) {
         throw new Error(result.error || "Unable to import this idea.");
@@ -254,22 +278,21 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
     <div className="space-y-6">
       <PageHero
         label="Scanner import"
-        title="Review this product idea"
-        description="Check the product, evidence, and economics before it becomes part of your Calm Commerce idea history."
+        title={draft.productTitle ? `Review ${draft.productTitle}` : "Review this product idea"}
+        description="Check the product, evidence, and economics before this Scout capture becomes part of your Calm Commerce idea history."
       >
         <div className="flex flex-wrap gap-3">
-          <PrimaryButton onClick={saveImport} disabled={saving || !draft.productTitle.trim()}>
+          <PrimaryButton
+            onClick={() => void saveImport()}
+            disabled={saving || !draft.productTitle.trim() || !payloadResult.ok}
+          >
             {saving ? "Adding..." : "Add to Ideas"}
           </PrimaryButton>
           <SecondaryButton href="/ideas">Back to Ideas</SecondaryButton>
         </div>
-        {!payloadParam ? (
-          <p className="mt-4 max-w-[640px] text-xs leading-5 text-ink-500">
-            No scanner payload was provided. You can still add a manually reviewed idea from this page.
-          </p>
-        ) : !parsedPayload ? (
+        {!payloadResult.ok ? (
           <p className="mt-4 max-w-[640px] text-xs leading-5 text-error-700">
-            The scanner payload could not be read. Review the fields below before saving.
+            {payloadResult.message}
           </p>
         ) : null}
       </PageHero>
@@ -277,6 +300,24 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
       {error ? (
         <div className="rounded-lg border border-error-100 bg-error-100 px-4 py-3 text-sm leading-6 text-error-700">
           {error}
+        </div>
+      ) : null}
+
+      {duplicate ? (
+        <div className="rounded-lg border border-cobalt-100 bg-cobalt-100/50 px-4 py-4 text-sm leading-6 text-ink-700">
+          <p className="font-semibold text-ink-900">This product is already in Ideas.</p>
+          <p className="mt-1">
+            We found an existing idea for {duplicate.ideaTitle}. Open it, or update that idea with this latest Scout capture.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <PrimaryButton href={duplicate.ideaHref}>Open existing</PrimaryButton>
+            <SecondaryButton
+              onClick={() => void saveImport(duplicate.ideaId)}
+              disabled={saving}
+            >
+              {saving ? "Updating..." : "Update existing"}
+            </SecondaryButton>
+          </div>
         </div>
       ) : null}
 
@@ -299,11 +340,16 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
-                  Product snapshot
+                  Imported from Scout
                 </p>
                 <h2 className="mt-2 font-[Manrope] text-2xl font-bold leading-tight text-ink-900">
                   {draft.productTitle || "Untitled product"}
                 </h2>
+                {draft.rawProductTitle && draft.rawProductTitle !== draft.productTitle ? (
+                  <p className="mt-2 line-clamp-2 max-w-[720px] text-xs leading-5 text-ink-500">
+                    Raw title: {draft.rawProductTitle}
+                  </p>
+                ) : null}
                 {draft.sourceUrl ? (
                   <a
                     href={draft.sourceUrl}

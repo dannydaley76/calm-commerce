@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { PrimaryButton } from "@/components/design-system";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   getProductIdeaLifecycles,
   type ProductIdeaLifecycle,
@@ -16,24 +18,36 @@ type MetricEntry = {
 
 async function getIdeaDetail(ideaId: string): Promise<{
   authenticated: boolean;
+  canAccessOsContent: boolean;
   idea: ProductIdeaLifecycle | null;
   responses: ResponseMap;
+  error?: string;
 }> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
-    if (!user || !projectId) return { authenticated: false, idea: null, responses: {} };
+    if (!user || !projectId) {
+      return { authenticated: false, canAccessOsContent: false, idea: null, responses: {} };
+    }
 
-    const [{ data }, { data: metricRows }] = await Promise.all([
-      supabase
-        .from("worksheet_responses")
-        .select("field_key, value_json")
-        .eq("project_id", projectId),
-      supabase
-        .from("weekly_metrics")
-        .select("id, week_ending, data_json")
-        .eq("project_id", projectId)
-        .order("week_ending", { ascending: false }),
-    ]);
+    const access = await getAccessStateForCurrentUser();
+    const responseQuery = supabase
+      .from("worksheet_responses")
+      .select("field_key, value_json")
+      .eq("project_id", projectId);
+    const scopedResponseQuery = access.canAccessOsContent
+      ? responseQuery
+      : responseQuery.eq("worksheet_id", "ideas-worksheet");
+
+    const { data } = await scopedResponseQuery;
+    const metricRows = access.canAccessOsContent
+      ? (
+        await supabase
+          .from("weekly_metrics")
+          .select("id, week_ending, data_json")
+          .eq("project_id", projectId)
+          .order("week_ending", { ascending: false })
+      ).data
+      : [];
 
     const responses: ResponseMap = Object.fromEntries(
       (data ?? []).map((row) => [
@@ -45,11 +59,18 @@ async function getIdeaDetail(ideaId: string): Promise<{
 
     return {
       authenticated: true,
+      canAccessOsContent: access.canAccessOsContent,
       idea: ideas.find((item) => item.ideaId === ideaId) ?? null,
       responses,
     };
-  } catch {
-    return { authenticated: false, idea: null, responses: {} };
+  } catch (error) {
+    return {
+      authenticated: true,
+      canAccessOsContent: false,
+      idea: null,
+      responses: {},
+      error: error instanceof Error ? error.message : "Unable to load this idea right now.",
+    };
   }
 }
 
@@ -74,13 +95,27 @@ export default async function IdeaDetailPage({
         { href: "/account",     label: "Account" },
       ]}
       title="Ideas"
+      showLogout={data.authenticated}
     >
-      {!data.authenticated || !data.idea ? (
+      {data.error ? (
+        <section className="rounded-xl border border-error-100 bg-surface-raised p-6 text-sm leading-6 text-ink-700">
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Idea could not be loaded</h2>
+          <p className="mt-2 text-ink-600">
+            Your session is active, but this idea did not load. Refresh the page, or try signing in again if this persists.
+          </p>
+        </section>
+      ) : !data.authenticated || !data.idea ? (
         <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 text-sm leading-6 text-ink-600">
-          Sign in to load this idea.
+          <PrimaryButton href={`/login?next=/ideas/${encodeURIComponent(ideaId)}`}>
+            Sign in to load this idea
+          </PrimaryButton>
         </section>
       ) : (
-        <IdeaDetailClient idea={data.idea} responses={data.responses} />
+        <IdeaDetailClient
+          idea={data.idea}
+          responses={data.responses}
+          canAccessOsContent={data.canAccessOsContent}
+        />
       )}
     </LearnerShell>
   );

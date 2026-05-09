@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   buildScannerImportDraft,
   normalizeScannerImportPayload,
   sourceLabelForUrl,
+  validateScannerImportPayload,
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
+import { getProductIdeaId } from "@/lib/v2/worksheets/product-idea-identity";
 
 type WorksheetRow = {
   worksheet_id: string;
@@ -32,6 +35,17 @@ function parseRows<T extends Record<string, string | undefined>>(raw: string): T
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function scannerVerdictForScore(score: number | undefined): string {
+  if (score === undefined) return "";
+  if (score >= 70) return "Strong opportunity";
+  if (score >= 40) return "Worth investigating";
+  return "Hard to make work";
+}
+
+function scoreValue(score: number | undefined): string {
+  return score === undefined ? "" : String(Math.round(score));
 }
 
 function createIdeaId(): string {
@@ -78,6 +92,7 @@ export async function POST(req: Request) {
     const body = (await req.json().catch(() => ({}))) as {
       payload?: unknown;
       draft?: ScannerImportDraft;
+      updateExistingIdeaId?: string;
     };
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
 
@@ -85,7 +100,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canUseScannerImport) {
+      return NextResponse.json(
+        { error: "Scout imports require scanner, research workspace, or Calm Commerce OS access." },
+        { status: 403 },
+      );
+    }
+
     const normalizedPayload = normalizeScannerImportPayload(body.payload);
+    const validation = validateScannerImportPayload(normalizedPayload);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.message, code: validation.code }, { status: 400 });
+    }
+
     const draft = mergeDraftWithPayload(buildScannerImportDraft(normalizedPayload), body.draft);
     const title = draft.productTitle.trim();
 
@@ -101,24 +129,63 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     const rows = (data ?? []) as WorksheetRow[];
-    const ideaId = createIdeaId();
     const productIdeas = parseRows(valueFor(rows, "ideas-worksheet", "product_ideas"));
     const ideaEconomics = parseRows(valueFor(rows, "unit-economics-worksheet", "idea_economics"));
     const ideaNotes = parseRows(valueFor(rows, "ideas-worksheet", "product_idea_notes"));
+    const sourceUrl = draft.sourceUrl.trim();
+    const duplicateIndex = sourceUrl
+      ? productIdeas.findIndex((idea) => (idea.source_url ?? "").trim() === sourceUrl)
+      : -1;
+    const duplicateIdea =
+      duplicateIndex >= 0 ? productIdeas[duplicateIndex] : null;
+    const duplicateIdeaId =
+      duplicateIdea ? getProductIdeaId(duplicateIdea, duplicateIndex) : null;
+    const isUpdatingDuplicate =
+      !!duplicateIdeaId && body.updateExistingIdeaId === duplicateIdeaId;
 
-    const nextProductIdeas = [
-      ...productIdeas,
-      {
-        idea_id: ideaId,
-        idea_description: title,
-        product_image_url: draft.productImageUrl,
-        source_url: draft.sourceUrl,
-        source_label: sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product"),
-        demand_evidence: draft.demandEvidence,
-        competition_notes: draft.competitionNotes,
-        seasonality: draft.seasonality,
-      },
-    ];
+    if (duplicateIdeaId && !isUpdatingDuplicate) {
+      return NextResponse.json(
+        {
+          error: "This product already exists in your ideas.",
+          duplicate: true,
+          ideaId: duplicateIdeaId,
+          ideaHref: `/ideas/${encodeURIComponent(duplicateIdeaId)}`,
+          ideaTitle: duplicateIdea?.idea_description ?? title,
+        },
+        { status: 409 },
+      );
+    }
+
+    const ideaId = isUpdatingDuplicate && duplicateIdeaId ? duplicateIdeaId : createIdeaId();
+    const ideaRow = {
+      ...(duplicateIdea ?? {}),
+      idea_id: ideaId,
+      idea_description: title,
+      raw_product_title: draft.rawProductTitle,
+      product_image_url: draft.productImageUrl,
+      source_url: draft.sourceUrl,
+      source_label: sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product"),
+      source_attribution: "Imported from Scout",
+      observed_price: normalizedPayload?.observedPrice ?? "",
+      observed_rating: normalizedPayload?.observedRating ?? "",
+      observed_review_count: normalizedPayload?.observedReviewCount === undefined ? "" : String(normalizedPayload.observedReviewCount),
+      observed_order_count: normalizedPayload?.observedOrderCount === undefined ? "" : String(normalizedPayload.observedOrderCount),
+      observed_bsr: normalizedPayload?.observedBsr ?? "",
+      variant_count: normalizedPayload?.variantCount === undefined ? "" : String(normalizedPayload.variantCount),
+      scanner_score: scoreValue(normalizedPayload?.opportunityScore),
+      scanner_verdict: scannerVerdictForScore(normalizedPayload?.opportunityScore),
+      scanner_confidence_score: scoreValue(normalizedPayload?.confidenceScore),
+      scanner_demand_score: scoreValue(normalizedPayload?.demandScore),
+      scanner_competition_score: scoreValue(normalizedPayload?.competitionScore),
+      scanner_scored_at: draft.scannedAt,
+      demand_evidence: draft.demandEvidence,
+      competition_notes: draft.competitionNotes,
+      seasonality: draft.seasonality,
+    };
+
+    const nextProductIdeas = isUpdatingDuplicate && duplicateIndex >= 0
+      ? productIdeas.map((idea, index) => (index === duplicateIndex ? ideaRow : idea))
+      : [...productIdeas, ideaRow];
 
     const upserts: UpsertRow[] = [
       {
@@ -130,30 +197,35 @@ export async function POST(req: Request) {
     ];
 
     if (hasEconomicsDraft(draft)) {
+      const economicsIndex = ideaEconomics.findIndex((row) => (row.idea_id ?? "").trim() === ideaId);
+      const economicsRow = {
+        ...(economicsIndex >= 0 ? ideaEconomics[economicsIndex] : {}),
+        idea_id: ideaId,
+        idea_name: title,
+        product_cost: draft.productCost,
+        shipping_to_customer: draft.shippingToCustomer,
+        platform_fees: draft.platformFees,
+        selling_price: draft.sellingPrice,
+        variant_complexity: draft.variantComplexity,
+        upfront_cost_risk: draft.upfrontCostRisk,
+        test_speed: draft.testSpeed,
+        numbers_confidence: draft.numbersConfidence,
+      };
+      const nextEconomics = economicsIndex >= 0
+        ? ideaEconomics.map((row, index) => (index === economicsIndex ? economicsRow : row))
+        : [...ideaEconomics, economicsRow];
+
       upserts.push({
         project_id: projectId,
         worksheet_id: "unit-economics-worksheet",
         field_key: "idea_economics",
-        value_json: JSON.stringify([
-          ...ideaEconomics,
-          {
-            idea_id: ideaId,
-            idea_name: title,
-            product_cost: draft.productCost,
-            shipping_to_customer: draft.shippingToCustomer,
-            platform_fees: draft.platformFees,
-            selling_price: draft.sellingPrice,
-            variant_complexity: draft.variantComplexity,
-            upfront_cost_risk: draft.upfrontCostRisk,
-            test_speed: draft.testSpeed,
-            numbers_confidence: draft.numbersConfidence,
-          },
-        ]),
+        value_json: JSON.stringify(nextEconomics),
       });
     }
 
     const sourceLines = [
-      `Imported from ${draft.sourcePlatform || "scanner"} on ${draft.scannedAt || todayISO()}.`,
+      `Imported from Scout on ${draft.scannedAt || todayISO()}.`,
+      draft.rawProductTitle && draft.rawProductTitle !== title ? `Raw product title: ${draft.rawProductTitle}` : "",
       draft.sourceUrl ? `Source: ${sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product")}` : "",
       draft.notes,
     ].filter(Boolean);

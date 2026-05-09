@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
 /* ── Seed data: 20 weeks of realistic e-commerce metrics ──
    Oldest first (week 20 → week 1), submitted_at spaced 7 days apart.
@@ -274,6 +275,10 @@ export async function POST() {
 
     if (!user || !projectId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canAccessMetrics) {
+      return NextResponse.json({ error: "Metrics are part of Calm Commerce OS access." }, { status: 403 });
     }
 
     // Check if seed has already been run (avoid duplication)

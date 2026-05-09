@@ -1,5 +1,7 @@
+import { AccessLockedCard } from "@/components/access-locked-card";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   ensureProductIdeaIds,
   findProductIdeaByIdOrLabel,
@@ -118,8 +120,12 @@ async function markChapter17DashboardViewed() {
 }
 
 export default async function MetricsPage() {
-  const { authenticated, entries, productIdeas, defaultProductIdeaId } = await getMetrics();
-  if (authenticated) await markChapter17DashboardViewed();
+  const [access, metrics] = await Promise.all([
+    getAccessStateForCurrentUser(),
+    getMetrics(),
+  ]);
+  const { authenticated, entries, productIdeas, defaultProductIdeaId } = metrics;
+  if (authenticated && access.canAccessMetrics) await markChapter17DashboardViewed();
 
   const isDev = process.env.NODE_ENV !== "production";
 
@@ -138,13 +144,24 @@ export default async function MetricsPage() {
       title="Weekly Metrics"
       subtitle="Track marketplace tests and own-store performance as each idea moves from validation to trading."
     >
-      <MetricsClient
-        entries={entries}
-        authenticated={authenticated}
-        isDev={isDev}
-        productIdeas={productIdeas}
-        defaultProductIdeaId={defaultProductIdeaId}
-      />
+      {!access.canAccessMetrics ? (
+        <AccessLockedCard
+          title="Metrics locked"
+          body={
+            access.canUseScannerImport
+              ? "Your current access covers Scout research tools and saved ideas. Upgrade to Calm Commerce OS to connect idea tests and live store numbers."
+              : "Upgrade to Calm Commerce OS to unlock weekly metrics, idea-linked test tracking, and store performance history."
+          }
+        />
+      ) : (
+        <MetricsClient
+          entries={entries}
+          authenticated={authenticated}
+          isDev={isDev}
+          productIdeas={productIdeas}
+          defaultProductIdeaId={defaultProductIdeaId}
+        />
+      )}
     </LearnerShell>
   );
 }

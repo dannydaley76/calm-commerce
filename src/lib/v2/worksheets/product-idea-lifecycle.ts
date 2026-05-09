@@ -17,12 +17,29 @@ export type ProductIdeaLifecycleStatus =
   | "retest"
   | "pivot";
 
+export type ProductIdeaWorkspaceStatus =
+  | "captured"
+  | "reviewing"
+  | "promising"
+  | "rejected"
+  | "testing"
+  | "archived";
+
 export type ProductIdeaLifecycle = {
   ideaId: string;
   label: string;
   productImageUrl: string | null;
   sourceUrl: string | null;
   sourceLabel: string | null;
+  scannerScore: number | null;
+  scannerVerdict: string | null;
+  scannerConfidenceScore: number | null;
+  scannerDemandScore: number | null;
+  scannerCompetitionScore: number | null;
+  scannerScoredAt: string | null;
+  workspaceStatus: ProductIdeaWorkspaceStatus;
+  workspaceStatusLabel: string;
+  archivedAt: string | null;
   status: ProductIdeaLifecycleStatus;
   statusLabel: string;
   latestSignal: string;
@@ -121,6 +138,29 @@ function normalize(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
+function scoreNumber(value: string | undefined): number | null {
+  const parsed = Number.parseFloat(normalize(value));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function scoreFromNotes(notes: ProductIdeaNote[]): number | null {
+  for (const note of notes) {
+    const match = note.note.match(/Scout score:\s*([0-9]+(?:\.[0-9]+)?)\/10/i);
+    if (match?.[1]) {
+      const parsed = Number.parseFloat(match[1]);
+      if (Number.isFinite(parsed)) return Math.round(parsed * 10);
+    }
+  }
+  return null;
+}
+
+function scannerVerdictForScore(score: number | null): string | null {
+  if (score === null) return null;
+  if (score >= 70) return "Strong opportunity";
+  if (score >= 40) return "Worth investigating";
+  return "Hard to make work";
+}
+
 function formatDisplayDate(raw: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
     const date = new Date(`${raw}T12:00:00`);
@@ -150,6 +190,64 @@ function statusLabel(status: ProductIdeaLifecycleStatus): string {
     case "pivot":
       return "Pivot";
   }
+}
+
+function workspaceStatusLabel(status: ProductIdeaWorkspaceStatus): string {
+  switch (status) {
+    case "captured":
+      return "Captured";
+    case "reviewing":
+      return "Reviewing";
+    case "promising":
+      return "Promising";
+    case "rejected":
+      return "Rejected";
+    case "testing":
+      return "Testing";
+    case "archived":
+      return "Archived";
+  }
+}
+
+function parseWorkspaceStatus(value: string | undefined): ProductIdeaWorkspaceStatus | null {
+  const normalised = normalize(value);
+  if (
+    normalised === "captured" ||
+    normalised === "reviewing" ||
+    normalised === "promising" ||
+    normalised === "rejected" ||
+    normalised === "testing" ||
+    normalised === "archived"
+  ) {
+    return normalised;
+  }
+  return null;
+}
+
+function deriveWorkspaceStatus({
+  idea,
+  lifecycleStatus,
+  scannerScore,
+}: {
+  idea: ProductIdeaRow;
+  lifecycleStatus: ProductIdeaLifecycleStatus;
+  scannerScore: number | null;
+}): ProductIdeaWorkspaceStatus {
+  const explicit = parseWorkspaceStatus(idea.scout_workspace_status);
+  if (explicit) return explicit;
+  if (normalize(idea.archived_at)) return "archived";
+  if (
+    lifecycleStatus === "test_planned" ||
+    lifecycleStatus === "test_running" ||
+    lifecycleStatus === "test_reviewed" ||
+    lifecycleStatus === "proceed" ||
+    lifecycleStatus === "retest"
+  ) {
+    return "testing";
+  }
+  if (lifecycleStatus === "pivot") return "rejected";
+  if (scannerScore !== null && scannerScore >= 70) return "promising";
+  return "captured";
 }
 
 function findEconomicsForIdea(
@@ -463,6 +561,7 @@ export function getProductIdeaLifecycles(
     if (isTestIdea) status = deriveTestStatus(responses);
     const metricEntries = metricsForIdea(metrics, ideaId);
     const notes = notesForIdea(noteRows, ideaId);
+    const scannerScore = scoreNumber(idea.scanner_score) ?? scoreFromNotes(notes);
 
     return {
       ideaId,
@@ -470,6 +569,15 @@ export function getProductIdeaLifecycles(
       productImageUrl: normalize(idea.product_image_url) || null,
       sourceUrl: normalize(idea.source_url) || null,
       sourceLabel: normalize(idea.source_label) || null,
+      scannerScore,
+      scannerVerdict: normalize(idea.scanner_verdict) || scannerVerdictForScore(scannerScore),
+      scannerConfidenceScore: scoreNumber(idea.scanner_confidence_score),
+      scannerDemandScore: scoreNumber(idea.scanner_demand_score),
+      scannerCompetitionScore: scoreNumber(idea.scanner_competition_score),
+      scannerScoredAt: normalize(idea.scanner_scored_at) || null,
+      workspaceStatus: deriveWorkspaceStatus({ idea, lifecycleStatus: status, scannerScore }),
+      workspaceStatusLabel: workspaceStatusLabel(deriveWorkspaceStatus({ idea, lifecycleStatus: status, scannerScore })),
+      archivedAt: normalize(idea.archived_at) || null,
       status,
       statusLabel: statusLabel(status),
       latestSignal: deriveLatestSignal({ status, economics, responses }),

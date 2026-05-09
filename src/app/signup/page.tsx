@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/browser";
 
 function getEmailRedirectTo() {
@@ -32,6 +32,14 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [nextDestination, setNextDestination] = useState("/");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    setNextDestination(next?.startsWith("/") ? next : "/");
+  }, []);
 
   const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -65,8 +73,8 @@ export default function SignupPage() {
           throw new Error(payload.error || "Account created, but initial setup did not complete.");
         }
 
-        setMessage("Account created. Redirecting to your dashboard...");
-        window.location.href = "/";
+        setMessage("Account created. Redirecting...");
+        window.location.href = nextDestination;
         return;
       }
 
@@ -179,7 +187,10 @@ export default function SignupPage() {
         )}
 
         <div className="mt-5 text-sm">
-          <Link href="/login" className="text-cobalt-600 hover:underline">
+          <Link
+            href={`/login?next=${encodeURIComponent(nextDestination)}`}
+            className="text-cobalt-600 hover:underline"
+          >
             Back to sign in
           </Link>
         </div>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="icons/scout-icon-32.png" width="24" height="24" alt="" />
+        <div class="logo-text">
+          <span class="logo-title">Scout</span>
+          <span class="logo-attr">by Calm Commerce</span>
+        </div>
+      </div>
+      <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="2" stroke="#6B7280" stroke-width="1.5"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="#6B7280" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Main content -->
+    <main class="main" id="main">
+
+      <!-- Idle state: no product detected -->
+      <div class="state" id="state-idle">
+        <div class="idle-icon">
+          <img src="icons/scout-icon-48.png" width="40" height="40" alt="" />
+        </div>
+        <p class="idle-title">Open a product listing</p>
+        <p class="idle-body">Navigate to a product on Etsy, eBay, Amazon, Vinted, or Depop and Scout will analyse it for you.</p>
+      </div>
+
+      <!-- Active state: product detected -->
+      <div class="state hidden" id="state-product">
+
+        <div class="product-header">
+          <p class="section-label">Detected listing</p>
+          <p class="product-title" id="product-title">—</p>
+          <p class="product-meta" id="product-meta">—</p>
+        </div>
+
+        <div class="score-row">
+          <div class="score-card" id="score-demand">
+            <p class="score-label">Demand</p>
+            <p class="score-value">—</p>
+          </div>
+          <div class="score-card" id="score-competition">
+            <p class="score-label">Competition</p>
+            <p class="score-value">—</p>
+          </div>
+          <div class="score-card" id="score-margin">
+            <p class="score-label">Margin</p>
+            <p class="score-value">—</p>
+          </div>
+        </div>
+
+        <div class="signals" id="signals-list">
+          <!-- Populated by popup.js -->
+        </div>
+
+        <div class="actions">
+          <button class="btn-primary" id="btn-add-board">Add to board →</button>
+          <button class="btn-secondary" id="btn-analyse">Analyse deeper</button>
+        </div>
+
+      </div>
+
+      <!-- Loading state -->
+      <div class="state hidden" id="state-loading">
+        <div class="loader">
+          <div class="loader-ring"></div>
+        </div>
+        <p class="loading-text">Analysing listing…</p>
+      </div>
+
+      <!-- Error state -->
+      <div class="state hidden" id="state-error">
+        <p class="error-text" id="error-message">Something went wrong.</p>
+        <button class="btn-secondary" id="btn-retry">Try again</button>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <a href="https://calmcommerce.co" target="_blank" rel="noopener" class="footer-link">Calm Commerce</a>
+      <span class="footer-sep">·</span>
+      <button class="footer-link" id="btn-board">My board</button>
+    </footer>
+
+  </div>
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

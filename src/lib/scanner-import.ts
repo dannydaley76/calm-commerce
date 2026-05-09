@@ -4,6 +4,7 @@ export type ScannerImportPayload = {
   sourceUrl?: string;
   scannedAt?: string;
   productTitle?: string;
+  displayTitle?: string;
   productImageUrl?: string;
   observedPrice?: string;
   observedRating?: string;
@@ -33,6 +34,7 @@ export type ScannerImportPayload = {
 
 export type ScannerImportDraft = {
   productTitle: string;
+  rawProductTitle: string;
   productImageUrl: string;
   sourcePlatform: string;
   sourceUrl: string;
@@ -51,6 +53,13 @@ export type ScannerImportDraft = {
   notes: string;
 };
 
+export type ScannerImportPayloadResult =
+  | { ok: true; payload: ScannerImportPayload }
+  | { ok: false; code: "missing" | "too_large" | "invalid" | "expired"; message: string };
+
+const MAX_IMPORT_PAYLOAD_CHARS = 64000;
+const MAX_IMPORT_AGE_DAYS = 30;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -60,7 +69,20 @@ function stringValue(value: unknown): string {
 }
 
 function numberValue(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function firstNumberValue(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    const parsed = numberValue(value);
+    if (parsed !== undefined) return parsed;
+  }
+  return undefined;
 }
 
 function stringArrayValue(value: unknown): string[] {
@@ -73,28 +95,44 @@ export function normalizeScannerImportPayload(raw: unknown): ScannerImportPayloa
   if (!isRecord(raw)) return null;
   const sourcePlatform = stringValue(raw.sourcePlatform);
   const source = stringValue(raw.source);
+  const sourceUrl =
+    stringValue(raw.sourceUrl) ||
+    stringValue(raw.source_url) ||
+    stringValue(raw.pageUrl) ||
+    stringValue(raw.page_url) ||
+    stringValue(raw.url);
+  const productImageUrl =
+    stringValue(raw.productImageUrl) ||
+    stringValue(raw.product_image_url) ||
+    stringValue(raw.imageUrl) ||
+    stringValue(raw.image_url) ||
+    stringValue(raw.product_image) ||
+    stringValue(raw.thumbnail) ||
+    stringValue(raw.image);
+
   return {
-    source: source === "research_workspace" ? "research_workspace" : "scanner",
+    source: source === "scanner" || source === "research_workspace" ? source : undefined,
     sourcePlatform: (
       sourcePlatform === "amazon" ||
       sourcePlatform === "aliexpress" ||
       sourcePlatform === "shopify" ||
       sourcePlatform === "other"
     ) ? sourcePlatform : "other",
-    sourceUrl: stringValue(raw.sourceUrl),
-    scannedAt: stringValue(raw.scannedAt),
+    sourceUrl,
+    scannedAt: stringValue(raw.scannedAt) || stringValue(raw.scanned_at) || stringValue(raw.scan_timestamp),
     productTitle: stringValue(raw.productTitle),
-    productImageUrl: stringValue(raw.productImageUrl),
+    displayTitle: stringValue(raw.displayTitle),
+    productImageUrl,
     observedPrice: stringValue(raw.observedPrice),
     observedRating: stringValue(raw.observedRating),
     observedReviewCount: numberValue(raw.observedReviewCount),
     observedOrderCount: numberValue(raw.observedOrderCount),
     observedBsr: stringValue(raw.observedBsr),
     variantCount: numberValue(raw.variantCount),
-    demandScore: numberValue(raw.demandScore),
-    competitionScore: numberValue(raw.competitionScore),
-    opportunityScore: numberValue(raw.opportunityScore),
-    confidenceScore: numberValue(raw.confidenceScore),
+    demandScore: firstNumberValue(raw.demandScore, raw.demand_score),
+    competitionScore: firstNumberValue(raw.competitionScore, raw.competition_score),
+    opportunityScore: firstNumberValue(raw.opportunityScore, raw.opportunity_score, raw.scanner_score),
+    confidenceScore: firstNumberValue(raw.confidenceScore, raw.confidence_score),
     missingSignals: stringArrayValue(raw.missingSignals),
     demandEvidence: stringValue(raw.demandEvidence),
     competitionNotes: stringValue(raw.competitionNotes),
@@ -123,12 +161,88 @@ function decodeBase64Url(value: string): string {
 }
 
 export function parseScannerImportPayloadParam(value: string | null | undefined): ScannerImportPayload | null {
-  if (!value) return null;
+  const result = parseScannerImportPayloadParamDetailed(value);
+  return result.ok ? result.payload : null;
+}
+
+function isExpiredScan(scannedAt: string | undefined): boolean {
+  if (!scannedAt || !/^\d{4}-\d{2}-\d{2}$/.test(scannedAt)) return false;
+  const scanned = new Date(`${scannedAt}T12:00:00Z`).getTime();
+  if (!Number.isFinite(scanned)) return false;
+  const ageDays = (Date.now() - scanned) / (1000 * 60 * 60 * 24);
+  return ageDays > MAX_IMPORT_AGE_DAYS || ageDays < -1;
+}
+
+export function validateScannerImportPayload(payload: ScannerImportPayload | null): ScannerImportPayloadResult {
+  if (!payload) {
+    return {
+      ok: false,
+      code: "invalid",
+      message: "The Scout payload could not be read. Open Scout again and send the product to Calm Commerce once more.",
+    };
+  }
+  if (payload.source !== "scanner") {
+    return {
+      ok: false,
+      code: "invalid",
+      message: "This import link was not created by Scout.",
+    };
+  }
+  if (!(payload.displayTitle || payload.productTitle)) {
+    return {
+      ok: false,
+      code: "invalid",
+      message: "Scout did not include a product title, so this idea cannot be imported yet.",
+    };
+  }
+  if (!payload.sourceUrl) {
+    return {
+      ok: false,
+      code: "invalid",
+      message: "Scout did not include the source product URL, so this idea cannot be matched or imported safely.",
+    };
+  }
+  if (isExpiredScan(payload.scannedAt)) {
+    return {
+      ok: false,
+      code: "expired",
+      message: "This Scout import link is too old. Scan the product again so Calm Commerce uses fresh marketplace data.",
+    };
+  }
+  return { ok: true, payload };
+}
+
+export function parseScannerImportPayloadParamDetailed(value: string | null | undefined): ScannerImportPayloadResult {
+  if (!value) {
+    return {
+      ok: false,
+      code: "missing",
+      message: "No Scout payload was provided.",
+    };
+  }
+  if (value.length > MAX_IMPORT_PAYLOAD_CHARS) {
+    return {
+      ok: false,
+      code: "too_large",
+      message: "This Scout import is too large to open safely. Try scanning the product again.",
+    };
+  }
   try {
     const decoded = value.trim().startsWith("{") ? value : decodeBase64Url(value);
-    return normalizeScannerImportPayload(JSON.parse(decoded));
+    if (decoded.length > MAX_IMPORT_PAYLOAD_CHARS) {
+      return {
+        ok: false,
+        code: "too_large",
+        message: "This Scout import is too large to open safely. Try scanning the product again.",
+      };
+    }
+    return validateScannerImportPayload(normalizeScannerImportPayload(JSON.parse(decoded)));
   } catch {
-    return null;
+    return {
+      ok: false,
+      code: "invalid",
+      message: "The Scout payload could not be read. Open Scout again and send the product to Calm Commerce once more.",
+    };
   }
 }
 
@@ -171,7 +285,8 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
   ].filter(Boolean);
 
   return {
-    productTitle: payload?.productTitle || "",
+    productTitle: payload?.displayTitle || payload?.productTitle || "",
+    rawProductTitle: payload?.productTitle || payload?.displayTitle || "",
     productImageUrl: payload?.productImageUrl || "",
     sourcePlatform: payload?.sourcePlatform || "other",
     sourceUrl: payload?.sourceUrl || "",

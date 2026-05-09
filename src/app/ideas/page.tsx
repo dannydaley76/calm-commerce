@@ -1,6 +1,7 @@
 import { LearnerShell } from "@/components/learner-shell";
 import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   getProductIdeaLifecycles,
   type ProductIdeaLifecycle,
@@ -17,23 +18,36 @@ type MetricEntry = {
 
 async function getIdeaData(): Promise<{
   authenticated: boolean;
+  canAccessOsContent: boolean;
+  canUseScannerImport: boolean;
   ideas: ProductIdeaLifecycle[];
+  error?: string;
 }> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
-    if (!user || !projectId) return { authenticated: false, ideas: [] };
+    if (!user || !projectId) {
+      return { authenticated: false, canAccessOsContent: false, canUseScannerImport: false, ideas: [] };
+    }
 
-    const [{ data }, { data: metricRows }] = await Promise.all([
-      supabase
-        .from("worksheet_responses")
-        .select("field_key, value_json")
-        .eq("project_id", projectId),
-      supabase
-        .from("weekly_metrics")
-        .select("id, week_ending, data_json")
-        .eq("project_id", projectId)
-        .order("week_ending", { ascending: false }),
-    ]);
+    const access = await getAccessStateForCurrentUser();
+    const responseQuery = supabase
+      .from("worksheet_responses")
+      .select("field_key, value_json")
+      .eq("project_id", projectId);
+    const scopedResponseQuery = access.canAccessOsContent
+      ? responseQuery
+      : responseQuery.eq("worksheet_id", "ideas-worksheet");
+
+    const { data } = await scopedResponseQuery;
+    const metricRows = access.canAccessOsContent
+      ? (
+        await supabase
+          .from("weekly_metrics")
+          .select("id, week_ending, data_json")
+          .eq("project_id", projectId)
+          .order("week_ending", { ascending: false })
+      ).data
+      : [];
 
     const responses: ResponseMap = Object.fromEntries(
       (data ?? []).map((row) => [
@@ -44,10 +58,18 @@ async function getIdeaData(): Promise<{
 
     return {
       authenticated: true,
+      canAccessOsContent: access.canAccessOsContent,
+      canUseScannerImport: access.canUseScannerImport,
       ideas: getProductIdeaLifecycles(responses, (metricRows ?? []) as MetricEntry[]),
     };
-  } catch {
-    return { authenticated: false, ideas: [] };
+  } catch (error) {
+    return {
+      authenticated: true,
+      canAccessOsContent: false,
+      canUseScannerImport: false,
+      ideas: [],
+      error: error instanceof Error ? error.message : "Unable to load your ideas right now.",
+    };
   }
 }
 
@@ -127,17 +149,17 @@ function EmptyIdeas() {
   return (
     <section className="rounded-xl border border-dashed border-ink-100 bg-surface-raised p-8">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
-        Idea history
+        Scout Workspace
       </p>
       <h2 className="mt-2 font-[Manrope] text-2xl font-bold text-ink-900">
-        No product ideas yet
+        No products captured yet
       </h2>
       <p className="mt-3 max-w-[620px] text-sm leading-7 text-ink-600">
-        Start in Chapter 3 by adding a shortlist of product ideas. As you run the numbers and test on a marketplace, each idea will build a history here.
+        Scan products with Scout or add ideas from the OS. This workspace is where captured products become a shortlist you can review, reject, test, or move into Calm Commerce.
       </p>
       <div className="mt-5">
-        <SecondaryButton href="/chapter/brainstorm-with-discipline/steps">
-          Go to Chapter 3
+        <SecondaryButton href="/ideas/import">
+          Import from Scout
         </SecondaryButton>
       </div>
     </section>
@@ -222,33 +244,48 @@ export default async function IdeasPage() {
         { href: "/account",     label: "Account" },
       ]}
       title="Ideas"
+      showLogout={data.authenticated}
     >
       <div className="space-y-8">
         <PageHero
           label="Product candidates"
-          title="Your idea history"
-          description="Track each product idea from shortlist to economics check, marketplace test, and next decision."
+          title="Scout Workspace"
+          description="Review captured products, sort by signal strength, keep the promising ones visible, and clear out the noise."
         >
           <div className="flex flex-wrap gap-3">
-            {actionIdea ? (
+            {!data.authenticated ? (
+              <PrimaryButton href="/login?next=/ideas">
+                Sign in to view ideas
+              </PrimaryButton>
+            ) : actionIdea ? (
               <PrimaryButton href={ideaDetailHref(actionIdea)}>
                 Open priority idea
               </PrimaryButton>
             ) : null}
-            <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">
-              {data.authenticated && data.ideas.length > 0 ? "Add another idea" : "Add first idea"}
-            </SecondaryButton>
+            {data.authenticated && data.canUseScannerImport ? (
+              <SecondaryButton href="/ideas/import">
+                Import from Scout
+              </SecondaryButton>
+            ) : null}
+            {data.authenticated && data.canAccessOsContent ? (
+              <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">
+                {data.ideas.length > 0 ? "Add another idea" : "Add first idea"}
+              </SecondaryButton>
+            ) : null}
           </div>
         </PageHero>
 
-        {!data.authenticated ? (
-          <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 text-sm leading-6 text-ink-600">
-            Sign in to load your idea history.
+        {data.error ? (
+          <section className="rounded-xl border border-error-100 bg-surface-raised p-6 text-sm leading-6 text-ink-700">
+            <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Ideas could not be loaded</h2>
+            <p className="mt-2 text-ink-600">
+              Your session is active, but the idea history did not load. Refresh the page, or try signing in again if this persists.
+            </p>
           </section>
-        ) : data.ideas.length === 0 ? (
+        ) : !data.authenticated ? null : data.ideas.length === 0 ? (
           <EmptyIdeas />
         ) : (
-          <IdeasIndexClient ideas={data.ideas} />
+          <IdeasIndexClient ideas={data.ideas} canAccessOsContent={data.canAccessOsContent} />
         )}
       </div>
     </LearnerShell>

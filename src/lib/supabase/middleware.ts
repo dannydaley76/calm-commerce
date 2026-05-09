@@ -8,7 +8,13 @@ function isPublicPath(pathname: string) {
 }
 
 function isProtectedLearnerPath(pathname: string) {
-  return pathname === "/" || pathname === "/program" || pathname === "/resume" || pathname.startsWith("/chapter/");
+  return (
+    pathname === "/" ||
+    pathname === "/program" ||
+    pathname === "/resume" ||
+    pathname.startsWith("/chapter/") ||
+    pathname.startsWith("/ideas")
+  );
 }
 
 export async function updateSession(request: NextRequest) {
@@ -48,11 +54,16 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && isProtectedLearnerPath(pathname) && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
 
   if (user && isPublicPath(pathname) && pathname !== "/auth/callback") {
+    const next = request.nextUrl.searchParams.get("next");
+    if (next?.startsWith("/")) {
+      return NextResponse.redirect(new URL(next, request.url));
+    }
+
     return NextResponse.redirect(new URL("/", request.url));
   }
 

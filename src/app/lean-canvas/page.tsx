@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccessLockedCard } from "@/components/access-locked-card";
 import { Eyebrow, PageHero, Panel, PrimaryButton, ProgressBar, SecondaryButton } from "@/components/design-system";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
@@ -670,6 +671,34 @@ export default async function LeanCanvasPage({
   ]);
 
   const initialTab: "operating" | "business" = tab === "business" ? "business" : "operating";
+  const navItems = [
+    { href: "/",           label: "Dashboard" },
+    { href: "/program",    label: "Program" },
+    { href: "/ideas",      label: "Ideas" },
+    { href: "/lean-canvas", label: "Lean Canvas", active: true },
+    { href: "/metrics",    label: "Metrics" },
+    { href: "/account",    label: "Account" },
+  ];
+
+  if (!access.canAccessLeanCanvas) {
+    return (
+      <LearnerShell
+        items={navItems}
+        title="Lean Canvas"
+        subtitle="The operating and business model canvas for Calm Commerce OS."
+        contentWidth="1180px"
+      >
+        <AccessLockedCard
+          title="Lean Canvas locked"
+          body={
+            access.canUseScannerImport
+              ? "Your current access covers Scout research tools and saved ideas. Upgrade to Calm Commerce OS to turn those ideas into a full operating and business model canvas."
+              : "Upgrade to Calm Commerce OS to unlock the Lean Canvas, guided chapters, worksheets, and Metrics."
+          }
+        />
+      </LearnerShell>
+    );
+  }
 
   /* Aggregated counts */
   const operatingFilledCount = getOperatingFilledCount(responses);
@@ -716,14 +745,7 @@ export default async function LeanCanvasPage({
 
   return (
     <LearnerShell
-      items={[
-        { href: "/",           label: "Dashboard" },
-        { href: "/program",    label: "Program" },
-        { href: "/ideas",      label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas", active: true },
-        { href: "/metrics",    label: "Metrics" },
-        { href: "/account",    label: "Account" },
-      ]}
+      items={navItems}
       title="Lean Canvas"
       subtitle={
         initialTab === "operating"

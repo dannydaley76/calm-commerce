@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
 /* ── Validation helpers ── */
 
@@ -25,6 +26,10 @@ export async function GET() {
 
     if (!user || !learnerId || !projectId) {
       return NextResponse.json({ auth: false, entries: [] });
+    }
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canAccessMetrics) {
+      return NextResponse.json({ error: "Metrics are part of Calm Commerce OS access." }, { status: 403 });
     }
 
     const { data, error } = await supabase
@@ -128,6 +133,10 @@ export async function POST(req: Request) {
 
     if (!user || !learnerId || !projectId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canAccessMetrics) {
+      return NextResponse.json({ error: "Metrics are part of Calm Commerce OS access." }, { status: 403 });
     }
 
     /* ── Sanitise data_json: only known keys per phase, strings, capped length ── */

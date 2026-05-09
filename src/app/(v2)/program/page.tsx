@@ -59,16 +59,42 @@ export default async function ProgramPage() {
     progress.map((p) => [p.chapter_id, p]),
   );
 
+  const navItems = [
+    { href: "/",            label: "Dashboard" },
+    { href: "/program",     label: "Program", active: true },
+    { href: "/ideas",       label: "Ideas" },
+    { href: "/lean-canvas", label: "Lean Canvas" },
+    { href: "/metrics",     label: "Metrics" },
+    { href: "/account",     label: "Account" },
+  ];
+
+  if (!access.canAccessOsContent) {
+    return (
+      <LearnerShell
+        items={navItems}
+        title="Program"
+        subtitle="All chapters in sequence. Pick up where you left off or jump to any chapter."
+      >
+        <AccessLockedCard
+          title={
+            access.entitlementStatus === "expired" ||
+            access.entitlementStatus === "cancelled"
+              ? "Your Calm Commerce OS access is inactive"
+              : "Calm Commerce OS is locked"
+          }
+          body={
+            access.canUseScannerImport
+              ? "Your current access covers Scout research tools, not the full Calm Commerce OS programme. Upgrade to continue into chapters, worksheets, Lean Canvas, and Metrics."
+              : "Upgrade to unlock the full Calm Commerce OS programme, worksheets, Lean Canvas, and Metrics."
+          }
+        />
+      </LearnerShell>
+    );
+  }
+
   return (
     <LearnerShell
-      items={[
-        { href: "/",            label: "Dashboard" },
-        { href: "/program",     label: "Program", active: true },
-        { href: "/ideas",       label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics",     label: "Metrics" },
-        { href: "/account",     label: "Account" },
-      ]}
+      items={navItems}
       title="Program"
       subtitle="All chapters in sequence. Pick up where you left off or jump to any chapter."
     >

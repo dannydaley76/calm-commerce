@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,6 +29,10 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canAccessMetrics) {
+      return NextResponse.json({ error: "Metrics are part of Calm Commerce OS access." }, { status: 403 });
     }
 
     // Delete only if it belongs to this project (row-level ownership check)
@@ -70,6 +75,10 @@ export async function PATCH(req: Request, { params }: RouteContext) {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    const access = await getAccessStateForCurrentUser();
+    if (!access.canAccessMetrics) {
+      return NextResponse.json({ error: "Metrics are part of Calm Commerce OS access." }, { status: 403 });
     }
 
     // Fetch the existing entry to verify ownership and read entry_type.

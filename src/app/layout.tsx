@@ -82,8 +82,13 @@ const epilogue = Epilogue({
 });
 
 export const metadata: Metadata = {
-  title: "Calm Commerce OS",
-  description: "Method-inspired MVP for chapter-led digital product delivery.",
+  title: "Calm Commerce",
+  description: "Build a real online business, one chapter at a time.",
+  icons: {
+    icon: "/brand/logo-favicon.svg",
+    shortcut: "/brand/logo-favicon.svg",
+    apple: "/brand/logo-icon.svg",
+  },
 };
 
 export default function RootLayout({

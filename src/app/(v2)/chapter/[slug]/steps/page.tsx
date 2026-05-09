@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import { AccessLockedCard } from "@/components/access-locked-card";
 import { StepShell } from "../step-shell";
 import { LearnerShell } from "@/components/learner-shell";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { calmCommerceChapterContent } from "@/lib/v2/content";
 import { ContentBlockRenderer } from "@/components/v2/content-block-renderer";
 import { InlineWorksheetCard } from "@/components/v2/inline-worksheet-card";
@@ -53,6 +55,32 @@ export default async function ChapterStepsPage({
 
   const chapter = calmCommerceChapterContent[slug];
   if (!chapter) notFound();
+  const access = await getAccessStateForCurrentUser();
+
+  const navItems = [
+    { href: "/", label: "Dashboard" },
+    { href: "/program", label: "Program" },
+    { href: "/ideas", label: "Ideas" },
+    { href: "/lean-canvas", label: "Lean Canvas" },
+    { href: "/metrics", label: "Metrics" },
+    { href: "/account", label: "Account" },
+    { href: `/chapter/${slug}`, label: `Chapter ${chapter.chapter.number}`, active: true },
+  ];
+
+  if (!access.canAccessOsContent) {
+    return (
+      <LearnerShell items={navItems}>
+        <AccessLockedCard
+          title="Calm Commerce OS chapter locked"
+          body={
+            access.canUseScannerImport
+              ? "Your current access covers Scout research tools, not the full Calm Commerce OS chapters. Upgrade to continue the guided programme."
+              : "Upgrade to unlock the full Calm Commerce OS chapters, worksheets, Lean Canvas, and Metrics."
+          }
+        />
+      </LearnerShell>
+    );
+  }
 
   const currentIndex = step ? chapter.steps.findIndex((item) => item.id === step) : 0;
   const resolvedIndex = currentIndex >= 0 ? currentIndex : 0;
@@ -64,15 +92,7 @@ export default async function ChapterStepsPage({
 
   return (
     <LearnerShell
-      items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
-        { href: "/ideas", label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
-        { href: `/chapter/${slug}`, label: `Chapter ${chapter.chapter.number}`, active: true },
-      ]}
+      items={navItems}
     >
       <StepShell
         chapterTitle={chapter.chapter.title}

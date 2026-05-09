@@ -1,14 +1,14 @@
+import { AccessLockedCard } from "@/components/access-locked-card";
 import { LearnerShell } from "@/components/learner-shell";
-import { PageHero, SecondaryButton } from "@/components/design-system";
-import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
+import { getAccessStateForCurrentUser, type LearnerAccessState } from "@/lib/auth/get-access-state";
 import { ImportIdeaClient } from "./import-idea-client";
 
-async function isAuthenticated(): Promise<boolean> {
+async function getImportAccess(): Promise<LearnerAccessState | null> {
   try {
-    const { user, projectId } = await getActiveProjectForCurrentUser();
-    return !!user && !!projectId;
+    return await getAccessStateForCurrentUser();
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -17,10 +17,11 @@ export default async function ImportIdeaPage({
 }: {
   searchParams: Promise<{ payload?: string }>;
 }) {
-  const [{ payload }, authenticated] = await Promise.all([
+  const [{ payload }, access] = await Promise.all([
     searchParams,
-    isAuthenticated(),
+    getImportAccess(),
   ]);
+  const authenticated = !!access?.authenticated && !!access.projectId;
 
   return (
     <LearnerShell
@@ -40,8 +41,20 @@ export default async function ImportIdeaPage({
           title="Sign in to import this idea"
           description="Scanner research is saved to your Calm Commerce ideas, economics and notes once you review it."
         >
-          <SecondaryButton href="/login">Sign in</SecondaryButton>
+          <div className="flex flex-wrap gap-3">
+            <PrimaryButton href={`/login?next=${encodeURIComponent(`/ideas/import${payload ? `?payload=${payload}` : ""}`)}`}>
+              Sign in
+            </PrimaryButton>
+            <SecondaryButton href={`/signup?next=${encodeURIComponent(`/ideas/import${payload ? `?payload=${payload}` : ""}`)}`}>
+              Create account
+            </SecondaryButton>
+          </div>
         </PageHero>
+      ) : !access?.canUseScannerImport ? (
+        <AccessLockedCard
+          title="Scanner import locked"
+          body="Scout imports are available to Scout extension buyers, research workspace subscribers, and Calm Commerce OS users."
+        />
       ) : (
         <ImportIdeaClient payloadParam={payload} />
       )}

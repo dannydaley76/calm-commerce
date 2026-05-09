@@ -32,6 +32,8 @@ create table if not exists learner_entitlements (
   learner_id uuid not null references learners(id) on delete cascade,
   status text not null check (status in ('preview','active','expired','cancelled')),
   access_level text not null check (access_level in ('preview','full')),
+  product_code text not null default 'calm_commerce_os' check (product_code in ('scanner_extension','research_workspace','calm_commerce_os')),
+  billing_type text not null default 'preview' check (billing_type in ('one_time','subscription','bundled','preview')),
   starts_at timestamptz,
   ends_at timestamptz,
   provider text not null default 'stripe',

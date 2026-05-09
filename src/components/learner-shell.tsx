@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
+import { CalmCommerceLogo } from "@/components/calm-commerce-logo";
 
 export type LearnerNavItem = {
   href: string;
@@ -29,8 +30,8 @@ export function LearnerShell({ children, items, title, subtitle, showLogout = tr
       <header className="sticky top-0 z-40 bg-[rgba(234,241,245,0.95)]">
         {/* Site chrome is intentionally panoramic (1280) so it always frames page content. Pages use narrower widths: Lean Canvas 1180, all other pages 1000. Don't match the nav width to a page width — the chrome-vs-content stagger is the design. */}
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-8 py-[14px]">
-          <Link href="/" className="font-[Manrope] text-[15px] font-semibold text-[#545a95]">
-            Calm Commerce
+          <Link href="/" aria-label="Calm Commerce — home">
+            <CalmCommerceLogo variant="horizontal" size={36} />
           </Link>
 
           <div className="flex items-center gap-4 lg:gap-6">

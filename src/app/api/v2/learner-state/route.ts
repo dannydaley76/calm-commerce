@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
 type LastLocationType = "chapter" | "worksheet" | "completion";
 
@@ -17,10 +18,29 @@ export async function GET() {
         resume: null,
       });
     }
+    const access = await getAccessStateForCurrentUser();
 
     const [{ data: responses, error: responsesError }, { data: resume, error: resumeError }] = await Promise.all([
       // Load ALL worksheet responses for this project (across all chapters)
-      supabase.from("worksheet_responses").select("worksheet_id, field_key, value_json").eq("project_id", projectId),
+      supabase
+        .from("worksheet_responses")
+        .select("worksheet_id, field_key, value_json")
+        .eq("project_id", projectId)
+        .in("worksheet_id", access.canAccessOsContent ? [
+          "ideas-worksheet",
+          "unit-economics-worksheet",
+          "pre-store-test-worksheet",
+          "customer-profile-worksheet",
+          "offer-worksheet",
+          "product-listing-worksheet",
+          "traffic-plan-worksheet",
+          "ad-test-worksheet",
+          "email-retention-worksheet",
+          "iteration-decision-worksheet",
+          "growth-strategy-worksheet",
+          "sourcing-model-sheet",
+          "founder-rules-sheet",
+        ] : ["ideas-worksheet"]),
       supabase.from("project_resume_state").select("*").eq("project_id", projectId).maybeSingle(),
     ]);
 
@@ -90,6 +110,16 @@ export async function POST(req: Request) {
     }
 
     const worksheetId = body.worksheetId ?? "founder-rules-sheet";
+    const access = await getAccessStateForCurrentUser();
+    const canWriteWorksheet =
+      access.canAccessOsContent ||
+      (access.canUseScannerImport && worksheetId === "ideas-worksheet");
+    if (!canWriteWorksheet) {
+      return NextResponse.json(
+        { error: "This worksheet is part of Calm Commerce OS access." },
+        { status: 403 },
+      );
+    }
     const incomingResponses = body.responses ?? {};
 
     const entries = Object.entries(incomingResponses)

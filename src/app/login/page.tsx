@@ -33,11 +33,14 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [canResendConfirmation, setCanResendConfirmation] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [nextDestination, setNextDestination] = useState("/");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
     const error = params.get("error");
+    setNextDestination(next?.startsWith("/") ? next : "/");
     if (error) {
       setErrorMessage(normalizeAuthError(error));
       setMessage("");
@@ -68,7 +71,7 @@ export default function LoginPage() {
       }
 
       setMessage("Signed in successfully. Redirecting...");
-      router.replace("/");
+      router.replace(nextDestination);
       router.refresh();
     } catch (error) {
       const resolved = error instanceof Error ? error.message : "Unable to sign in.";
@@ -146,11 +149,14 @@ export default function LoginPage() {
 
         <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
           <p className="font-semibold">What happens after sign-in?</p>
-          <p className="mt-2 leading-6">You’ll return to your learner dashboard, where you can continue Chapter 3, resume unfinished worksheet work, or open your Lean Canvas.</p>
+          <p className="mt-2 leading-6">You’ll return to the page you were trying to open, or your learner dashboard if you started here directly.</p>
         </div>
 
         <div className="mt-5 flex flex-col gap-2 text-sm">
-          <Link href="/signup" className="text-cobalt-600 hover:underline">
+          <Link
+            href={`/signup?next=${encodeURIComponent(nextDestination)}`}
+            className="text-cobalt-600 hover:underline"
+          >
             Create account
           </Link>
           <Link href="/forgot-password" className="text-cobalt-600 hover:underline">

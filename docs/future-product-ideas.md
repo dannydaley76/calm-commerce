@@ -30,6 +30,17 @@ The OS should receive scanned/researched products through a review-first import 
 
 See `docs/scanner-research-os-architecture.md` for payload shape, field mapping, and implementation phases.
 
+### Scanner Title Normalisation
+
+Imported scanner titles can be long marketplace descriptions rather than usable product names. Add an MCP/API endpoint that accepts the raw title, page metadata, source URL, and optional image context, then returns:
+
+- A short product name for cards and tables.
+- A fuller cleaned description for evidence/detail pages.
+- Important attributes worth preserving, such as pack size, material, variant, or use case.
+- Confidence plus the original raw title for auditability.
+
+The OS should keep the raw marketplace title, but display the short name by default. The import review screen should let the user accept or edit the suggested name before saving.
+
 ### Idea Pipeline
 
 Treat each Chapter 3 product idea as a durable candidate that can move through the whole Calm Commerce OS.
@@ -80,6 +91,20 @@ Possible first version:
 - Offer, store, listing, and acquisition decisions from later chapters.
 - Metrics tied to the product once live.
 - Decision log: continue, improve, pause, retire, or revisit.
+
+### Research Score History
+
+The current scanner import stores the latest product score snapshot directly on the idea row so the Ideas index can show a sortable score quickly. A richer future version should preserve multiple research snapshots per idea instead of overwriting or flattening the scan.
+
+Useful future shape:
+
+- Multiple scans per idea, including AliExpress supplier pages, Amazon competitor pages, Shopify stores, and generic product pages.
+- Score, verdict, confidence, demand score, competition score, price signal, trend signal, missing signals, and risk flags for each scan.
+- Source URL, source label, product image, scanned date, and notes for auditability.
+- A comparison view showing whether the idea is getting stronger, weaker, or simply better understood over time.
+- A way to mark one scan as the current reference supplier or current reference competitor.
+
+This should eventually move into a dedicated research snapshot structure or table. The Ideas index can continue to show the latest/current score, while the idea detail page shows the evidence trail behind that score.
 
 Possible UI locations:
 
