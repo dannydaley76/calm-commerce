@@ -227,7 +227,6 @@ function parseWorkspaceStatus(value: string | undefined): ProductIdeaWorkspaceSt
 function deriveWorkspaceStatus({
   idea,
   lifecycleStatus,
-  scannerScore,
 }: {
   idea: ProductIdeaRow;
   lifecycleStatus: ProductIdeaLifecycleStatus;
@@ -246,7 +245,6 @@ function deriveWorkspaceStatus({
     return "testing";
   }
   if (lifecycleStatus === "pivot") return "archived";
-  if (scannerScore !== null && scannerScore >= 70) return "shortlist";
   return "new";
 }
 

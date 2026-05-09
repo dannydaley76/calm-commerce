@@ -299,7 +299,7 @@ export function IdeasIndexClient({
 }) {
   const [localIdeas, setLocalIdeas] = useState(ideas);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<ViewFilter>("open");
+  const [view, setView] = useState<ViewFilter>("new");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

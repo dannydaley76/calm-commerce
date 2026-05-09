@@ -5,7 +5,6 @@ import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   getProductIdeaLifecycles,
   type ProductIdeaLifecycle,
-  type ProductIdeaLifecycleStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 import { IdeasIndexClient } from "./ideas-index-client";
 
@@ -73,78 +72,6 @@ async function getIdeaData(): Promise<{
   }
 }
 
-function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
-  if (status === "proceed") return "bg-success-100 text-[#005e3f]";
-  if (status === "pivot" || status === "retest") return "bg-[#fff8e6] text-[#835700]";
-  if (status === "test_running" || status === "test_reviewed" || status === "test_planned") {
-    return "bg-[#eef4ff] text-cobalt-600";
-  }
-  return "bg-surface-sunken text-ink-500";
-}
-
-function ideaDetailHref(idea: ProductIdeaLifecycle): string {
-  return `/ideas/${encodeURIComponent(idea.ideaId)}`;
-}
-
-function ideaPrimaryActionHref(idea: ProductIdeaLifecycle): string {
-  return idea.nextAction.label === "Define customer"
-    ? idea.nextAction.href
-    : ideaDetailHref(idea);
-}
-
-function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
-  const priority: Record<ProductIdeaLifecycleStatus, number> = {
-    test_reviewed: 1,
-    test_running: 2,
-    test_planned: 3,
-    proceed: 4,
-    selected: 5,
-    retest: 6,
-    economics_checked: 7,
-    draft: 8,
-    pivot: 9,
-  };
-  return priority[status];
-}
-
-function nextIdea(ideas: ProductIdeaLifecycle[]): ProductIdeaLifecycle | null {
-  return [...ideas].sort((a, b) => ideaActionPriority(a.status) - ideaActionPriority(b.status))[0] ?? null;
-}
-
-function DetailRow({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm leading-6 text-ink-800">{value}</dd>
-    </div>
-  );
-}
-
-function IdeaTimeline({ idea }: { idea: ProductIdeaLifecycle }) {
-  return (
-    <ol className="mt-6 space-y-3 border-l border-ink-100 pl-4">
-      {idea.timeline.map((event) => (
-        <li key={event.key} className="relative">
-          <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
-            <a
-              href={event.href}
-              className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
-            >
-              {event.chapter}
-            </a>
-          </div>
-          <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 function EmptyIdeas() {
   return (
     <section className="rounded-xl border border-dashed border-ink-100 bg-surface-raised p-8">
@@ -189,75 +116,20 @@ function importNotice(importStatus?: string, importError?: string) {
     scout_save_limit: "Your free Workspace saves are used up. Upgrade to save more product ideas.",
     failed: "The Scout capture could not be saved. Try again from the extension.",
   };
+  if (importError === "scout_save_limit") {
+    return {
+      title: "Workspace limit reached",
+      body: messages.scout_save_limit,
+      tone: "error",
+      cta: "Upgrade Scout",
+    };
+  }
   return {
     title: "Scout import did not save",
     body: messages[importError] ?? messages.failed,
     tone: "error",
     cta: importError === "scout_save_limit" ? "Upgrade Scout" : null,
   };
-}
-
-function IdeaCard({ idea }: { idea: ProductIdeaLifecycle }) {
-  return (
-    <article className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <a
-            href={ideaDetailHref(idea)}
-            className="font-[Manrope] text-lg font-bold text-ink-900 underline-offset-4 hover:text-cobalt-600 hover:underline"
-          >
-            {idea.label}
-          </a>
-          <p className="mt-2 text-sm leading-6 text-ink-600">
-            {idea.latestSignal}
-          </p>
-        </div>
-        <span className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(idea.status)}`}>
-          {idea.statusLabel}
-        </span>
-      </div>
-
-      <dl className="mt-6 grid gap-5 md:grid-cols-2">
-        <DetailRow label="Demand evidence" value={idea.demandEvidence} />
-        <DetailRow label="Competition notes" value={idea.competitionNotes} />
-        <DetailRow label="Seasonality" value={idea.seasonality} />
-        <DetailRow label="Economics decision" value={idea.economicsDecision} />
-        <DetailRow label="Test marketplace" value={idea.testMarketplace} />
-        <DetailRow label="Test result" value={idea.testResult} />
-        <DetailRow label="Units sold" value={idea.unitsSold} />
-        <DetailRow label="Test learning" value={idea.testLearning} />
-        <DetailRow label="Test decision" value={idea.testDecision} />
-        <DetailRow
-          label="Metric entries"
-          value={idea.metricEntries.length > 0 ? String(idea.metricEntries.length) : null}
-        />
-      </dl>
-
-      <IdeaTimeline idea={idea} />
-
-      <div className="mt-6 rounded-lg border border-cobalt-100 bg-cobalt-100/50 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">
-              Next best action
-            </p>
-            <p className="mt-1 text-sm leading-6 text-ink-700">
-              {idea.nextAction.note}
-            </p>
-          </div>
-          <PrimaryButton href={ideaPrimaryActionHref(idea)} className="shrink-0">
-            {idea.nextAction.label}
-          </PrimaryButton>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <SecondaryButton href={ideaDetailHref(idea)} className="px-4 py-2">
-          Open detail
-        </SecondaryButton>
-      </div>
-    </article>
-  );
 }
 
 export default async function IdeasPage({
@@ -267,20 +139,24 @@ export default async function IdeasPage({
 }) {
   const params = await searchParams;
   const data = await getIdeaData();
-  const actionIdea = data.authenticated ? nextIdea(data.ideas) : null;
   const notice = importNotice(params?.importStatus, params?.importError);
+  const navItems = data.canAccessOsContent
+    ? [
+      { href: "/",            label: "Dashboard" },
+      { href: "/program",     label: "Program" },
+      { href: "/ideas",       label: "Ideas", active: true },
+      { href: "/lean-canvas", label: "Lean Canvas" },
+      { href: "/metrics",     label: "Metrics" },
+      { href: "/account",     label: "Account" },
+    ]
+    : [
+      { href: "/ideas",   label: "Scout Workspace", active: true },
+      { href: "/account", label: "Account" },
+    ];
 
   return (
     <LearnerShell
-      items={[
-        { href: "/",            label: "Dashboard" },
-        { href: "/program",     label: "Program" },
-        { href: "/ideas",       label: "Ideas", active: true },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics",     label: "Metrics" },
-        { href: "/account",     label: "Account" },
-      ]}
-      title="Ideas"
+      items={navItems}
       showLogout={data.authenticated}
     >
       <div className="space-y-5">
@@ -297,27 +173,18 @@ export default async function IdeasPage({
                 Review captured products, sort by signal strength, build a shortlist, and archive the noise.
               </p>
             </div>
-          <div className="flex flex-wrap gap-3">
-            {!data.authenticated ? (
-              <PrimaryButton href="/login?next=/ideas">
-                Sign in to view ideas
-              </PrimaryButton>
-            ) : actionIdea ? (
-              <PrimaryButton href={ideaDetailHref(actionIdea)}>
-                Open priority idea
-              </PrimaryButton>
-            ) : null}
-            {data.authenticated ? (
-              <SecondaryButton href="/scout">
-                Get Scout extension
-              </SecondaryButton>
-            ) : null}
-            {data.authenticated && data.canAccessOsContent ? (
-              <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">
-                {data.ideas.length > 0 ? "Add another idea" : "Add first idea"}
-              </SecondaryButton>
-            ) : null}
-          </div>
+            <div className="flex flex-wrap gap-3">
+              {!data.authenticated ? (
+                <PrimaryButton href="/login?next=/ideas">
+                  Sign in to view ideas
+                </PrimaryButton>
+              ) : null}
+              {data.authenticated && data.canAccessOsContent ? (
+                <SecondaryButton href="/chapter/brainstorm-with-discipline/steps?step=chapter-3-step-4-score-and-shortlist">
+                  {data.ideas.length > 0 ? "Add another idea" : "Add first idea"}
+                </SecondaryButton>
+              ) : null}
+            </div>
           </div>
         </section>
 
@@ -326,19 +193,29 @@ export default async function IdeasPage({
             className={[
               "rounded-xl border px-5 py-4 text-sm leading-6 shadow-card",
               notice.tone === "error"
-                ? "border-error-100 bg-error-100 text-error-700 ring-2 ring-error-100"
+                ? "border-2 border-error-700 bg-error-100 text-error-700 ring-2 ring-error-100"
                 : "border-success-100 bg-success-100 text-[#005e3f]",
             ].join(" ")}
           >
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex min-w-0 gap-3">
+                {notice.tone === "error" ? (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-error-700 shadow-sm">
+                    !
+                  </span>
+                ) : null}
+                <div className="min-w-0">
                 <h2 className="font-[Manrope] text-lg font-bold">{notice.title}</h2>
                 <p className="mt-1">{notice.body}</p>
+                </div>
               </div>
               {notice.cta ? (
-                <PrimaryButton href="/upgrade?plan=scout_basic">
+                <a
+                  href="/upgrade?plan=scout_basic"
+                  className="inline-flex items-center justify-center rounded-lg bg-error-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-error-700/90"
+                >
                   {notice.cta}
-                </PrimaryButton>
+                </a>
               ) : null}
             </div>
           </section>
