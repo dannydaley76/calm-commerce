@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { LearnerShell } from "@/components/learner-shell";
 import { BILLING_PLANS } from "@/lib/billing/products";
+import { CheckoutAutostart } from "./checkout-autostart";
 
 const PLAN_ORDER = ["scout_basic", "scout_pro", "calm_commerce_os"] as const;
 
-export default function UpgradePage() {
+export default async function UpgradePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ plan?: string }>;
+}) {
+  const selectedPlan = (await searchParams)?.plan;
+
   return (
     <LearnerShell
       items={[
@@ -18,6 +25,7 @@ export default function UpgradePage() {
       title="Upgrade"
       subtitle="Choose the product research or operating system tier that fits where you are."
     >
+      <CheckoutAutostart plan={selectedPlan} />
       <div className="space-y-8">
         <div className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Scout to OS</p>
