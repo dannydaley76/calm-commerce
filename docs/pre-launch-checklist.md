@@ -40,6 +40,10 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Scout Workspace And Extension
 
+- [ ] Use the standalone Scout extension repo as the only extension source.
+  - Canonical local path: `/Users/admin/winning-product-scanner`.
+  - Chrome should load the unpacked extension from that folder.
+  - Do not maintain or test an embedded `extension/` copy inside the OS repo.
 - [ ] Test public install-first Scout journey.
   - User lands on `/scout`.
   - User clicks to install the Chrome extension.
