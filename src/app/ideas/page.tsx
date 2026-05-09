@@ -225,12 +225,9 @@ export default async function IdeasPage({
                 </div>
               </div>
               {notice.cta ? (
-                <a
-                  href="/upgrade?plan=scout_basic"
-                  className="inline-flex items-center justify-center rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-ink-300 focus:ring-offset-2 focus:ring-offset-error-100"
-                >
+                <PrimaryButton href="/upgrade?plan=scout_basic">
                   {notice.cta}
-                </a>
+                </PrimaryButton>
               ) : null}
             </div>
           </section>
