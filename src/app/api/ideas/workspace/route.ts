@@ -24,10 +24,9 @@ type UpsertRow = {
 type Action = "set_status" | "archive" | "restore" | "delete";
 
 const WORKSPACE_STATUSES = new Set<ProductIdeaWorkspaceStatus>([
-  "captured",
+  "new",
   "reviewing",
-  "promising",
-  "rejected",
+  "shortlist",
   "testing",
   "archived",
 ]);
@@ -154,7 +153,7 @@ export async function POST(request: Request) {
       const nextIdeas = productIdeas.map((idea, index) => {
         if (index !== targetIndex) return idea;
         const nextStatus: ProductIdeaWorkspaceStatus =
-          action === "archive" ? "archived" : action === "restore" ? "captured" : body.status ?? "captured";
+          action === "archive" ? "archived" : action === "restore" ? "new" : body.status ?? "new";
         return {
           ...idea,
           scout_workspace_status: nextStatus,

@@ -18,10 +18,9 @@ export type ProductIdeaLifecycleStatus =
   | "pivot";
 
 export type ProductIdeaWorkspaceStatus =
-  | "captured"
+  | "new"
   | "reviewing"
-  | "promising"
-  | "rejected"
+  | "shortlist"
   | "testing"
   | "archived";
 
@@ -195,14 +194,12 @@ function statusLabel(status: ProductIdeaLifecycleStatus): string {
 
 function workspaceStatusLabel(status: ProductIdeaWorkspaceStatus): string {
   switch (status) {
-    case "captured":
-      return "Captured";
+    case "new":
+      return "New";
     case "reviewing":
       return "Reviewing";
-    case "promising":
-      return "Promising";
-    case "rejected":
-      return "Rejected";
+    case "shortlist":
+      return "Shortlist";
     case "testing":
       return "Testing";
     case "archived":
@@ -212,11 +209,13 @@ function workspaceStatusLabel(status: ProductIdeaWorkspaceStatus): string {
 
 function parseWorkspaceStatus(value: string | undefined): ProductIdeaWorkspaceStatus | null {
   const normalised = normalize(value);
+  if (normalised === "captured") return "new";
+  if (normalised === "promising") return "shortlist";
+  if (normalised === "rejected") return "archived";
   if (
-    normalised === "captured" ||
+    normalised === "new" ||
     normalised === "reviewing" ||
-    normalised === "promising" ||
-    normalised === "rejected" ||
+    normalised === "shortlist" ||
     normalised === "testing" ||
     normalised === "archived"
   ) {
@@ -246,9 +245,9 @@ function deriveWorkspaceStatus({
   ) {
     return "testing";
   }
-  if (lifecycleStatus === "pivot") return "rejected";
-  if (scannerScore !== null && scannerScore >= 70) return "promising";
-  return "captured";
+  if (lifecycleStatus === "pivot") return "archived";
+  if (scannerScore !== null && scannerScore >= 70) return "shortlist";
+  return "new";
 }
 
 function findEconomicsForIdea(

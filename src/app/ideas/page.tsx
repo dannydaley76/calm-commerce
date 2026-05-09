@@ -155,7 +155,7 @@ function EmptyIdeas() {
         No products captured yet
       </h2>
       <p className="mt-3 max-w-[620px] text-sm leading-7 text-ink-600">
-        Scan products with Scout or add ideas from the OS. This workspace is where captured products become a shortlist you can review, reject, test, or move into Calm Commerce.
+        Scan products with Scout. This workspace is where new products become a shortlist you can review, test, or archive.
       </p>
       <div className="mt-5">
         <SecondaryButton href="/scout">
@@ -294,7 +294,7 @@ export default async function IdeasPage({
                 Scout Workspace
               </h1>
               <p className="mt-1 max-w-[720px] text-sm leading-6 text-ink-600">
-                Review captured products, sort by signal strength, keep the promising ones visible, and clear out the noise.
+                Review captured products, sort by signal strength, build a shortlist, and archive the noise.
               </p>
             </div>
           <div className="flex flex-wrap gap-3">

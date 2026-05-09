@@ -10,22 +10,22 @@ import {
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 
 type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "metrics";
-type ViewFilter = "active" | "promising" | "reviewing" | "rejected" | "archived" | "all";
+type ViewFilter = "open" | "new" | "shortlist" | "reviewing" | "testing" | "archived" | "all";
 
 const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label: string }> = [
-  { value: "captured", label: "Captured" },
+  { value: "new", label: "New" },
   { value: "reviewing", label: "Reviewing" },
-  { value: "promising", label: "Promising" },
-  { value: "rejected", label: "Rejected" },
+  { value: "shortlist", label: "Shortlist" },
   { value: "testing", label: "Testing" },
   { value: "archived", label: "Archived" },
 ];
 
 const VIEW_FILTERS: Array<{ value: ViewFilter; label: string }> = [
-  { value: "active", label: "Active" },
-  { value: "promising", label: "Promising" },
+  { value: "open", label: "Open" },
+  { value: "new", label: "New" },
+  { value: "shortlist", label: "Shortlist" },
   { value: "reviewing", label: "Reviewing" },
-  { value: "rejected", label: "Rejected" },
+  { value: "testing", label: "Testing" },
   { value: "archived", label: "Archived" },
   { value: "all", label: "All" },
 ];
@@ -40,9 +40,8 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
 }
 
 function workspaceTone(status: ProductIdeaWorkspaceStatus): string {
-  if (status === "promising") return "bg-success-100 text-[#005e3f]";
+  if (status === "shortlist") return "bg-success-100 text-[#005e3f]";
   if (status === "reviewing" || status === "testing") return "bg-[#eef4ff] text-cobalt-600";
-  if (status === "rejected") return "bg-error-100 text-error-700";
   if (status === "archived") return "bg-surface-sunken text-ink-500";
   return "bg-surface-sunken text-ink-700";
 }
@@ -300,7 +299,7 @@ export function IdeasIndexClient({
 }) {
   const [localIdeas, setLocalIdeas] = useState(ideas);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<ViewFilter>("active");
+  const [view, setView] = useState<ViewFilter>("open");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -310,7 +309,7 @@ export function IdeasIndexClient({
     const filtered = localIdeas.filter((idea) => {
       const matchesView =
         view === "all" ||
-        (view === "active" && idea.workspaceStatus !== "archived" && idea.workspaceStatus !== "rejected") ||
+        (view === "open" && idea.workspaceStatus !== "archived") ||
         idea.workspaceStatus === view;
       const matchesQuery = !normalizedQuery || [
         idea.label,
@@ -327,10 +326,11 @@ export function IdeasIndexClient({
 
   const counts = useMemo(() => ({
     all: localIdeas.length,
-    active: localIdeas.filter((idea) => idea.workspaceStatus !== "archived" && idea.workspaceStatus !== "rejected").length,
-    promising: localIdeas.filter((idea) => idea.workspaceStatus === "promising").length,
+    open: localIdeas.filter((idea) => idea.workspaceStatus !== "archived").length,
+    new: localIdeas.filter((idea) => idea.workspaceStatus === "new").length,
+    shortlist: localIdeas.filter((idea) => idea.workspaceStatus === "shortlist").length,
     reviewing: localIdeas.filter((idea) => idea.workspaceStatus === "reviewing").length,
-    rejected: localIdeas.filter((idea) => idea.workspaceStatus === "rejected").length,
+    testing: localIdeas.filter((idea) => idea.workspaceStatus === "testing").length,
     archived: localIdeas.filter((idea) => idea.workspaceStatus === "archived").length,
   }), [localIdeas]);
 
@@ -346,7 +346,7 @@ export function IdeasIndexClient({
       if (action === "delete") {
         setLocalIdeas((current) => current.filter((item) => item.ideaId !== idea.ideaId));
       } else {
-        const nextStatus = action === "archive" ? "archived" : action === "restore" ? "captured" : status ?? idea.workspaceStatus;
+        const nextStatus = action === "archive" ? "archived" : action === "restore" ? "new" : status ?? idea.workspaceStatus;
         const nextLabel = WORKSPACE_STATUS_OPTIONS.find((item) => item.value === nextStatus)?.label ?? idea.workspaceStatusLabel;
         setLocalIdeas((current) => current.map((item) => (
           item.ideaId === idea.ideaId
