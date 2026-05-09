@@ -1,4 +1,3 @@
-import { LearnerShell } from "@/components/learner-shell";
 import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { CaptureIdeaClient } from "./capture-idea-client";
@@ -15,17 +14,8 @@ export default async function CaptureIdeaPage({
   const nextPath = `/ideas/capture${payload ? `?payload=${encodeURIComponent(payload)}` : ""}`;
 
   return (
-    <LearnerShell
-      items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
-        { href: "/ideas", label: "Ideas", active: true },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
-      ]}
-      title="Ideas"
-    >
+    <main className="min-h-screen bg-surface-canvas px-6 py-12 text-ink-900 lg:px-8">
+      <div className="mx-auto max-w-2xl">
       {!access.authenticated ? (
         <PageHero
           label="Scout capture"
@@ -44,6 +34,7 @@ export default async function CaptureIdeaPage({
       ) : (
         <CaptureIdeaClient payloadParam={payload} />
       )}
-    </LearnerShell>
+      </div>
+    </main>
   );
 }
