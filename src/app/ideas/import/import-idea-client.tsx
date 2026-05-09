@@ -12,6 +12,7 @@ import {
 
 type ImportIdeaClientProps = {
   payloadParam?: string;
+  limitMessage?: string;
 };
 
 type DuplicateImport = {
@@ -215,7 +216,7 @@ function FieldSection({
   );
 }
 
-export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
+export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClientProps) {
   const router = useRouter();
   const payloadResult = useMemo(() => parseScannerImportPayloadParamDetailed(payloadParam), [payloadParam]);
   const parsedPayload = payloadResult.ok ? payloadResult.payload : null;
@@ -247,6 +248,7 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
       });
       const result = (await response.json().catch(() => ({}))) as {
         error?: string;
+        limitMessage?: string;
         ideaHref?: string;
         ideaId?: string;
         ideaTitle?: string;
@@ -264,7 +266,7 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
       }
 
       if (!response.ok || !result.ideaHref) {
-        throw new Error(result.error || "Unable to import this idea.");
+        throw new Error(result.limitMessage || result.error || "Unable to import this idea.");
       }
 
       router.push(result.ideaHref);
@@ -293,6 +295,11 @@ export function ImportIdeaClient({ payloadParam }: ImportIdeaClientProps) {
         {!payloadResult.ok ? (
           <p className="mt-4 max-w-[640px] text-xs leading-5 text-error-700">
             {payloadResult.message}
+          </p>
+        ) : null}
+        {limitMessage ? (
+          <p className="mt-4 max-w-[640px] rounded-lg bg-surface-sunken px-3 py-2 text-xs leading-5 text-ink-600">
+            {limitMessage}
           </p>
         ) : null}
       </PageHero>

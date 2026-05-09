@@ -2,11 +2,33 @@ import { AccessLockedCard } from "@/components/access-locked-card";
 import { LearnerShell } from "@/components/learner-shell";
 import { PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { getAccessStateForCurrentUser, type LearnerAccessState } from "@/lib/auth/get-access-state";
+import { scoutLimitMessage } from "@/lib/scout-workspace-limits";
+import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { ImportIdeaClient } from "./import-idea-client";
 
-async function getImportAccess(): Promise<LearnerAccessState | null> {
+async function getImportAccess(): Promise<{ access: LearnerAccessState; savedCount: number } | null> {
   try {
-    return await getAccessStateForCurrentUser();
+    const access = await getAccessStateForCurrentUser();
+    if (!access.authenticated || !access.projectId) return { access, savedCount: 0 };
+
+    const { supabase, projectId } = await getActiveProjectForCurrentUser();
+    const { data } = await supabase
+      .from("worksheet_responses")
+      .select("value_json")
+      .eq("project_id", projectId)
+      .eq("worksheet_id", "ideas-worksheet")
+      .eq("field_key", "product_ideas")
+      .maybeSingle();
+    const rawValue = typeof data?.value_json === "string" ? data.value_json : String(data?.value_json ?? "");
+    let savedCount = 0;
+    try {
+      const parsed = JSON.parse(rawValue);
+      savedCount = Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      savedCount = 0;
+    }
+
+    return { access, savedCount };
   } catch {
     return null;
   }
@@ -17,10 +39,12 @@ export default async function ImportIdeaPage({
 }: {
   searchParams: Promise<{ payload?: string }>;
 }) {
-  const [{ payload }, access] = await Promise.all([
+  const [{ payload }, importAccess] = await Promise.all([
     searchParams,
     getImportAccess(),
   ]);
+  const access = importAccess?.access ?? null;
+  const savedCount = importAccess?.savedCount ?? 0;
   const authenticated = !!access?.authenticated && !!access.projectId;
 
   return (
@@ -50,13 +74,13 @@ export default async function ImportIdeaPage({
             </SecondaryButton>
           </div>
         </PageHero>
-      ) : !access?.canUseScannerImport ? (
-        <AccessLockedCard
-          title="Scanner import locked"
-          body="Scout imports are available to Scout extension buyers, research workspace subscribers, and Calm Commerce OS users."
+      ) : access ? (
+        <ImportIdeaClient
+          payloadParam={payload}
+          limitMessage={scoutLimitMessage(savedCount, access)}
         />
       ) : (
-        <ImportIdeaClient payloadParam={payload} />
+        <AccessLockedCard title="Scout import unavailable" body="We could not load your Scout Workspace access. Try refreshing, or sign in again." />
       )}
     </LearnerShell>
   );

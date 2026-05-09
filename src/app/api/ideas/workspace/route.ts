@@ -69,9 +69,9 @@ export async function POST(request: Request) {
     }
 
     const access = await getAccessStateForCurrentUser();
-    if (!access.canUseScannerImport) {
+    if (!access.authenticated) {
       return NextResponse.json(
-        { error: "Scout Workspace requires scanner, research workspace, or Calm Commerce OS access." },
+        { error: "Sign in to use Scout Workspace." },
         { status: 403 },
       );
     }

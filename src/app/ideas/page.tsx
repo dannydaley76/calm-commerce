@@ -262,7 +262,7 @@ export default async function IdeasPage() {
                 Open priority idea
               </PrimaryButton>
             ) : null}
-            {data.authenticated && data.canUseScannerImport ? (
+            {data.authenticated ? (
               <SecondaryButton href="/ideas/import">
                 Import from Scout
               </SecondaryButton>

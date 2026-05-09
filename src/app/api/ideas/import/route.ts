@@ -9,6 +9,7 @@ import {
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
 import { getProductIdeaId } from "@/lib/v2/worksheets/product-idea-identity";
+import { canSaveMoreScoutProducts, scoutLimitMessage } from "@/lib/scout-workspace-limits";
 
 type WorksheetRow = {
   worksheet_id: string;
@@ -101,13 +102,6 @@ export async function POST(req: Request) {
     }
 
     const access = await getAccessStateForCurrentUser();
-    if (!access.canUseScannerImport) {
-      return NextResponse.json(
-        { error: "Scout imports require scanner, research workspace, or Calm Commerce OS access." },
-        { status: 403 },
-      );
-    }
-
     const normalizedPayload = normalizeScannerImportPayload(body.payload);
     const validation = validateScannerImportPayload(normalizedPayload);
     if (!validation.ok) {
@@ -153,6 +147,17 @@ export async function POST(req: Request) {
           ideaTitle: duplicateIdea?.idea_description ?? title,
         },
         { status: 409 },
+      );
+    }
+
+    if (!isUpdatingDuplicate && !canSaveMoreScoutProducts(productIdeas.length, access)) {
+      return NextResponse.json(
+        {
+          error: "You have reached your Scout Workspace save limit.",
+          code: "scout_save_limit",
+          limitMessage: scoutLimitMessage(productIdeas.length, access),
+        },
+        { status: 402 },
       );
     }
 
