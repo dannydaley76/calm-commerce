@@ -227,8 +227,7 @@ export default async function IdeasPage({
               {notice.cta ? (
                 <a
                   href="/upgrade?plan=scout_basic"
-                  className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
-                  style={{ backgroundColor: "var(--error-700)" }}
+                  className="inline-flex items-center justify-center rounded-lg bg-ink-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-ink-300 focus:ring-offset-2 focus:ring-offset-error-100"
                 >
                   {notice.cta}
                 </a>
