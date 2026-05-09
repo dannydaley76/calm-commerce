@@ -11,6 +11,7 @@ export default async function UpgradePage({
   searchParams?: Promise<{ plan?: string }>;
 }) {
   const selectedPlan = (await searchParams)?.plan;
+  const checkoutPlan = selectedPlan === "calm_commerce_os" ? undefined : selectedPlan;
 
   return (
     <LearnerShell
@@ -25,7 +26,7 @@ export default async function UpgradePage({
       title="Upgrade"
       subtitle="Choose the product research or operating system tier that fits where you are."
     >
-      <CheckoutAutostart plan={selectedPlan} />
+      <CheckoutAutostart plan={checkoutPlan} />
       <div className="space-y-8">
         <div className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Scout to OS</p>
@@ -38,6 +39,7 @@ export default async function UpgradePage({
         <div className="grid gap-5 lg:grid-cols-3">
           {PLAN_ORDER.map((planCode) => {
             const plan = BILLING_PLANS[planCode];
+            const comingSoon = plan.code === "calm_commerce_os";
             return (
               <article key={plan.code} className="flex rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
                 <div className="flex min-h-full flex-col">
@@ -59,12 +61,22 @@ export default async function UpgradePage({
                     ))}
                   </ul>
 
-                  <form action="/api/billing/create-checkout-session" method="post" className="mt-auto pt-6">
-                    <input type="hidden" name="plan" value={plan.code} />
-                    <button className="inline-flex w-full items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white transition hover:bg-cobalt-700">
-                      {plan.cta}
+                  {comingSoon ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-auto inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-ink-100 bg-surface-sunken px-5 py-3 font-semibold text-ink-500"
+                    >
+                      Coming soon
                     </button>
-                  </form>
+                  ) : (
+                    <form action="/api/billing/create-checkout-session" method="post" className="mt-auto pt-6">
+                      <input type="hidden" name="plan" value={plan.code} />
+                      <button className="inline-flex w-full items-center justify-center rounded-xl bg-cobalt-600 px-5 py-3 font-semibold !text-white transition hover:bg-cobalt-700">
+                        {plan.cta}
+                      </button>
+                    </form>
+                  )}
                 </div>
               </article>
             );
