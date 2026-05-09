@@ -36,6 +36,7 @@
         "https://www.ebay.com/*",
         "https://www.amazon.co.uk/*",
         "https://www.amazon.com/*",
+        "https://www.aliexpress.com/*",
         "https://www.vinted.co.uk/*",
         "https://www.depop.com/*"
       ],
@@ -56,6 +57,7 @@
     "https://www.ebay.com/*",
     "https://www.amazon.co.uk/*",
     "https://www.amazon.com/*",
+    "https://www.aliexpress.com/*",
     "https://www.vinted.co.uk/*",
     "https://www.depop.com/*"
   ]

@@ -6,6 +6,7 @@
 /* ── State machine ── */
 
 const STATES = ["idle", "loading", "product", "error"];
+const CALM_COMMERCE_URL = "https://www.calmcommerce.net";
 
 function showState(name) {
   STATES.forEach((s) => {
@@ -88,19 +89,24 @@ async function requestAnalysis(tabId) {
 async function addToBoard(tabId) {
   const btn = document.getElementById("btn-add-board");
   btn.disabled = true;
-  btn.textContent = "Adding…";
+  btn.textContent = "Opening…";
   try {
-    await chrome.tabs.sendMessage(tabId, { type: "SCOUT_ADD_TO_BOARD" });
-    btn.textContent = "Added ✓";
-    btn.style.background = "#0D9488";
+    const response = await chrome.tabs.sendMessage(tabId, {
+      type: "SCOUT_ADD_TO_BOARD",
+      appBaseUrl: CALM_COMMERCE_URL,
+    });
+    if (!response?.ok || !response.importUrl) {
+      throw new Error("Unable to create import link");
+    }
+    await chrome.tabs.create({ url: response.importUrl });
+    btn.textContent = "Opened ✓";
     setTimeout(() => {
       btn.disabled = false;
-      btn.textContent = "Add to board →";
-      btn.style.background = "";
+      btn.textContent = "Save to Workspace →";
     }, 2000);
   } catch {
     btn.disabled = false;
-    btn.textContent = "Add to board →";
+    btn.textContent = "Save to Workspace →";
   }
 }
 
@@ -132,6 +138,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("btn-board")?.addEventListener("click", () => {
-    chrome.tabs.create({ url: "https://app.calmcommerce.co/program" });
+    chrome.tabs.create({ url: `${CALM_COMMERCE_URL}/ideas` });
   });
 });

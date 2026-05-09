@@ -8,7 +8,7 @@
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === "install") {
     // Open onboarding on first install
-    chrome.tabs.create({ url: "https://app.calmcommerce.co" });
+    chrome.tabs.create({ url: "https://www.calmcommerce.net/scout" });
   }
 });
 
@@ -18,6 +18,7 @@ const SUPPORTED_PATTERNS = [
   /etsy\.com/,
   /ebay\.(co\.uk|com)/,
   /amazon\.(co\.uk|com)/,
+  /aliexpress\.com/,
   /vinted\.co\.uk/,
   /depop\.com/,
 ];
