@@ -40,9 +40,18 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Scout Workspace And Extension
 
-- [ ] Test full Scout Basic customer journey.
-  - `/scout` -> signup -> checkout -> payment -> Scout Workspace.
-  - Install extension -> scan product -> import -> save.
+- [ ] Test public install-first Scout journey.
+  - User lands on `/scout`.
+  - User clicks to install the Chrome extension.
+  - Once the Chrome Web Store listing is live, this should open the public listing.
+  - Before the listing is live, show clear temporary copy such as `Chrome Web Store link coming soon` or provide internal test instructions.
+  - User installs extension, scans a product, then clicks `Save to Workspace`.
+  - If not signed in, user signs up or logs in and returns to the import review.
+  - User can save 3 products for free before payment.
+  - Upgrade prompt appears when the limit is hit or when Pro features are requested.
+- [ ] Avoid forcing payment before installation in the public Scout flow.
+  - `/scout` should sell the value and drive extension install first.
+  - Payment should happen after the user has captured value or needs more capacity.
 - [ ] Test free save limit.
   - Free users can save 3 products.
   - Fourth save is blocked with clear upgrade copy.
