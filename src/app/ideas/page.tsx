@@ -1,5 +1,6 @@
 import { LearnerShell } from "@/components/learner-shell";
 import { PrimaryButton, SecondaryButton } from "@/components/design-system";
+import type { CSSProperties } from "react";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
@@ -193,14 +194,28 @@ export default async function IdeasPage({
             className={[
               "rounded-xl border px-5 py-4 text-sm leading-6 shadow-card",
               notice.tone === "error"
-                ? "border-2 border-error-700 bg-error-100 text-error-700 ring-2 ring-error-100"
+                ? "border-2 ring-2"
                 : "border-success-100 bg-success-100 text-[#005e3f]",
             ].join(" ")}
+            style={notice.tone === "error"
+              ? {
+                borderColor: "var(--error-700)",
+                backgroundColor: "var(--error-100)",
+                color: "var(--error-700)",
+                "--tw-ring-color": "var(--error-100)",
+              } as CSSProperties
+              : undefined}
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
                 {notice.tone === "error" ? (
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-error-700 bg-white text-lg font-black text-error-700 shadow-sm">
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-white text-lg font-black shadow-sm"
+                    style={{
+                      borderColor: "var(--error-700)",
+                      color: "var(--error-700)",
+                    }}
+                  >
                     !
                   </span>
                 ) : null}
@@ -212,7 +227,8 @@ export default async function IdeasPage({
               {notice.cta ? (
                 <a
                   href="/upgrade?plan=scout_basic"
-                  className="inline-flex items-center justify-center rounded-lg bg-error-700 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-error-700/90"
+                  className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+                  style={{ backgroundColor: "var(--error-700)" }}
                 >
                   {notice.cta}
                 </a>
