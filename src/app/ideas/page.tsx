@@ -158,8 +158,8 @@ function EmptyIdeas() {
         Scan products with Scout or add ideas from the OS. This workspace is where captured products become a shortlist you can review, reject, test, or move into Calm Commerce.
       </p>
       <div className="mt-5">
-        <SecondaryButton href="/ideas/import">
-          Import from Scout
+        <SecondaryButton href="/scout">
+          Get Scout extension
         </SecondaryButton>
       </div>
     </section>
@@ -263,8 +263,8 @@ export default async function IdeasPage() {
               </PrimaryButton>
             ) : null}
             {data.authenticated ? (
-              <SecondaryButton href="/ideas/import">
-                Import from Scout
+              <SecondaryButton href="/scout">
+                Get Scout extension
               </SecondaryButton>
             ) : null}
             {data.authenticated && data.canAccessOsContent ? (

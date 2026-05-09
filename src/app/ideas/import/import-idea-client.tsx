@@ -231,6 +231,33 @@ export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClien
   const [editingNotes, setEditingNotes] = useState(false);
   const sourceLabel = sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product");
 
+  if (!payloadResult.ok && payloadResult.code === "missing") {
+    return (
+      <div className="space-y-6">
+        <PageHero
+          label="Scout import"
+          title="Open Scout on a product page"
+          description="This page receives product captures from the Scout Chrome extension. It needs a secure import payload from Scout before it can create an idea."
+        >
+          <div className="flex flex-wrap gap-3">
+            <PrimaryButton href="/scout">Get Scout extension</PrimaryButton>
+            <SecondaryButton href="/ideas">Back to Ideas</SecondaryButton>
+          </div>
+        </PageHero>
+
+        <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+          <h2 className="font-[Manrope] text-xl font-semibold text-ink-900">How importing works</h2>
+          <ol className="mt-4 space-y-3 text-sm leading-6 text-ink-600">
+            <li>1. Open a product listing on AliExpress or Amazon.</li>
+            <li>2. Open Scout and review the product signal.</li>
+            <li>3. Click Save to Workspace.</li>
+            <li>4. Scout opens this review screen with the product title, source link, image, scores, notes, and economics preview.</li>
+          </ol>
+        </section>
+      </div>
+    );
+  }
+
   function updateField(key: keyof ScannerImportDraft, value: string) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
