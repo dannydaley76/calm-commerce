@@ -62,7 +62,9 @@ function SectionHeader({
 function CheckItem({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
     <li className={["flex gap-3 text-sm leading-7", dark ? "text-white/75" : "text-ink-800"].join(" ")}>
-      <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cobalt-600" />
+      <span className="mt-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-teal-600 text-[10px] font-bold leading-none text-teal-700">
+        ✓
+      </span>
       <span>{children}</span>
     </li>
   );
@@ -193,7 +195,7 @@ export default async function ScoutLandingPage() {
       cadence: "one-time",
       cta: "Get Basic",
       href: checkoutHref("scout_basic", signedIn),
-      featured: true,
+      featured: false,
     },
     {
       ...BILLING_PLANS.scout_pro,
@@ -201,7 +203,7 @@ export default async function ScoutLandingPage() {
       cadence: "/month",
       cta: "Start Pro",
       href: checkoutHref("scout_pro", signedIn),
-      featured: false,
+      featured: true,
     },
     {
       name: "Calm Commerce",
@@ -281,16 +283,21 @@ export default async function ScoutLandingPage() {
             title="Read any product page like a pro."
             body="Open any product page. Click Scout. Get a clear verdict in seconds."
           />
-          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-5xl gap-6 md:grid-cols-2">
             {productBenefits.map((benefit) => (
-              <div key={benefit} className="rounded-xl border border-ink-200 bg-surface-raised p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
+              <div key={benefit} className="rounded-xl bg-surface-sunken p-6">
                 <CheckItem>{benefit}</CheckItem>
               </div>
             ))}
           </div>
-          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        </div>
+      </section>
+
+      <section className="bg-surface-canvas px-5 py-20 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {workflow.map(([title, body], index) => (
-              <article key={title} className="rounded-xl border border-ink-200 bg-white p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
+              <article key={title} className="rounded-xl border border-ink-100 bg-white p-6 shadow-[0_12px_30px_rgba(11,42,57,0.08)]">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cobalt-700 font-bold text-white">
                   {index + 1}
                 </span>
@@ -302,12 +309,12 @@ export default async function ScoutLandingPage() {
         </div>
       </section>
 
-      <section className="bg-surface-canvas px-5 py-20 lg:px-8">
+      <section className="bg-white px-5 py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionHeader title="Six signals. One clear answer." />
           <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {signals.map(([title, body]) => (
-              <article key={title} className="rounded-xl border border-ink-200 bg-white p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
+              <article key={title} className="rounded-xl border border-ink-100 bg-white p-6 shadow-[0_10px_28px_rgba(11,42,57,0.08)]">
                 <h3 className="font-[Manrope] text-xl font-bold text-ink-900">{title}</h3>
                 <p className="mt-3 text-sm leading-7 text-ink-700">{body}</p>
               </article>
