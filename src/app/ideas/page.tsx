@@ -1,12 +1,12 @@
 import { LearnerShell } from "@/components/learner-shell";
 import { PrimaryButton, SecondaryButton } from "@/components/design-system";
-import type { CSSProperties } from "react";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import {
   getProductIdeaLifecycles,
   type ProductIdeaLifecycle,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
+import { IdeasImportNotice } from "./ideas-import-notice";
 import { IdeasIndexClient } from "./ideas-index-client";
 
 type ResponseMap = Record<string, string>;
@@ -114,7 +114,7 @@ function importNotice(importStatus?: string, importError?: string) {
     missing: "Scout did not include product data. Open Scout on a product page and try Save to Workspace again.",
     invalid: "Scout sent product data we could not read. Reload the extension and try again.",
     expired: "That Scout capture is too old. Scan the product again to save fresh data.",
-    scout_save_limit: "Your free Workspace saves are used up. Upgrade to save more product ideas.",
+    scout_save_limit: "Scout tried to save this product, but your free Workspace saves are used up. Upgrade Scout to save more product ideas.",
     failed: "The Scout capture could not be saved. Try again from the extension.",
   };
   if (importError === "scout_save_limit") {
@@ -190,47 +190,12 @@ export default async function IdeasPage({
         </section>
 
         {notice ? (
-          <section
-            className={[
-              "rounded-xl border px-5 py-4 text-sm leading-6 shadow-card",
-              notice.tone === "error"
-                ? "border-2 ring-2"
-                : "border-success-100 bg-success-100 text-[#005e3f]",
-            ].join(" ")}
-            style={notice.tone === "error"
-              ? {
-                borderColor: "var(--error-700)",
-                backgroundColor: "var(--error-100)",
-                color: "var(--error-700)",
-                "--tw-ring-color": "var(--error-100)",
-              } as CSSProperties
-              : undefined}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex min-w-0 gap-3">
-                {notice.tone === "error" ? (
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 bg-white text-lg font-black shadow-sm"
-                    style={{
-                      borderColor: "var(--error-700)",
-                      color: "var(--error-700)",
-                    }}
-                  >
-                    !
-                  </span>
-                ) : null}
-                <div className="min-w-0">
-                <h2 className="font-[Manrope] text-lg font-bold">{notice.title}</h2>
-                <p className="mt-1">{notice.body}</p>
-                </div>
-              </div>
-              {notice.cta ? (
-                <PrimaryButton href="/upgrade?plan=scout_basic">
-                  {notice.cta}
-                </PrimaryButton>
-              ) : null}
-            </div>
-          </section>
+          <IdeasImportNotice
+            title={notice.title}
+            body={notice.body}
+            tone={notice.tone as "success" | "error"}
+            cta={notice.cta ?? undefined}
+          />
         ) : null}
 
         {data.error ? (

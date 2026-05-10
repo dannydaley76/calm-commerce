@@ -10,7 +10,7 @@ import {
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 
 type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "metrics";
-type ViewFilter = "open" | "new" | "shortlist" | "reviewing" | "testing" | "archived" | "all";
+type ViewFilter = "new" | "shortlist" | "reviewing" | "testing" | "archived" | "all";
 
 const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label: string }> = [
   { value: "new", label: "New" },
@@ -21,7 +21,6 @@ const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label
 ];
 
 const VIEW_FILTERS: Array<{ value: ViewFilter; label: string }> = [
-  { value: "open", label: "Open" },
   { value: "new", label: "New" },
   { value: "shortlist", label: "Shortlist" },
   { value: "reviewing", label: "Reviewing" },
@@ -56,7 +55,7 @@ function scoreTone(score: number | null): string {
 function compactScoreLabel(idea: ProductIdeaLifecycle): string {
   if (idea.scannerScore === null) return "Not scored";
   if (idea.scannerScore >= 70) return "Strong";
-  if (idea.scannerScore >= 40) return "Review";
+  if (idea.scannerScore >= 40) return "Moderate";
   return "Weak";
 }
 
@@ -87,6 +86,13 @@ function compactActionLabel(label: string): string {
 
 function clippedIdeaName(name: string): string {
   return name.length > 90 ? `${name.slice(0, 87).trim()}...` : name;
+}
+
+function latestSignalText(idea: ProductIdeaLifecycle, canAccessOsContent: boolean): string {
+  if (!canAccessOsContent && idea.status === "draft") {
+    return "Imported from Scout. Add pricing to check the economics.";
+  }
+  return idea.latestSignal;
 }
 
 function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
@@ -195,6 +201,7 @@ function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
 
 function IdeaMobileCard({
   idea,
+  canAccessOsContent,
   saving,
   onStatusChange,
   onArchive,
@@ -202,6 +209,7 @@ function IdeaMobileCard({
   onDelete,
 }: {
   idea: ProductIdeaLifecycle;
+  canAccessOsContent: boolean;
   saving: boolean;
   onStatusChange: (idea: ProductIdeaLifecycle, status: ProductIdeaWorkspaceStatus) => void;
   onArchive: (idea: ProductIdeaLifecycle) => void;
@@ -220,7 +228,7 @@ function IdeaMobileCard({
           >
             {clippedIdeaName(idea.label)}
           </a>
-          <p className="mt-1 text-sm leading-6 text-ink-600">{idea.latestSignal}</p>
+          <p className="mt-1 text-sm leading-6 text-ink-600">{latestSignalText(idea, canAccessOsContent)}</p>
         </div>
       </div>
 
@@ -237,6 +245,9 @@ function IdeaMobileCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+          Move to
+        </span>
         <select
           aria-label={`Workspace status for ${idea.label}`}
           value={idea.workspaceStatus}
@@ -248,12 +259,6 @@ function IdeaMobileCard({
             <option key={item.value} value={item.value}>{item.label}</option>
           ))}
         </select>
-        <a
-          href={ideaDetailHref(idea)}
-          className="text-sm font-semibold text-cobalt-600 underline-offset-4 hover:underline"
-        >
-          Open detail
-        </a>
         {idea.sourceUrl ? (
           <a
             href={idea.sourceUrl}
@@ -262,7 +267,7 @@ function IdeaMobileCard({
             title={idea.sourceUrl}
             className="text-sm font-semibold text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
           >
-            Source
+            View on {idea.sourceLabel || "source"}
           </a>
         ) : null}
         <ActionMenu
@@ -309,11 +314,10 @@ export function IdeasIndexClient({
     const filtered = localIdeas.filter((idea) => {
       const matchesView =
         view === "all" ||
-        (view === "open" && idea.workspaceStatus !== "archived") ||
         idea.workspaceStatus === view;
       const matchesQuery = !normalizedQuery || [
         idea.label,
-        idea.latestSignal,
+        latestSignalText(idea, canAccessOsContent),
         idea.workspaceStatusLabel,
         idea.sourceLabel ?? "",
         idea.demandEvidence ?? "",
@@ -326,7 +330,6 @@ export function IdeasIndexClient({
 
   const counts = useMemo(() => ({
     all: localIdeas.length,
-    open: localIdeas.filter((idea) => idea.workspaceStatus !== "archived").length,
     new: localIdeas.filter((idea) => idea.workspaceStatus === "new").length,
     shortlist: localIdeas.filter((idea) => idea.workspaceStatus === "shortlist").length,
     reviewing: localIdeas.filter((idea) => idea.workspaceStatus === "reviewing").length,
@@ -374,6 +377,7 @@ export function IdeasIndexClient({
             <button
               key={item.value}
               type="button"
+              aria-pressed={view === item.value}
               onClick={() => setView(item.value)}
               className={[
                 "rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition",
@@ -435,6 +439,7 @@ export function IdeasIndexClient({
             <IdeaMobileCard
               key={idea.ideaId}
               idea={idea}
+              canAccessOsContent={canAccessOsContent}
               saving={savingIdeaId === idea.ideaId}
               onStatusChange={(target, status) => void mutateIdea(target, "set_status", status)}
               onArchive={(target) => void mutateIdea(target, "archive")}
@@ -449,8 +454,8 @@ export function IdeasIndexClient({
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
                 <th className="w-[26%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Product</th>
                 <th className="w-[9%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Score</th>
-                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Workspace</th>
-                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Economics</th>
+                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Move to</th>
+                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Pricing</th>
                 <th className="w-[17%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Evidence</th>
                 {canAccessOsContent ? (
                   <th className="w-[10%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
@@ -479,7 +484,7 @@ export function IdeasIndexClient({
                           {clippedIdeaName(idea.label)}
                         </a>
                         <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">
-                          {idea.latestSignal}
+                          {latestSignalText(idea, canAccessOsContent)}
                         </p>
                         {idea.sourceUrl ? (
                           <a
@@ -517,7 +522,9 @@ export function IdeasIndexClient({
                   <td className="px-3 py-4 text-xs leading-5 text-ink-700">
                     <p><span className="font-semibold text-ink-900">Sell:</span> {idea.sellingPrice ?? "-"}</p>
                     <p><span className="font-semibold text-ink-900">Cost:</span> {idea.productCost ?? "-"}</p>
-                    <p className="text-xs text-ink-500">{idea.numbersConfidence ?? "No confidence set"}</p>
+                    {idea.numbersConfidence ? (
+                      <p className="text-xs text-ink-500">{idea.numbersConfidence}</p>
+                    ) : null}
                   </td>
                   <td className="px-3 py-4 text-sm leading-6 text-ink-700">
                     <div className="space-y-3">
@@ -540,12 +547,6 @@ export function IdeasIndexClient({
                           {compactActionLabel(idea.nextAction.label)}
                         </PrimaryButton>
                       ) : null}
-                      <a
-                        href={ideaDetailHref(idea)}
-                        className="rounded-lg border border-ink-100 bg-surface-raised px-2 py-2 text-xs font-semibold text-cobalt-600 underline-offset-4 transition hover:border-cobalt-500 hover:bg-surface-sunken hover:underline"
-                      >
-                        Open
-                      </a>
                       <ActionMenu
                         ariaLabel={`Actions for ${idea.label}`}
                         items={[
