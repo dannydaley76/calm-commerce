@@ -43,7 +43,7 @@ function SectionHeader({
   return (
     <div className="mx-auto max-w-3xl text-center">
       {eyebrow ? (
-        <p className={["text-[10px] font-bold uppercase tracking-[0.18em]", dark ? "text-teal-600" : "text-cobalt-600"].join(" ")}>
+        <p className={["text-[10px] font-bold uppercase tracking-[0.18em]", dark ? "text-teal-500" : "text-cobalt-700"].join(" ")}>
           {eyebrow}
         </p>
       ) : null}
@@ -51,7 +51,7 @@ function SectionHeader({
         {title}
       </h2>
       {body ? (
-        <p className={["mt-4 text-base leading-8", dark ? "text-white/70" : "text-ink-600"].join(" ")}>
+        <p className={["mt-4 text-base leading-8", dark ? "text-white/70" : "text-ink-700"].join(" ")}>
           {body}
         </p>
       ) : null}
@@ -61,8 +61,8 @@ function SectionHeader({
 
 function CheckItem({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <li className={["flex gap-3 text-sm leading-7", dark ? "text-white/75" : "text-ink-700"].join(" ")}>
-      <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-600" />
+    <li className={["flex gap-3 text-sm leading-7", dark ? "text-white/75" : "text-ink-800"].join(" ")}>
+      <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cobalt-600" />
       <span>{children}</span>
     </li>
   );
@@ -77,8 +77,8 @@ function ScoutMockup() {
   ];
 
   return (
-    <div className="rounded-xl bg-surface-sunken p-8 shadow-[0_24px_60px_rgba(11,42,57,0.12)]">
-      <div className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+    <div className="rounded-xl bg-surface-sunken p-8 shadow-[0_24px_60px_rgba(11,42,57,0.16)] ring-1 ring-ink-100/80">
+      <div className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-[0_18px_44px_rgba(11,42,57,0.12)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-[Manrope] text-base font-bold text-ink-900">Scout Analysis</p>
@@ -91,7 +91,7 @@ function ScoutMockup() {
         <div className="mt-6 space-y-4">
           {rows.map(([label, color, filled]) => (
             <div key={label} className="grid grid-cols-[140px_1fr] items-center gap-4">
-              <p className="text-sm text-ink-600">{label}</p>
+              <p className="text-sm font-semibold text-ink-700">{label}</p>
               <div className="flex gap-1">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <span
@@ -222,13 +222,15 @@ export default async function ScoutLandingPage() {
           <Link href="/scout" aria-label="Scout home">
             <ScoutLogo size={40} />
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-ink-700 md:flex">
-            <a href="#pricing" className="hover:text-cobalt-600">Pricing</a>
-            <a href="#how-it-works" className="hover:text-cobalt-600">How it works</a>
-          </nav>
-          <PrimaryButton href={INSTALL_ANCHOR} className="px-5 py-2.5">
-            Install Scout
-          </PrimaryButton>
+          <div className="flex items-center gap-5">
+            <nav className="hidden items-center gap-6 text-sm font-semibold text-ink-800 md:flex">
+              <a href="#pricing" className="transition hover:text-cobalt-600">Pricing</a>
+              <a href="#how-it-works" className="transition hover:text-cobalt-600">How it works</a>
+            </nav>
+            <PrimaryButton href={INSTALL_ANCHOR} className="px-5 py-2.5">
+              Install Scout
+            </PrimaryButton>
+          </div>
         </div>
       </header>
 
@@ -272,7 +274,7 @@ export default async function ScoutLandingPage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="px-5 py-20 lg:px-8">
+      <section id="how-it-works" className="bg-white px-5 py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionHeader
             eyebrow="What Scout is"
@@ -281,19 +283,19 @@ export default async function ScoutLandingPage() {
           />
           <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {productBenefits.map((benefit) => (
-              <div key={benefit} className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+              <div key={benefit} className="rounded-xl border border-ink-200 bg-surface-raised p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
                 <CheckItem>{benefit}</CheckItem>
               </div>
             ))}
           </div>
           <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {workflow.map(([title, body], index) => (
-              <article key={title} className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cobalt-600 font-bold text-white">
+              <article key={title} className="rounded-xl border border-ink-200 bg-white p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-cobalt-700 font-bold text-white">
                   {index + 1}
                 </span>
                 <h3 className="mt-5 font-[Manrope] text-xl font-bold text-ink-900">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-ink-600">{body}</p>
+                <p className="mt-3 text-sm leading-7 text-ink-700">{body}</p>
               </article>
             ))}
           </div>
@@ -305,23 +307,23 @@ export default async function ScoutLandingPage() {
           <SectionHeader title="Six signals. One clear answer." />
           <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {signals.map(([title, body]) => (
-              <article key={title} className="rounded-xl border border-ink-100 bg-white p-6 shadow-card">
+              <article key={title} className="rounded-xl border border-ink-200 bg-white p-6 shadow-[0_14px_34px_rgba(11,42,57,0.08)]">
                 <h3 className="font-[Manrope] text-xl font-bold text-ink-900">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-ink-600">{body}</p>
+                <p className="mt-3 text-sm leading-7 text-ink-700">{body}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-5 py-20 lg:px-8">
+      <section className="bg-white px-5 py-20 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">Scout Workspace</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-700">Scout Workspace</p>
             <h2 className="mt-3 font-[Manrope] text-4xl font-bold tracking-tight text-ink-900 lg:text-5xl">
               Your product research, finally organised.
             </h2>
-            <p className="mt-5 text-lg leading-8 text-ink-600">
+            <p className="mt-5 text-lg leading-8 text-ink-700">
               Every idea you save flows through a simple funnel: New, Reviewing, Shortlist, Testing, Archived.
             </p>
             <ul className="mt-7 space-y-2">
@@ -330,19 +332,19 @@ export default async function ScoutLandingPage() {
               ))}
             </ul>
           </div>
-          <div className="grid gap-4 rounded-xl bg-surface-sunken p-5">
+          <div className="grid gap-4 rounded-xl bg-surface-sunken p-5 shadow-[0_18px_48px_rgba(11,42,57,0.1)] ring-1 ring-ink-100">
             {["New", "Reviewing", "Shortlist", "Testing", "Archived"].map((stage, stageIndex) => (
-              <div key={stage} className="rounded-xl border border-ink-100 bg-white p-4 shadow-card">
+              <div key={stage} className="rounded-xl border border-ink-200 bg-white p-4 shadow-[0_10px_24px_rgba(11,42,57,0.07)]">
                 <div className="flex items-center justify-between">
                   <p className="font-[Manrope] text-lg font-bold text-ink-900">{stage}</p>
-                  <span className="rounded-full bg-cobalt-100 px-3 py-1 text-xs font-bold text-cobalt-600">
+                  <span className="rounded-full bg-cobalt-100 px-3 py-1 text-xs font-bold text-cobalt-700">
                     {[3, 2, 4, 1, 5][stageIndex]}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {Array.from({ length: stageIndex === 3 ? 1 : 2 }).map((_, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-lg bg-surface-canvas px-3 py-2">
-                      <span className="text-sm font-semibold text-ink-700">Product {index + 1}</span>
+                    <div key={index} className="flex items-center justify-between rounded-lg bg-surface-canvas px-3 py-2 ring-1 ring-ink-100">
+                      <span className="text-sm font-semibold text-ink-800">Product {index + 1}</span>
                       <span className="text-sm font-bold text-teal-600">{(7 + index * 0.5).toFixed(1)}</span>
                     </div>
                   ))}
@@ -365,22 +367,22 @@ export default async function ScoutLandingPage() {
               <article
                 key={plan.name}
                 className={[
-                  "relative flex rounded-xl border bg-white p-6 shadow-card",
-                  plan.featured ? "border-cobalt-600 ring-2 ring-cobalt-100" : "border-ink-100",
+                  "relative flex rounded-xl border bg-white p-6 shadow-[0_16px_40px_rgba(11,42,57,0.09)]",
+                  plan.featured ? "border-cobalt-700 ring-2 ring-cobalt-100" : "border-ink-200",
                 ].join(" ")}
               >
                 <div className="flex min-h-full w-full flex-col">
                   {plan.featured ? (
-                    <span className="mb-4 inline-flex w-fit rounded-full bg-cobalt-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-700">
+                    <span className="mb-4 inline-flex w-fit rounded-full bg-cobalt-700 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
                       Most popular
                     </span>
                   ) : null}
                   <h3 className="font-[Manrope] text-2xl font-bold text-ink-900">{plan.name}</h3>
                   <div className="mt-4">
                     <span className="font-[Manrope] text-3xl font-bold text-ink-900">{plan.price}</span>
-                    <span className="ml-2 text-sm text-ink-500">{plan.cadence}</span>
+                    <span className="ml-2 text-sm font-semibold text-ink-600">{plan.cadence}</span>
                   </div>
-                  <p className="mt-4 text-sm leading-7 text-ink-600">{plan.description}</p>
+                  <p className="mt-4 text-sm leading-7 text-ink-700">{plan.description}</p>
                   <ul className="mt-5 space-y-2">
                     {plan.features.map((feature) => (
                       <CheckItem key={feature}>{feature}</CheckItem>
@@ -397,7 +399,7 @@ export default async function ScoutLandingPage() {
                       <button
                         type="button"
                         disabled
-                        className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-lg border border-ink-100 bg-surface-sunken px-6 py-3 text-[13px] font-medium text-ink-500"
+                        className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-lg border border-ink-200 bg-surface-sunken px-6 py-3 text-[13px] font-semibold text-ink-600"
                       >
                         {plan.cta}
                       </button>
@@ -444,12 +446,12 @@ export default async function ScoutLandingPage() {
         </div>
       </section>
 
-      <section className="px-5 py-20 lg:px-8">
+      <section className="bg-white px-5 py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <SectionHeader title="Scout works for you whether you're:" />
           <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {useCases.map((item) => (
-              <div key={item} className="rounded-xl border border-ink-100 bg-white p-5 shadow-card">
+              <div key={item} className="rounded-xl border border-ink-200 bg-surface-raised p-5 shadow-[0_12px_30px_rgba(11,42,57,0.075)]">
                 <CheckItem>{item}</CheckItem>
               </div>
             ))}
@@ -460,25 +462,25 @@ export default async function ScoutLandingPage() {
       <section className="bg-surface-canvas px-5 py-20 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <SectionHeader title="Questions before you scan?" />
-          <div className="mt-10 divide-y divide-ink-100 rounded-xl border border-ink-100 bg-white shadow-card">
+          <div className="mt-10 divide-y divide-ink-100 rounded-xl border border-ink-200 bg-white shadow-[0_18px_44px_rgba(11,42,57,0.09)]">
             {faqs.map(([question, answer]) => (
               <details key={question} className="group p-6">
                 <summary className="cursor-pointer list-none font-[Manrope] text-lg font-bold text-ink-900">
                   {question}
                 </summary>
-                <p className="mt-3 text-sm leading-7 text-ink-600">{answer}</p>
+                <p className="mt-3 text-sm leading-7 text-ink-700">{answer}</p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-5 py-20 text-center lg:px-8">
+      <section className="bg-white px-5 py-20 text-center lg:px-8">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-[Manrope] text-4xl font-bold tracking-tight text-ink-900 lg:text-5xl">
             Test your next product idea with evidence.
           </h2>
-          <p className="mt-5 text-lg leading-8 text-ink-600">
+          <p className="mt-5 text-lg leading-8 text-ink-700">
             Install Scout, scan the product page, and decide whether it deserves a place in your shortlist.
           </p>
           <div className="mt-8 flex justify-center">
