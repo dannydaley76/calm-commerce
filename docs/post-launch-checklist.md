@@ -12,3 +12,10 @@ This file tracks improvements to make after the first paid Scout / Calm Commerce
   - Include an upgrade CTA that opens the Scout upgrade flow.
   - Keep server-side checks as the source of truth, because extension UI checks can be bypassed.
   - Reason: otherwise users can keep scanning, read/copy the popup output, and avoid upgrading even if Workspace saves are blocked.
+
+## Scout Enrichment Infrastructure
+
+- [ ] Consider Oxylabs or a similar ecommerce scraping API once "scan any product website" becomes painful to maintain.
+  - Use this only after the DataForSEO / Keepa enrichment path proves there is demand for deeper scans.
+  - Primary benefit: robust extraction across many storefronts without maintaining custom selectors and anti-bot handling.
+  - Keep it post-launch because it adds recurring cost and infrastructure complexity before we know scan volume.
