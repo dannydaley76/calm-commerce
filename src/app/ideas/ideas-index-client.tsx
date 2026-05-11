@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { PrimaryButton } from "@/components/design-system";
+import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
   type ProductIdeaLifecycle,
   type ProductIdeaLifecycleStatus,
   type ProductIdeaWorkspaceStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 
-type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "metrics";
+type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "margin" | "orders" | "reviews" | "rating" | "metrics";
 type ViewFilter = "new" | "shortlist" | "reviewing" | "testing" | "archived" | "all";
 
 const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label: string }> = [
@@ -59,6 +60,20 @@ function compactScoreLabel(idea: ProductIdeaLifecycle): string {
   return "Weak";
 }
 
+function signalLabel(score: number | null): string {
+  if (score === null) return "Missing";
+  if (score >= 70) return "Strong";
+  if (score >= 40) return "Moderate";
+  return "Weak";
+}
+
+function signalTone(score: number | null): string {
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (score >= 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
 function ideaDetailHref(idea: ProductIdeaLifecycle): string {
   return `/ideas/${encodeURIComponent(idea.ideaId)}`;
 }
@@ -90,7 +105,7 @@ function clippedIdeaName(name: string): string {
 
 function latestSignalText(idea: ProductIdeaLifecycle, canAccessOsContent: boolean): string {
   if (!canAccessOsContent && idea.status === "draft") {
-    return "Imported from Scout. Add pricing to check the economics.";
+    return "Imported from Scout.";
   }
   return idea.latestSignal;
 }
@@ -116,6 +131,41 @@ function numericValue(value: string | null): number {
   return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
 }
 
+function observedNumericValue(value: string | null): number {
+  return numericValue(value);
+}
+
+function economicsForIdea(idea: ProductIdeaLifecycle) {
+  return calculateUnitEconomics({
+    selling_price: idea.sellingPrice ?? undefined,
+    product_cost: idea.productCost ?? undefined,
+    shipping_to_customer: idea.shippingToCustomer ?? undefined,
+    platform_fees: idea.platformFees ?? undefined,
+  });
+}
+
+function formatMoneyValue(value: string | null): string {
+  return value?.trim() || "";
+}
+
+function formatMarginPercent(value: number | null): string {
+  if (value === null) return "";
+  return `${value.toFixed(0)}%`;
+}
+
+function marginTone(value: number | null): string {
+  if (value === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (value >= 40) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (value >= 20) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
+function compactNumber(value: string | null): string {
+  const parsed = numericValue(value);
+  if (!Number.isFinite(parsed)) return value?.trim() || "-";
+  return parsed.toLocaleString("en-GB");
+}
+
 function scoreValue(value: number | null): number {
   return value === null ? Number.NEGATIVE_INFINITY : value;
 }
@@ -133,6 +183,10 @@ function sortIdeas(ideas: ProductIdeaLifecycle[], sortKey: SortKey): ProductIdea
     if (sortKey === "status") return a.statusLabel.localeCompare(b.statusLabel);
     if (sortKey === "scanner_score") return scoreValue(b.scannerScore) - scoreValue(a.scannerScore);
     if (sortKey === "selling_price") return numericValue(b.sellingPrice) - numericValue(a.sellingPrice);
+    if (sortKey === "margin") return (economicsForIdea(b).marginPercent ?? Number.NEGATIVE_INFINITY) - (economicsForIdea(a).marginPercent ?? Number.NEGATIVE_INFINITY);
+    if (sortKey === "orders") return observedNumericValue(b.observedOrderCount) - observedNumericValue(a.observedOrderCount);
+    if (sortKey === "reviews") return observedNumericValue(b.observedReviewCount) - observedNumericValue(a.observedReviewCount);
+    if (sortKey === "rating") return observedNumericValue(b.observedRating) - observedNumericValue(a.observedRating);
     if (sortKey === "metrics") return b.metricEntries.length - a.metricEntries.length;
     return ideaActionPriority(a.status) - ideaActionPriority(b.status);
   });
@@ -140,13 +194,14 @@ function sortIdeas(ideas: ProductIdeaLifecycle[], sortKey: SortKey): ProductIdea
 
 async function updateWorkspaceIdea(
   ideaId: string,
-  action: "set_status" | "archive" | "restore" | "delete",
+  action: "set_status" | "archive" | "restore" | "delete" | "update_economics",
   status?: ProductIdeaWorkspaceStatus,
+  economics?: { sellingPrice?: string; productCost?: string },
 ) {
   const response = await fetch("/api/ideas/workspace", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ideaId, action, status }),
+    body: JSON.stringify({ ideaId, action, status, ...economics }),
   });
   if (!response.ok) {
     const payload = (await response.json().catch(() => ({}))) as { error?: string };
@@ -175,27 +230,157 @@ function IdeaImage({ idea }: { idea: ProductIdeaLifecycle }) {
   );
 }
 
-function EvidenceText({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">{label}</p>
-      <p className="mt-1 line-clamp-2 max-w-[240px] text-xs leading-5 text-ink-700">
-        {value ?? `No ${label.toLowerCase()} yet`}
-      </p>
-    </div>
-  );
-}
-
 function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className={`inline-flex min-w-20 flex-col rounded-lg px-3 py-2 ${scoreTone(idea.scannerScore)}`}>
-      <span className="text-sm font-bold leading-none">
+    <div className={`inline-flex min-w-24 flex-col rounded-xl px-3 py-2 ${scoreTone(idea.scannerScore)}`}>
+      <span className="font-[Manrope] text-2xl font-bold leading-none">
         {idea.scannerScore === null ? "-" : idea.scannerScore}
       </span>
       <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em]">
         {compactScoreLabel(idea)}
       </span>
     </div>
+  );
+}
+
+function SignalChip({
+  label,
+  value,
+  tone = "border-ink-100 bg-surface-sunken text-ink-700",
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <div className={`rounded-lg border px-2.5 py-2 ${tone}`}>
+      <p className="text-[9px] font-bold uppercase tracking-[0.12em] opacity-70">{label}</p>
+      <p className="mt-1 text-xs font-bold leading-none">{value}</p>
+    </div>
+  );
+}
+
+function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
+  return (
+    <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+      <SignalChip label="Orders" value={compactNumber(idea.observedOrderCount)} />
+      <SignalChip label="Reviews" value={compactNumber(idea.observedReviewCount)} />
+      <SignalChip label="Rating" value={idea.observedRating ?? "-"} />
+      <SignalChip
+        label="Demand"
+        value={idea.scannerDemandScore === null ? "-" : `${idea.scannerDemandScore} ${signalLabel(idea.scannerDemandScore)}`}
+        tone={signalTone(idea.scannerDemandScore)}
+      />
+      <SignalChip
+        label="Competition"
+        value={idea.scannerCompetitionScore === null ? "-" : `${idea.scannerCompetitionScore} ${signalLabel(idea.scannerCompetitionScore)}`}
+        tone={signalTone(idea.scannerCompetitionScore)}
+      />
+      <SignalChip
+        label="Risk"
+        value={idea.seasonality ? "Seasonal" : "None"}
+        tone={idea.seasonality ? "border-amber-100 bg-[#fff8e6] text-[#835700]" : "border-success-100 bg-success-100 text-[#005e3f]"}
+      />
+    </div>
+  );
+}
+
+function PricingEditor({
+  idea,
+  saving,
+  onSave,
+}: {
+  idea: ProductIdeaLifecycle;
+  saving: boolean;
+  onSave: (idea: ProductIdeaLifecycle, values: { sellingPrice: string; productCost: string }) => void;
+}) {
+  const [sellingPrice, setSellingPrice] = useState(formatMoneyValue(idea.sellingPrice));
+  const [productCost, setProductCost] = useState(formatMoneyValue(idea.productCost));
+  const [dirty, setDirty] = useState(false);
+  const economics = economicsForIdea({ ...idea, sellingPrice, productCost });
+  const hasAnyPricing = Boolean(sellingPrice.trim() || productCost.trim());
+  const marginLabel = economics.marginPercent === null
+    ? hasAnyPricing ? "Need shipping/fees" : "Add pricing"
+    : `${formatMarginPercent(economics.marginPercent)} margin`;
+
+  function commit() {
+    if (!dirty || saving) return;
+    setDirty(false);
+    onSave(idea, { sellingPrice, productCost });
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="grid gap-2">
+        <label className="block">
+          <span className="sr-only">Selling price for {idea.label}</span>
+          <input
+            value={sellingPrice}
+            disabled={saving}
+            onChange={(event) => {
+              setSellingPrice(event.target.value);
+              setDirty(true);
+            }}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.currentTarget.blur();
+              }
+            }}
+            placeholder="Add sell"
+            className="w-full rounded-lg border border-ink-100 bg-white px-2 py-1.5 text-xs font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60"
+          />
+        </label>
+        <label className="block">
+          <span className="sr-only">Product cost for {idea.label}</span>
+          <input
+            value={productCost}
+            disabled={saving}
+            onChange={(event) => {
+              setProductCost(event.target.value);
+              setDirty(true);
+            }}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.currentTarget.blur();
+              }
+            }}
+            placeholder="Add cost"
+            className="w-full rounded-lg border border-ink-100 bg-white px-2 py-1.5 text-xs font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60"
+          />
+        </label>
+      </div>
+      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${marginTone(economics.marginPercent)}`}>
+        {marginLabel}
+      </span>
+    </div>
+  );
+}
+
+function SortHeader({
+  label,
+  sort,
+  activeSort,
+  onSort,
+  className = "",
+}: {
+  label: string;
+  sort: SortKey;
+  activeSort: SortKey;
+  onSort: (sort: SortKey) => void;
+  className?: string;
+}) {
+  return (
+    <th className={`px-3 py-3 text-left ${className}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sort)}
+        className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
+      >
+        {label}{activeSort === sort ? " ↓" : ""}
+      </button>
+    </th>
   );
 }
 
@@ -207,6 +392,7 @@ function IdeaMobileCard({
   onArchive,
   onRestore,
   onDelete,
+  onPricingSave,
 }: {
   idea: ProductIdeaLifecycle;
   canAccessOsContent: boolean;
@@ -215,6 +401,7 @@ function IdeaMobileCard({
   onArchive: (idea: ProductIdeaLifecycle) => void;
   onRestore: (idea: ProductIdeaLifecycle) => void;
   onDelete: (idea: ProductIdeaLifecycle) => void;
+  onPricingSave: (idea: ProductIdeaLifecycle, values: { sellingPrice: string; productCost: string }) => void;
 }) {
   return (
     <article className="border-b border-ink-100 p-5 last:border-b-0">
@@ -240,8 +427,8 @@ function IdeaMobileCard({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <EvidenceText label="Demand" value={idea.demandEvidence} />
-        <EvidenceText label="Competition" value={idea.competitionNotes} />
+        <SignalStrip idea={idea} />
+        <PricingEditor idea={idea} saving={saving} onSave={onPricingSave} />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -326,7 +513,7 @@ export function IdeasIndexClient({
       return matchesView && matchesQuery;
     });
     return sortIdeas(filtered, sortKey);
-  }, [localIdeas, query, view, sortKey]);
+  }, [canAccessOsContent, localIdeas, query, view, sortKey]);
 
   const counts = useMemo(() => ({
     all: localIdeas.length,
@@ -336,6 +523,8 @@ export function IdeasIndexClient({
     testing: localIdeas.filter((idea) => idea.workspaceStatus === "testing").length,
     archived: localIdeas.filter((idea) => idea.workspaceStatus === "archived").length,
   }), [localIdeas]);
+
+  const hasNoPricing = localIdeas.length > 0 && localIdeas.every((idea) => !idea.sellingPrice && !idea.productCost);
 
   async function mutateIdea(
     idea: ProductIdeaLifecycle,
@@ -364,6 +553,28 @@ export function IdeasIndexClient({
     }
   }
 
+  async function savePricing(idea: ProductIdeaLifecycle, values: { sellingPrice: string; productCost: string }) {
+    setSavingIdeaId(idea.ideaId);
+    setError(null);
+    setLocalIdeas((current) => current.map((item) => (
+      item.ideaId === idea.ideaId
+        ? { ...item, sellingPrice: values.sellingPrice, productCost: values.productCost }
+        : item
+    )));
+    try {
+      await updateWorkspaceIdea(idea.ideaId, "update_economics", undefined, values);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update pricing.");
+      setLocalIdeas((current) => current.map((item) => (
+        item.ideaId === idea.ideaId
+          ? { ...item, sellingPrice: idea.sellingPrice, productCost: idea.productCost }
+          : item
+      )));
+    } finally {
+      setSavingIdeaId(null);
+    }
+  }
+
   function confirmDelete(idea: ProductIdeaLifecycle) {
     const confirmed = window.confirm(`Delete "${idea.label}" from Scout Workspace? This removes its research notes and economics draft.`);
     if (confirmed) void mutateIdea(idea, "delete");
@@ -373,7 +584,7 @@ export function IdeasIndexClient({
     <section className="rounded-xl border border-ink-100 bg-surface-raised shadow-card">
       <div className="border-b border-ink-100 p-5">
         <div className="flex flex-wrap gap-2">
-          {VIEW_FILTERS.map((item) => (
+          {VIEW_FILTERS.filter((item) => item.value === "new" || item.value === "all" || counts[item.value] > 0).map((item) => (
             <button
               key={item.value}
               type="button"
@@ -411,6 +622,10 @@ export function IdeasIndexClient({
               <option value="newest">Newest captured</option>
               <option value="priority">Priority action</option>
               <option value="scanner_score">Product score</option>
+              <option value="orders">Orders</option>
+              <option value="reviews">Reviews</option>
+              <option value="rating">Rating</option>
+              <option value="margin">Margin</option>
               <option value="name">Product name</option>
               <option value="status">Status</option>
               <option value="selling_price">Selling price</option>
@@ -426,6 +641,11 @@ export function IdeasIndexClient({
         <p className="mt-3 text-xs leading-5 text-ink-500">
           Showing {filteredIdeas.length} of {localIdeas.length} products.
         </p>
+        {hasNoPricing ? (
+          <p className="mt-2 rounded-lg bg-surface-sunken px-3 py-2 text-xs leading-5 text-ink-600">
+            Add sell price and product cost inline to compare margin across candidates. Scout Pro can pre-fill more of this automatically.
+          </p>
+        ) : null}
       </div>
 
       {filteredIdeas.length === 0 ? (
@@ -445,6 +665,7 @@ export function IdeasIndexClient({
               onArchive={(target) => void mutateIdea(target, "archive")}
               onRestore={(target) => void mutateIdea(target, "restore")}
               onDelete={confirmDelete}
+              onPricingSave={(target, values) => void savePricing(target, values)}
             />
           ))}
         </div>
@@ -452,15 +673,15 @@ export function IdeasIndexClient({
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
-                <th className="w-[26%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Product</th>
-                <th className="w-[9%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Score</th>
-                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Move to</th>
-                <th className="w-[13%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Pricing</th>
-                <th className="w-[17%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Evidence</th>
+                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
+                <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[9%]" />
+                <th className="w-[11%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Status</th>
+                <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[14%]" />
+                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[20%]" />
                 {canAccessOsContent ? (
                   <th className="w-[10%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
-                <th className="w-[12%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Action</th>
+                <th className="w-[12%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -507,30 +728,34 @@ export function IdeasIndexClient({
                     ) : null}
                   </td>
                   <td className="px-3 py-4">
-                    <select
-                      aria-label={`Workspace status for ${idea.label}`}
-                      value={idea.workspaceStatus}
-                      disabled={savingIdeaId === idea.ideaId}
-                      onChange={(event) => void mutateIdea(idea, "set_status", event.target.value as ProductIdeaWorkspaceStatus)}
-                      className={`w-full rounded-lg border border-transparent px-2 py-2 text-[10px] font-bold uppercase tracking-[0.08em] outline-none transition focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60 ${workspaceTone(idea.workspaceStatus)}`}
-                    >
-                      {WORKSPACE_STATUS_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>{item.label}</option>
-                      ))}
-                    </select>
+                    <details className="group relative">
+                      <summary className={`inline-flex cursor-pointer list-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${workspaceTone(idea.workspaceStatus)}`}>
+                        {idea.workspaceStatusLabel}
+                      </summary>
+                      <div className="absolute left-0 z-30 mt-2 w-36 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
+                        {WORKSPACE_STATUS_OPTIONS.map((item) => (
+                          <button
+                            key={item.value}
+                            type="button"
+                            disabled={savingIdeaId === idea.ideaId}
+                            onClick={() => void mutateIdea(idea, "set_status", item.value)}
+                            className="block w-full rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
                   </td>
-                  <td className="px-3 py-4 text-xs leading-5 text-ink-700">
-                    <p><span className="font-semibold text-ink-900">Sell:</span> {idea.sellingPrice ?? "-"}</p>
-                    <p><span className="font-semibold text-ink-900">Cost:</span> {idea.productCost ?? "-"}</p>
-                    {idea.numbersConfidence ? (
-                      <p className="text-xs text-ink-500">{idea.numbersConfidence}</p>
-                    ) : null}
+                  <td className="px-3 py-4">
+                    <PricingEditor
+                      idea={idea}
+                      saving={savingIdeaId === idea.ideaId}
+                      onSave={(target, values) => void savePricing(target, values)}
+                    />
                   </td>
-                  <td className="px-3 py-4 text-sm leading-6 text-ink-700">
-                    <div className="space-y-3">
-                      <EvidenceText label="Demand" value={idea.demandEvidence} />
-                      <EvidenceText label="Competition" value={idea.competitionNotes} />
-                    </div>
+                  <td className="px-3 py-4">
+                    <SignalStrip idea={idea} />
                   </td>
                   {canAccessOsContent ? (
                     <td className="px-3 py-4">

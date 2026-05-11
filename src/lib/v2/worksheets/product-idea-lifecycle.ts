@@ -37,6 +37,12 @@ export type ProductIdeaLifecycle = {
   scannerCompetitionScore: number | null;
   scannerScoredAt: string | null;
   scoutCapturedAt: string | null;
+  observedPrice: string | null;
+  observedRating: string | null;
+  observedReviewCount: string | null;
+  observedOrderCount: string | null;
+  observedBsr: string | null;
+  variantCount: string | null;
   workspaceStatus: ProductIdeaWorkspaceStatus;
   workspaceStatusLabel: string;
   archivedAt: string | null;
@@ -574,6 +580,12 @@ export function getProductIdeaLifecycles(
       scannerCompetitionScore: scoreNumber(idea.scanner_competition_score),
       scannerScoredAt: normalize(idea.scanner_scored_at) || null,
       scoutCapturedAt: normalize(idea.scout_captured_at) || normalize(idea.scanner_scored_at) || null,
+      observedPrice: normalize(idea.observed_price) || null,
+      observedRating: normalize(idea.observed_rating) || null,
+      observedReviewCount: normalize(idea.observed_review_count) || null,
+      observedOrderCount: normalize(idea.observed_order_count) || null,
+      observedBsr: normalize(idea.observed_bsr) || null,
+      variantCount: normalize(idea.variant_count) || null,
       workspaceStatus: deriveWorkspaceStatus({ idea, lifecycleStatus: status, scannerScore }),
       workspaceStatusLabel: workspaceStatusLabel(deriveWorkspaceStatus({ idea, lifecycleStatus: status, scannerScore })),
       archivedAt: normalize(idea.archived_at) || null,

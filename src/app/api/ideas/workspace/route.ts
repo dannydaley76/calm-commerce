@@ -21,7 +21,7 @@ type UpsertRow = {
   value_json: string;
 };
 
-type Action = "set_status" | "archive" | "restore" | "delete";
+type Action = "set_status" | "archive" | "restore" | "delete" | "update_economics";
 
 const WORKSPACE_STATUSES = new Set<ProductIdeaWorkspaceStatus>([
   "new",
@@ -54,12 +54,26 @@ function normalize(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
+function findEconomicsIndex(
+  rows: Array<Record<string, string | undefined>>,
+  idea: ProductIdeaRow,
+  ideaId: string,
+): number {
+  const byId = rows.findIndex((row) => normalize(row.idea_id) === ideaId);
+  if (byId >= 0) return byId;
+  const ideaName = normalize(idea.idea_description);
+  if (!ideaName) return -1;
+  return rows.findIndex((row) => normalize(row.idea_name) === ideaName);
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as {
       action?: Action;
       ideaId?: string;
       status?: ProductIdeaWorkspaceStatus;
+      sellingPrice?: string;
+      productCost?: string;
     };
 
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
@@ -83,6 +97,10 @@ export async function POST(request: Request) {
 
     if (action === "set_status" && (!body.status || !WORKSPACE_STATUSES.has(body.status))) {
       return NextResponse.json({ error: "Choose a valid workspace status." }, { status: 400 });
+    }
+
+    if (action === "update_economics" && body.sellingPrice === undefined && body.productCost === undefined) {
+      return NextResponse.json({ error: "Add a selling price or product cost to save." }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -149,6 +167,27 @@ export async function POST(request: Request) {
           value_json: "",
         });
       }
+    } else if (action === "update_economics") {
+      const ideaEconomics = parseRows(valueFor(rows, "unit-economics-worksheet", "idea_economics"));
+      const economicsIndex = findEconomicsIndex(ideaEconomics, productIdeas[targetIndex], targetIdeaId);
+      const existing = economicsIndex >= 0 ? ideaEconomics[economicsIndex] : {};
+      const nextRow = {
+        ...existing,
+        idea_id: targetIdeaId,
+        idea_name: normalize(productIdeas[targetIndex].idea_description) || `Idea ${targetIndex + 1}`,
+        selling_price: body.sellingPrice === undefined ? existing.selling_price ?? "" : normalize(body.sellingPrice),
+        product_cost: body.productCost === undefined ? existing.product_cost ?? "" : normalize(body.productCost),
+      };
+      const nextEconomics = economicsIndex >= 0
+        ? ideaEconomics.map((row, index) => (index === economicsIndex ? nextRow : row))
+        : [...ideaEconomics, nextRow];
+
+      upserts.push({
+        project_id: projectId,
+        worksheet_id: "unit-economics-worksheet",
+        field_key: "idea_economics",
+        value_json: JSON.stringify(nextEconomics),
+      });
     } else {
       const nextIdeas = productIdeas.map((idea, index) => {
         if (index !== targetIndex) return idea;
