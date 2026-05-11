@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { PrimaryButton } from "@/components/design-system";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
@@ -114,16 +114,6 @@ function compactActionLabel(label: string): string {
   return labels[label] ?? label;
 }
 
-function workflowText(idea: ProductIdeaLifecycle, canAccessOsContent: boolean): string {
-  if (canAccessOsContent) return idea.nextAction.note;
-  if (idea.workspaceStatus === "new") return "Next: review signals and add pricing.";
-  if (idea.workspaceStatus === "reviewing") return "Next: compare demand, competition, and margin.";
-  if (idea.workspaceStatus === "shortlist") return "Next: shortlist for supplier or marketplace checks.";
-  if (idea.workspaceStatus === "testing") return "Next: record what happens in the test.";
-  if (idea.workspaceStatus === "archived") return "Archived.";
-  return "Next: review this candidate.";
-}
-
 function clippedIdeaName(name: string, max = 58): string {
   return name.length > max ? `${name.slice(0, max - 3).trim()}...` : name;
 }
@@ -170,6 +160,12 @@ function economicsForIdea(idea: ProductIdeaLifecycle) {
 
 function formatMoneyValue(value: string | null): string {
   return value?.trim() || "";
+}
+
+function displayMoneyValue(value: string, empty = "£ —"): string {
+  const trimmed = value.trim();
+  if (!trimmed) return empty;
+  return /^[£$€]/.test(trimmed) ? trimmed : `${currencySymbol()}${trimmed}`;
 }
 
 function formatMarginPercent(value: number | null): string {
@@ -301,7 +297,7 @@ function SignalChip({
 
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className="flex max-w-full flex-wrap items-center gap-1.5 overflow-hidden">
+    <div className="flex max-w-full flex-wrap items-center gap-1.5">
       <SignalChip
         label="DMND"
         value={idea.scannerDemandScore === null ? "-" : String(idea.scannerDemandScore)}
@@ -344,6 +340,7 @@ function PricingEditor({
   const [sellingPrice, setSellingPrice] = useState(formatMoneyValue(idea.sellingPrice));
   const [productCost, setProductCost] = useState(formatMoneyValue(idea.productCost));
   const [dirty, setDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const economics = economicsForIdea({ ...idea, sellingPrice, productCost });
   const quickMargin = simpleMarginPercent(sellingPrice, productCost);
   const marginPercent = economics.marginPercent ?? quickMargin;
@@ -357,71 +354,111 @@ function PricingEditor({
     pricingSyncFailedAt?: string | null;
   }).pricingSyncStatus;
 
-  function commit() {
-    if (!dirty || saving) return;
+  useEffect(() => {
+    if (isEditing) return;
+    setSellingPrice(formatMoneyValue(idea.sellingPrice));
+    setProductCost(formatMoneyValue(idea.productCost));
+    setDirty(false);
+  }, [idea.sellingPrice, idea.productCost, isEditing]);
+
+  function commit(exitEditing = true) {
+    if (saving) return;
+    if (exitEditing) setIsEditing(false);
+    if (!dirty) return;
     setDirty(false);
     onSave(idea, { sellingPrice, productCost });
   }
 
+  function cancelEdit() {
+    setSellingPrice(formatMoneyValue(idea.sellingPrice));
+    setProductCost(formatMoneyValue(idea.productCost));
+    setDirty(false);
+    setIsEditing(false);
+  }
+
+  function handleEditorBlur(event: FocusEvent<HTMLDivElement>) {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+    commit(true);
+  }
+
+  const emptyMessage = canUseScannerImport && canUseResearchWorkspace
+    ? syncStatus === "failed"
+      ? `£ Sync failed${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt ? ` · ${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt}` : ""}`
+      : "£ Awaiting sync"
+    : "+ Add pricing";
+
+  const editor = (
+    <div
+      className="space-y-2 rounded-lg bg-white/70 px-2 py-1.5"
+      onBlur={handleEditorBlur}
+    >
+      <label className="block">
+        <span className="sr-only">Selling price for {idea.label}</span>
+        <input
+          value={sellingPrice}
+          disabled={saving}
+          autoFocus
+          onChange={(event) => {
+            setSellingPrice(event.target.value);
+            setDirty(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") cancelEdit();
+          }}
+          placeholder="£ Sell"
+          className="w-full min-w-0 border-b border-ink-100 bg-transparent py-1 text-sm font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 disabled:opacity-60"
+        />
+      </label>
+      <label className="block">
+        <span className="sr-only">Product cost for {idea.label}</span>
+        <input
+          value={productCost}
+          disabled={saving}
+          onChange={(event) => {
+            setProductCost(event.target.value);
+            setDirty(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") cancelEdit();
+          }}
+          placeholder="£ Cost"
+          className="w-full min-w-0 border-b border-ink-100 bg-transparent py-1 text-sm font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 disabled:opacity-60"
+        />
+      </label>
+    </div>
+  );
+
   return (
-    <div className="space-y-2">
-      {!hasAnyPricing ? (
-        <p className="text-[10px] font-semibold leading-4 text-ink-500">
-          {!canUseScannerImport
-            ? "Add manually"
-            : canUseResearchWorkspace
-              ? syncStatus === "failed"
-                ? `Pricing sync failed${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt ? ` · ${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt}` : ""}`
-                : "Awaiting extension sync"
-              : "Add manually"}
-        </p>
-      ) : null}
-      <div className="grid gap-1.5">
-        <label className="block">
-          <span className="sr-only">Selling price for {idea.label}</span>
-          <span className="flex items-center rounded-lg border border-ink-100 bg-white text-xs font-semibold text-ink-900 transition focus-within:border-cobalt-500 focus-within:ring-2 focus-within:ring-cobalt-100">
-            <span className="pl-2 text-ink-400">{currencySymbol()}</span>
-            <input
-              value={sellingPrice}
-              disabled={saving}
-              onChange={(event) => {
-                setSellingPrice(event.target.value);
-                setDirty(true);
-              }}
-              onBlur={commit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-              placeholder="Sell"
-              className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1.5 outline-none placeholder:text-ink-300 disabled:opacity-60"
-            />
+    <div className="min-w-0 space-y-2">
+      {isEditing ? editor : (
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => setIsEditing(true)}
+          className="group w-full rounded-lg px-2 py-1.5 text-left transition hover:bg-surface-sunken disabled:opacity-60"
+        >
+          {hasAnyPricing ? (
+            <span className="block space-y-0.5">
+              <span className="block text-sm font-semibold leading-5 text-ink-900">
+                {displayMoneyValue(sellingPrice)} <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">sell</span>
+              </span>
+              <span className="block text-sm font-semibold leading-5 text-ink-700">
+                {displayMoneyValue(productCost)} <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">cost</span>
+              </span>
+            </span>
+          ) : (
+            <span className="block text-sm font-semibold leading-5 text-ink-500">
+              {emptyMessage}
+            </span>
+          )}
+          <span className="mt-1 hidden text-[10px] font-semibold text-cobalt-600 group-hover:inline">
+            Edit
           </span>
-        </label>
-        <label className="block">
-          <span className="sr-only">Product cost for {idea.label}</span>
-          <span className="flex items-center rounded-lg border border-ink-100 bg-white text-xs font-semibold text-ink-900 transition focus-within:border-cobalt-500 focus-within:ring-2 focus-within:ring-cobalt-100">
-            <span className="pl-2 text-ink-400">{currencySymbol()}</span>
-            <input
-              value={productCost}
-              disabled={saving}
-              onChange={(event) => {
-                setProductCost(event.target.value);
-                setDirty(true);
-              }}
-              onBlur={commit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.currentTarget.blur();
-                }
-              }}
-              placeholder="Cost"
-              className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1.5 outline-none placeholder:text-ink-300 disabled:opacity-60"
-            />
-          </span>
-        </label>
-      </div>
+        </button>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {hasBothCoreValues ? (
           <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${marginTone(marginPercent)}`}>
@@ -500,9 +537,6 @@ function IdeaMobileCard({
           {marketplaceTitle(idea) ? (
             <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{marketplaceTitle(idea)}</p>
           ) : null}
-          <p className="mt-2 text-xs font-semibold leading-5 text-ink-600">
-            {workflowText(idea, canAccessOsContent)}
-          </p>
         </div>
       </div>
 
@@ -688,14 +722,14 @@ export function IdeasIndexClient({
     <section className="rounded-xl border border-ink-100 bg-surface-raised shadow-card">
       <div className="border-b border-ink-100 p-5">
         <div className="flex flex-wrap gap-2">
-          {VIEW_FILTERS.filter((item) => item.value === "new" || item.value === "all" || counts[item.value] > 0).map((item) => (
+          {VIEW_FILTERS.map((item) => (
             <button
               key={item.value}
               type="button"
               aria-pressed={view === item.value}
               onClick={() => setView(item.value)}
               className={[
-                "rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition",
+                "rounded-lg border px-3 py-2 text-sm font-semibold transition",
                 view === item.value
                   ? "border-cobalt-600 bg-cobalt-600 !text-white"
                   : "border-ink-100 bg-surface-raised text-ink-600 hover:border-cobalt-500 hover:text-cobalt-600",
@@ -776,17 +810,14 @@ export function IdeasIndexClient({
             />
           ))}
         </div>
-        <div className="hidden overflow-x-hidden lg:block">
+        <div className="hidden lg:block">
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
-                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
+                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[30%]" />
                 <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[8%]" />
-                <th className="w-[7%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-                  <span className="sr-only">Status</span>
-                </th>
-                <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[13%]" />
-                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[26%]" />
+                <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[16%]" />
+                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[28%]" />
                 {canAccessOsContent ? (
                   <th className="w-[8%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
@@ -818,48 +849,45 @@ export function IdeasIndexClient({
                             {marketplaceTitle(idea)}
                           </p>
                         ) : null}
-                        <p className="mt-2 line-clamp-2 text-xs font-semibold leading-5 text-ink-600">
-                          {workflowText(idea, canAccessOsContent)}
-                        </p>
-                        {idea.sourceUrl ? (
-                          <a
-                            href={idea.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={idea.sourceUrl}
-                            className="mt-2 inline-flex text-[10px] font-bold uppercase tracking-[0.12em] text-cobalt-600 underline-offset-4 hover:underline"
-                          >
-                            View on {idea.sourceLabel || "source"}
-                          </a>
-                        ) : null}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <details className="group relative">
+                            <summary className={`inline-flex cursor-pointer list-none rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] ${workspaceTone(idea.workspaceStatus)}`}>
+                              {idea.workspaceStatusLabel}
+                            </summary>
+                            <div className="absolute left-0 z-30 mt-2 w-36 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
+                              {WORKSPACE_STATUS_OPTIONS.map((item) => (
+                                <button
+                                  key={item.value}
+                                  type="button"
+                                  disabled={savingIdeaId === idea.ideaId}
+                                  onClick={() => void mutateIdea(idea, "set_status", item.value)}
+                                  className="block w-full rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
+                                >
+                                  {item.label}
+                                </button>
+                              ))}
+                            </div>
+                          </details>
+                          {idea.scannerScoredAt ? (
+                            <span className="text-[10px] font-semibold text-ink-400">Scanned {idea.scannerScoredAt}</span>
+                          ) : null}
+                          {idea.sourceUrl ? (
+                            <a
+                              href={idea.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={idea.sourceUrl}
+                              className="text-[10px] font-bold tracking-[0.08em] text-cobalt-600 underline-offset-4 hover:underline"
+                            >
+                              View on {idea.sourceLabel || "source"}
+                            </a>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-3 py-4">
                     <ScoreBadge idea={idea} />
-                    {idea.scannerScoredAt ? (
-                      <p className="mt-2 text-[10px] leading-4 text-ink-500">Scanned {idea.scannerScoredAt}</p>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-4">
-                    <details className="group relative">
-                      <summary className={`inline-flex cursor-pointer list-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${workspaceTone(idea.workspaceStatus)}`}>
-                        {idea.workspaceStatusLabel}
-                      </summary>
-                      <div className="absolute left-0 z-30 mt-2 w-36 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
-                        {WORKSPACE_STATUS_OPTIONS.map((item) => (
-                          <button
-                            key={item.value}
-                            type="button"
-                            disabled={savingIdeaId === idea.ideaId}
-                            onClick={() => void mutateIdea(idea, "set_status", item.value)}
-                            className="block w-full rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
-                          >
-                            {item.label}
-                          </button>
-                        ))}
-                      </div>
-                    </details>
                   </td>
                   <td className="px-3 py-4">
                     <PricingEditor
