@@ -30,7 +30,7 @@ export const BILLING_PLANS: Record<BillingPlanCode, BillingPlan> = {
     cta: "Buy Scout Basic",
     features: [
       "Scan Amazon and AliExpress product pages",
-      "Save captured products to Scout Workspace",
+      "Save up to 50 products to Scout Workspace",
       "Sort, filter, archive, and delete product candidates",
     ],
   },
@@ -47,7 +47,7 @@ export const BILLING_PLANS: Record<BillingPlanCode, BillingPlan> = {
     features: [
       "Scan any product website via the MCP research layer",
       "Get deeper demand, competition, and risk analysis",
-      "Use Scout Workspace as a serious product research funnel",
+      "Use Scout Workspace with fair-use research limits",
     ],
   },
   calm_commerce_os: {

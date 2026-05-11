@@ -419,6 +419,9 @@ export default async function ScoutLandingPage() {
           <p className="mt-8 text-center text-sm font-semibold text-ink-600">
             Most sellers pick Pro. Scan anywhere, save everything, decide faster.
           </p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-xs leading-6 text-ink-500">
+            Scout Pro includes fair-use access to AI-assisted research so normal product research is covered while protecting the service from automated or abusive usage.
+          </p>
         </div>
       </section>
 

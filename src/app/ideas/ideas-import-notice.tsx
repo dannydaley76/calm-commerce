@@ -97,7 +97,7 @@ export function IdeasImportNotice({ title, body, tone, cta }: ImportNoticeProps)
           <button
             type="button"
             onClick={dismiss}
-            className="rounded-lg border border-current/20 bg-white/50 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:ring-offset-2"
+            className="rounded-lg border border-current/20 bg-white/50 px-3 py-2 text-sm font-semibold transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:ring-offset-2"
           >
             Dismiss
           </button>

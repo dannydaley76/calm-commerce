@@ -84,8 +84,58 @@ function scoreTone(score: number | null): string {
 function compactScoreLabel(score: number | null): string {
   if (score === null) return "Not scored";
   if (score >= 70) return "Strong";
-  if (score >= 40) return "Review";
+  if (score >= 40) return "Moderate";
   return "Weak";
+}
+
+function scoreOutOfTen(score: number | null): string {
+  if (score === null) return "-";
+  return `${(score / 10).toFixed(1)}/10`;
+}
+
+function scoreOutOfHundred(score: number | null): string {
+  if (score === null) return "-";
+  return `${score}/100`;
+}
+
+function scoreBorderTone(score: number | null): string {
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (score >= 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
+function seasonalityTone(value: string | null | undefined): string {
+  const normalised = (value ?? "").trim().toLowerCase();
+  if (!normalised) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (normalised.includes("season") || normalised.includes("risk") || normalised.includes("spike")) {
+    return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  }
+  return "border-success-100 bg-success-100 text-[#005e3f]";
+}
+
+function compactNumber(value: string | undefined): string {
+  const parsed = Number.parseFloat((value ?? "").replace(/,/g, ""));
+  if (!Number.isFinite(parsed)) return value?.trim() || "Not captured";
+  return parsed.toLocaleString("en-GB");
+}
+
+function cleanEvidenceText(value: string | null | undefined): string {
+  const seen = new Set<string>();
+  return (value ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => {
+      const key = line
+        .replace(/Observed reviews:\s*([0-9,]+)/i, (_, count) => `Observed reviews:${String(count).replace(/,/g, "")}`)
+        .replace(/Observed orders:\s*([0-9,]+)/i, (_, count) => `Observed orders:${String(count).replace(/,/g, "")}`)
+        .toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join("\n");
 }
 
 function formatCurrency(value: number | null): string {
@@ -332,6 +382,99 @@ function SummaryCard({
   );
 }
 
+function SignalCard({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: string;
+}) {
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${tone}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-75">{label}</p>
+      <p className="mt-2 font-[Manrope] text-2xl font-bold leading-none">{value}</p>
+      <p className="mt-2 text-xs font-semibold leading-5 opacity-85">{detail}</p>
+    </div>
+  );
+}
+
+function ScoutSignalSummary({
+  idea,
+  sourceIdea,
+}: {
+  idea: ProductIdeaLifecycle;
+  sourceIdea: ProductIdeaRow;
+}) {
+  const observed = [
+    ["Orders", compactNumber(sourceIdea.observed_order_count)],
+    ["Reviews", compactNumber(sourceIdea.observed_review_count)],
+    ["Rating", sourceIdea.observed_rating?.trim() || "Not captured"],
+    ["Price", sourceIdea.observed_price?.trim() || "Not captured"],
+  ];
+
+  return (
+    <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Scout verdict</p>
+          <h2 className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">
+            {idea.scannerVerdict || compactScoreLabel(idea.scannerScore)}
+          </h2>
+        </div>
+        {idea.scannerScoredAt ? (
+          <p className="text-xs font-semibold text-ink-500">Scanned {idea.scannerScoredAt}</p>
+        ) : null}
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <SignalCard
+          label="Scout score"
+          value={scoreOutOfTen(idea.scannerScore)}
+          detail={compactScoreLabel(idea.scannerScore)}
+          tone={scoreBorderTone(idea.scannerScore)}
+        />
+        <SignalCard
+          label="Demand"
+          value={scoreOutOfHundred(idea.scannerDemandScore)}
+          detail={compactScoreLabel(idea.scannerDemandScore)}
+          tone={scoreBorderTone(idea.scannerDemandScore)}
+        />
+        <SignalCard
+          label="Competition"
+          value={scoreOutOfHundred(idea.scannerCompetitionScore)}
+          detail={compactScoreLabel(idea.scannerCompetitionScore)}
+          tone={scoreBorderTone(idea.scannerCompetitionScore)}
+        />
+        <SignalCard
+          label="Confidence"
+          value={scoreOutOfHundred(idea.scannerConfidenceScore)}
+          detail={compactScoreLabel(idea.scannerConfidenceScore)}
+          tone={scoreBorderTone(idea.scannerConfidenceScore)}
+        />
+        <SignalCard
+          label="Seasonality"
+          value={idea.seasonality ? "Flagged" : "None"}
+          detail={idea.seasonality ? "Review timing risk" : "No risk captured"}
+          tone={seasonalityTone(idea.seasonality)}
+        />
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        {observed.map(([label, value]) => (
+          <div key={label} className="rounded-lg bg-surface-sunken px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">{label}</p>
+            <p className="mt-1 text-sm font-bold text-ink-900">{value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function IdeaSummarySection({
   idea,
   economics,
@@ -506,6 +649,24 @@ function ProjectedActualSection({
       <p className="mt-4 rounded-xl bg-surface-sunken px-4 py-3 text-sm leading-6 text-ink-600">
         {signal}
       </p>
+    </section>
+  );
+}
+
+function ScoutUpgradePanel() {
+  return (
+    <section className="rounded-xl border border-cobalt-100 bg-[#f4f8ff] p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="font-[Manrope] text-base font-bold text-ink-900">Want the guided OS workflow?</h2>
+          <p className="mt-1 max-w-[620px] text-sm leading-6 text-ink-700">
+            Upgrade when you want to connect this idea to economics, marketplace tests, Lean Canvas, and metrics.
+          </p>
+        </div>
+        <PrimaryButton href="/upgrade" className="shrink-0">
+          Upgrade access
+        </PrimaryButton>
+      </div>
     </section>
   );
 }
@@ -700,10 +861,11 @@ export function IdeaDetailClient({
 
   const [ideaDraft, setIdeaDraft] = useState({
     idea_description: getProductIdeaLabel(sourceIdea, ideaIndex),
+    raw_product_title: sourceIdea.raw_product_title ?? "",
     product_image_url: sourceIdea.product_image_url ?? "",
     source_url: sourceIdea.source_url ?? "",
     source_label: sourceIdea.source_label ?? "",
-    demand_evidence: sourceIdea.demand_evidence ?? "",
+    demand_evidence: cleanEvidenceText(sourceIdea.demand_evidence),
     competition_notes: sourceIdea.competition_notes ?? "",
     seasonality: sourceIdea.seasonality ?? "",
   });
@@ -758,6 +920,8 @@ export function IdeaDetailClient({
   };
   const nextActionHref = canAccessOsContent ? localNextActionHref(displayIdea) : "/upgrade";
   const nextActionLabel = canAccessOsContent ? displayIdea.nextAction.label : "Upgrade";
+  const rawTitle = ideaDraft.raw_product_title.trim();
+  const showRawTitle = Boolean(rawTitle && rawTitle !== ideaDraft.idea_description.trim());
 
   const setSectionStatus = (section: string, value: SaveState) => {
     setStatus((prev) => ({ ...prev, [section]: value }));
@@ -869,9 +1033,9 @@ export function IdeaDetailClient({
       <PageHero
         label="Product candidate"
         title={ideaDraft.idea_description || idea.label}
-        description={displayIdea.latestSignal}
+        description={showRawTitle ? rawTitle : displayIdea.latestSignal}
       >
-        <div className="flex flex-wrap items-center gap-5">
+        <div className="flex flex-wrap items-start gap-5">
           {ideaDraft.product_image_url ? (
             <img
               src={ideaDraft.product_image_url}
@@ -886,58 +1050,60 @@ export function IdeaDetailClient({
               Image
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
-              {displayIdea.statusLabel}
-            </span>
-            {ideaDraft.source_url ? (
-              <a
-                href={ideaDraft.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={ideaDraft.source_url}
-                className="inline-flex rounded-full bg-cobalt-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600 underline-offset-4 hover:underline"
-              >
-                View on {ideaDraft.source_label || displayIdea.sourceLabel || "source"}
-              </a>
-            ) : null}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm leading-6 text-ink-700">{displayIdea.latestSignal}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
+                {displayIdea.statusLabel}
+              </span>
+              {ideaDraft.source_url ? (
+                <a
+                  href={ideaDraft.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-[13px] font-medium text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+                >
+                  View on {ideaDraft.source_label || displayIdea.sourceLabel || "source"}
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       </PageHero>
 
-      <section className="rounded-xl border border-cobalt-100 bg-white p-5 shadow-card">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
-              Next best action
-            </p>
-            <p className="mt-2 text-sm leading-6 text-ink-700">
-              {canAccessOsContent
-                ? displayIdea.nextAction.note
-                : "Scout keeps the product idea and evidence here. Upgrade to Calm Commerce OS to run economics, tests, canvas, and metrics."}
-            </p>
+      <ScoutSignalSummary idea={displayIdea} sourceIdea={sourceIdea} />
+
+      {canAccessOsContent ? (
+        <section className="rounded-xl border border-cobalt-100 bg-white p-5 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">
+                Next best action
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ink-700">{displayIdea.nextAction.note}</p>
+            </div>
+            <PrimaryButton href={nextActionHref} className="shrink-0">
+              {nextActionLabel}
+            </PrimaryButton>
           </div>
-          <PrimaryButton href={nextActionHref} className="shrink-0">
-            {nextActionLabel}
-          </PrimaryButton>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {canAccessOsContent ? (
         <IdeaSummarySection idea={displayIdea} economics={economicsDraft} />
       ) : null}
 
-      <nav className="rounded-xl border border-ink-100 bg-surface-raised p-4 shadow-card">
-        <div className="flex flex-wrap gap-3">
-          <SecondaryButton href="#idea-evidence" className="px-4 py-2">Idea evidence</SecondaryButton>
+      <nav className="rounded-xl border border-ink-100 bg-surface-raised px-4 py-3 shadow-card">
+        <div className="flex flex-wrap gap-4 text-sm font-semibold text-cobalt-600">
+          <a href="#idea-evidence" className="underline-offset-4 hover:underline">Idea evidence</a>
           {canAccessOsContent ? (
             <>
-              <SecondaryButton href="#economics" className="px-4 py-2">Economics</SecondaryButton>
-              <SecondaryButton href="#marketplace-test" className="px-4 py-2">Test</SecondaryButton>
-              <SecondaryButton href="#projected-actual" className="px-4 py-2">Projection</SecondaryButton>
+              <a href="#economics" className="underline-offset-4 hover:underline">Economics</a>
+              <a href="#marketplace-test" className="underline-offset-4 hover:underline">Test</a>
+              <a href="#projected-actual" className="underline-offset-4 hover:underline">Projection</a>
             </>
           ) : null}
-          <SecondaryButton href="#history" className="px-4 py-2">History</SecondaryButton>
+          <a href="#history" className="underline-offset-4 hover:underline">History</a>
         </div>
       </nav>
 
@@ -1001,13 +1167,14 @@ export function IdeaDetailClient({
               description="Demand, competition, source, and seasonality captured for this candidate."
               onEdit={() => setEditSection("idea")}
             >
-              <ReviewValue label="Idea name" value={ideaDraft.idea_description} />
               <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Not added"} />
               <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
               <ReviewValue label="Demand evidence" value={ideaDraft.demand_evidence} wide />
               <ReviewValue label="Competition notes" value={ideaDraft.competition_notes} wide />
             </ReviewSection>
           )}
+
+          {!canAccessOsContent ? <ScoutUpgradePanel /> : null}
 
           {canAccessOsContent ? editSection === "economics" ? (
             <EditableSection
@@ -1158,17 +1325,7 @@ export function IdeaDetailClient({
               <ReviewValue label="Decision" value={optionLabel(testDraft.decision)} />
               <ReviewValue label="What you learned" value={testDraft.what_you_learned} wide />
             </ReviewSection>
-          ) : (
-            <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-              <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Calm Commerce OS workflow</h2>
-              <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
-                Economics, marketplace tests, Lean Canvas, and metrics are available with full OS access.
-              </p>
-              <div className="mt-5">
-                <PrimaryButton href="/upgrade">Upgrade access</PrimaryButton>
-              </div>
-            </section>
-          )}
+          ) : null}
         </div>
 
         <aside className="space-y-6">
