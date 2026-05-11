@@ -639,15 +639,17 @@ function IdeaMobileCard({
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <ScoreBadge idea={idea} />
-        <StatusSelector
-          idea={idea}
-          saving={saving}
-          saved={savedStatus}
-          onChange={onStatusChange}
-        />
-        {idea.scannerScoredAt ? (
-          <span className="text-[10px] font-semibold text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
-        ) : null}
+        <div className="flex flex-col items-start gap-1">
+          <StatusSelector
+            idea={idea}
+            saving={saving}
+            saved={savedStatus}
+            onChange={onStatusChange}
+          />
+          {idea.scannerScoredAt ? (
+            <span className="text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -671,7 +673,7 @@ function IdeaMobileCard({
             title={idea.sourceUrl}
             className="text-sm font-semibold text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
           >
-            View on {idea.sourceLabel || "source"}
+            View on {idea.sourceLabel || "source"} ↗
           </a>
         ) : null}
         <ActionMenu
@@ -946,12 +948,17 @@ export function IdeasIndexClient({
                           </p>
                         ) : null}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <StatusSelector
-                            idea={idea}
-                            saving={savingIdeaId === idea.ideaId}
-                            saved={savedStatusIdeaId === idea.ideaId}
-                            onChange={(target, status) => void mutateIdea(target, "set_status", status)}
-                          />
+                          <div className="flex flex-col items-start gap-1">
+                            <StatusSelector
+                              idea={idea}
+                              saving={savingIdeaId === idea.ideaId}
+                              saved={savedStatusIdeaId === idea.ideaId}
+                              onChange={(target, status) => void mutateIdea(target, "set_status", status)}
+                            />
+                            {idea.scannerScoredAt ? (
+                              <span className="text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
+                            ) : null}
+                          </div>
                           {idea.sourceUrl ? (
                             <a
                               href={idea.sourceUrl}
@@ -960,7 +967,7 @@ export function IdeasIndexClient({
                               title={idea.sourceUrl}
                               className="text-[10px] font-bold tracking-[0.08em] text-cobalt-600 underline-offset-4 hover:underline"
                             >
-                              View on {idea.sourceLabel || "source"}
+                              View on {idea.sourceLabel || "source"} ↗
                             </a>
                           ) : null}
                         </div>
@@ -968,14 +975,7 @@ export function IdeasIndexClient({
                     </div>
                   </td>
                   <td className="px-3 py-4 text-center">
-                    <div className="flex min-h-[86px] flex-col items-center justify-between">
-                      <ScoreBadge idea={idea} />
-                      {idea.scannerScoredAt ? (
-                        <span className="mt-3 text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
-                      ) : (
-                        <span aria-hidden="true" />
-                      )}
-                    </div>
+                    <ScoreBadge idea={idea} />
                   </td>
                   <td className="px-3 py-4">
                     <PricingEditor
