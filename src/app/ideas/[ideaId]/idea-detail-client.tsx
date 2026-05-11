@@ -132,8 +132,33 @@ function parsedNumber(value: string | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parsedMoney(value: string | null | undefined): number | null {
+  const parsed = Number.parseFloat((value ?? "").replace(/[^0-9.\-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function formatMoneyInput(value: string): string {
   return value.trim() || "Not added";
+}
+
+function projectedEconomics(row: InstanceRow): {
+  sellingPrice: number | null;
+  margin: number | null;
+  marginPercent: number | null;
+  missingNumbers: boolean;
+} {
+  const full = calculateUnitEconomics(row);
+  if (full.margin !== null) return full;
+  const sellingPrice = full.sellingPrice ?? parsedMoney(row.selling_price);
+  const productCost = parsedMoney(row.product_cost);
+  if (sellingPrice === null || productCost === null || sellingPrice <= 0) return full;
+  const margin = sellingPrice - productCost;
+  return {
+    sellingPrice,
+    margin,
+    marginPercent: (margin / sellingPrice) * 100,
+    missingNumbers: true,
+  };
 }
 
 function marginTone(value: number | null): string {
@@ -524,7 +549,7 @@ function ScoutSignalSummary({
 }
 
 function EconomicsSnapshot({ economics }: { economics: InstanceRow }) {
-  const projection = calculateUnitEconomics(economics);
+  const projection = projectedEconomics(economics);
   const hasAnyEconomics = Boolean(
     economics.selling_price ||
     economics.product_cost ||
@@ -563,6 +588,10 @@ function EconomicsSnapshot({ economics }: { economics: InstanceRow }) {
         <p className="mt-3 text-xs leading-5 text-ink-500">
           Add sell price and product cost from the workspace table, then complete shipping and fees when you need the full margin.
         </p>
+      ) : projection.missingNumbers && projection.margin !== null ? (
+        <p className="mt-3 text-xs leading-5 text-ink-500">
+          This margin uses sell price minus product cost. Add shipping and platform fees later for the full economics.
+        </p>
       ) : null}
     </section>
   );
@@ -575,7 +604,7 @@ function IdeaSummarySection({
   idea: ProductIdeaLifecycle;
   economics: InstanceRow;
 }) {
-  const projection = calculateUnitEconomics(economics);
+  const projection = projectedEconomics(economics);
   const latestMetric = idea.metricEntries[0] ?? null;
   const testSummary = idea.testResult || idea.testDecision || idea.testMarketplace || "No test logged";
 
@@ -676,7 +705,7 @@ function ProjectedActualSection({
   idea: ProductIdeaLifecycle;
   economics: InstanceRow;
 }) {
-  const projection = calculateUnitEconomics(economics);
+  const projection = projectedEconomics(economics);
   const actualProfitEntry = idea.metricEntries.find((entry) => entry.profitPerSale !== null);
   const actualRevenueEntry = idea.metricEntries.find((entry) => entry.revenuePerOrder !== null);
   const actualProfitPerSale = actualProfitEntry?.profitPerSale ?? null;
@@ -746,62 +775,98 @@ function ProjectedActualSection({
   );
 }
 
-function ScoutUpgradePanel() {
+function ScoutUpgradePanel({ canUseResearchWorkspace }: { canUseResearchWorkspace: boolean }) {
+  if (canUseResearchWorkspace) return null;
   return (
     <section className="rounded-xl border border-cobalt-100 bg-[#f4f8ff] p-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="font-[Manrope] text-base font-bold text-ink-900">Want the guided OS workflow?</h2>
+          <h2 className="font-[Manrope] text-base font-bold text-ink-900">Unlock Scout Pro research</h2>
           <p className="mt-1 max-w-[620px] text-sm leading-6 text-ink-700">
-            Upgrade when you want to connect this idea to economics, marketplace tests, Lean Canvas, and metrics.
+            Move from basic saves to deeper Scout research, better product-page extraction, and richer product notes before the full OS launches.
           </p>
         </div>
         <PrimaryButton href="/upgrade" className="shrink-0">
-          Upgrade access
+          Upgrade Scout
         </PrimaryButton>
       </div>
     </section>
   );
 }
 
+function activitySourceLabel(
+  event: ProductIdeaLifecycle["timeline"][number],
+  canAccessOsContent: boolean,
+): { label: string; href: string } {
+  if (canAccessOsContent) return { label: event.chapter, href: event.href };
+  if (event.key === "captured") return { label: "Scout Workspace", href: "/ideas" };
+  if (event.key === "economics") return { label: "Scout pricing", href: "#economics" };
+  return { label: "Scout", href: "/ideas" };
+}
+
 function NotesSection({
   idea,
+  canAccessOsContent,
   noteDraft,
   status,
   onChange,
   onSave,
 }: {
   idea: ProductIdeaLifecycle;
+  canAccessOsContent: boolean;
   noteDraft: string;
   status: SaveState;
   onChange: (value: string) => void;
   onSave: () => Promise<void>;
 }) {
   const userNotes = idea.notes.filter((note) => !isScoutImportNote(note));
+  const activity = [
+    ...idea.timeline.map((event) => ({ type: "system" as const, key: event.key, event })),
+    ...userNotes.map((note) => ({ type: "note" as const, key: `note-${note.id}`, note })),
+  ];
 
   return (
     <div id="history" className="space-y-6">
       <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
         <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Activity</h2>
         <p className="mt-2 text-sm leading-6 text-ink-500">
-          System events for this product candidate.
+          System events and notes for this product candidate.
         </p>
         <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
-          {idea.timeline.map((event) => (
-            <li key={event.key} className="relative">
-              <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
-                <a
-                  href={event.href}
-                  className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
-                >
-                  {event.chapter}
-                </a>
-              </div>
-              <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
-            </li>
-          ))}
+          {activity.map((item) => {
+            if (item.type === "note") {
+              return (
+                <li key={item.key} className="relative">
+                  <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-ink-300 ring-4 ring-surface-raised" />
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-[Manrope] text-sm font-bold text-ink-900">Note added</p>
+                    <span className="text-[10px] font-bold tracking-[0.08em] text-ink-500">{item.note.createdAt}</span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{item.note.note}</p>
+                </li>
+              );
+            }
+            const source = activitySourceLabel(item.event, canAccessOsContent);
+            return (
+              <li key={item.key} className="relative">
+                <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-[Manrope] text-sm font-bold text-ink-900">{item.event.label}</p>
+                  <a
+                    href={source.href}
+                    className="text-[10px] font-bold tracking-[0.08em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
+                  >
+                    {source.label}
+                  </a>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-ink-500">
+                  {!canAccessOsContent && item.event.key === "captured"
+                    ? "Imported into Scout Workspace."
+                    : item.event.detail.replace(/Chapter 3|Chapter 5|Chapter 6/g, "Scout")}
+                </p>
+              </li>
+            );
+          })}
         </ol>
       </section>
 
@@ -940,10 +1005,12 @@ export function IdeaDetailClient({
   idea,
   responses,
   canAccessOsContent,
+  canUseResearchWorkspace,
 }: {
   idea: ProductIdeaLifecycle;
   responses: ResponseMap;
   canAccessOsContent: boolean;
+  canUseResearchWorkspace: boolean;
 }) {
   const router = useRouter();
   const productIdeas = useMemo(
@@ -1219,7 +1286,10 @@ export function IdeaDetailClient({
             <EditableSection
               id="idea-evidence"
               title="Idea evidence"
-              description="Edit the original demand signals and market notes from Chapter 3 without returning to the lesson."
+              description={canAccessOsContent
+                ? "Edit the original demand signals and market notes from Chapter 3 without returning to the lesson."
+                : "Edit the product source, scan evidence, and market notes captured from Scout."
+              }
               state={status.idea}
               onSubmit={saveIdea}
               onCancel={() => setEditSection(null)}
@@ -1278,7 +1348,7 @@ export function IdeaDetailClient({
             </ReviewSection>
           )}
 
-          {!canAccessOsContent ? <ScoutUpgradePanel /> : null}
+          {!canAccessOsContent ? <ScoutUpgradePanel canUseResearchWorkspace={canUseResearchWorkspace} /> : null}
 
           {canAccessOsContent ? editSection === "economics" ? (
             <EditableSection
@@ -1435,6 +1505,7 @@ export function IdeaDetailClient({
         <aside className="space-y-6">
           <NotesSection
             idea={idea}
+            canAccessOsContent={canAccessOsContent}
             noteDraft={noteDraft}
             status={status.notes}
             onChange={setNoteDraft}

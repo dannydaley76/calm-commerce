@@ -19,6 +19,7 @@ type MetricEntry = {
 async function getIdeaDetail(ideaId: string): Promise<{
   authenticated: boolean;
   canAccessOsContent: boolean;
+  canUseResearchWorkspace: boolean;
   idea: ProductIdeaLifecycle | null;
   responses: ResponseMap;
   error?: string;
@@ -26,7 +27,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) {
-      return { authenticated: false, canAccessOsContent: false, idea: null, responses: {} };
+      return { authenticated: false, canAccessOsContent: false, canUseResearchWorkspace: false, idea: null, responses: {} };
     }
 
     const access = await getAccessStateForCurrentUser();
@@ -36,7 +37,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
       .eq("project_id", projectId);
     const scopedResponseQuery = access.canAccessOsContent
       ? responseQuery
-      : responseQuery.eq("worksheet_id", "ideas-worksheet");
+      : responseQuery.in("worksheet_id", ["ideas-worksheet", "unit-economics-worksheet"]);
 
     const { data } = await scopedResponseQuery;
     const metricRows = access.canAccessOsContent
@@ -60,6 +61,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
     return {
       authenticated: true,
       canAccessOsContent: access.canAccessOsContent,
+      canUseResearchWorkspace: access.canUseResearchWorkspace,
       idea: ideas.find((item) => item.ideaId === ideaId) ?? null,
       responses,
     };
@@ -67,6 +69,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
     return {
       authenticated: true,
       canAccessOsContent: false,
+      canUseResearchWorkspace: false,
       idea: null,
       responses: {},
       error: error instanceof Error ? error.message : "Unable to load this idea right now.",
@@ -115,6 +118,7 @@ export default async function IdeaDetailPage({
           idea={data.idea}
           responses={data.responses}
           canAccessOsContent={data.canAccessOsContent}
+          canUseResearchWorkspace={data.canUseResearchWorkspace}
         />
       )}
     </LearnerShell>
