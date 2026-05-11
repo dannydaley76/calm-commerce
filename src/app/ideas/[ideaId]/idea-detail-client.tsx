@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { GhostButton, PageHero, PrimaryButton, SecondaryButton } from "@/components/design-system";
+import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { writeWorksheetField } from "@/components/lean-canvas/write-worksheet-field";
+import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
+import { formatDate } from "@/lib/format-date";
 import {
   ensureProductIdeaIds,
   getProductIdeaId,
@@ -21,6 +23,27 @@ type ResponseMap = Record<string, string>;
 type InstanceRow = Record<string, string | undefined>;
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditSection = "idea" | "economics" | "test" | null;
+type IdeaDraft = {
+  idea_description: string;
+  raw_product_title: string;
+  product_image_url: string;
+  source_url: string;
+  source_label: string;
+  demand_evidence: string;
+  competition_notes: string;
+  seasonality: string;
+};
+type EconomicsDraft = {
+  product_cost: string;
+  shipping_to_customer: string;
+  platform_fees: string;
+  selling_price: string;
+  variant_complexity: string;
+  upfront_cost_risk: string;
+  test_speed: string;
+  numbers_confidence: string;
+  viable: string;
+};
 type NoteRow = {
   note_id?: string;
   idea_id?: string;
@@ -58,7 +81,7 @@ function parseRows(raw: string | undefined): InstanceRow[] {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toISOString();
 }
 
 function createNoteId(): string {
@@ -159,19 +182,6 @@ function formatMoneyDisplay(value: string | null | undefined): string {
   const parsed = parsedMoney(value);
   if (parsed === null) return "Not added";
   return formatCurrency(parsed);
-}
-
-function formatCapturedAt(value: string | null | undefined): string {
-  if (!value) return "Not captured";
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return value;
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(parsed));
 }
 
 function projectedEconomics(row: InstanceRow): {
@@ -346,7 +356,7 @@ function SaveButton({ state }: { state: SaveState }) {
       <PrimaryButton type="submit" disabled={state === "saving"}>
         {state === "saving" ? "Saving" : "Save changes"}
       </PrimaryButton>
-      {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">Saved</span> : null}
+      {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">✓</span> : null}
       {state === "error" ? <span className="text-sm font-semibold text-error-700">Not saved</span> : null}
     </div>
   );
@@ -358,9 +368,146 @@ function NoteSaveButton({ state, disabled }: { state: SaveState; disabled: boole
       <PrimaryButton type="submit" disabled={disabled || state === "saving"}>
         {state === "saving" ? "Saving" : "Save note"}
       </PrimaryButton>
-      {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">Saved</span> : null}
+      {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">✓</span> : null}
       {state === "error" ? <span className="text-sm font-semibold text-error-700">Not saved</span> : null}
     </div>
+  );
+}
+
+function InlineValue({
+  label,
+  value,
+  caption,
+  placeholder = "Add value",
+  multiline = false,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  caption?: string;
+  placeholder?: string;
+  multiline?: boolean;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [state, setState] = useState<SaveState>("idle");
+
+  useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [editing, value]);
+
+  async function commit() {
+    const trimmed = draft.trim();
+    if (trimmed === value.trim()) {
+      setEditing(false);
+      return;
+    }
+    setState("saving");
+    await onSave(trimmed);
+    setState("saved");
+    setEditing(false);
+    window.setTimeout(() => setState("idle"), 1600);
+  }
+
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-start">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</dt>
+      <dd className="min-w-0">
+        {editing ? (
+          multiline ? (
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={() => void commit()}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") cancel();
+              }}
+              className="block min-h-20 w-full rounded-lg border border-cobalt-200 bg-white px-3 py-2 text-sm leading-6 text-ink-900 outline-none focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100"
+            />
+          ) : (
+            <input
+              autoFocus
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={() => void commit()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+                if (event.key === "Escape") cancel();
+              }}
+              className="block w-full border-b border-cobalt-400 bg-transparent py-0.5 text-sm text-ink-900 outline-none"
+            />
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="group flex max-w-full items-center gap-2 text-left text-sm text-ink-800 underline-offset-4 hover:text-cobalt-600"
+          >
+            <span className={multiline ? "line-clamp-2" : "truncate"}>{value || placeholder}</span>
+            <span aria-hidden="true" className="text-ink-300 opacity-0 transition group-hover:opacity-100">Edit</span>
+            {state === "saved" ? <span className="text-[#005e3f]">Saved</span> : null}
+          </button>
+        )}
+        {caption ? <p className="mt-1 text-xs italic leading-5 text-ink-500">{caption}</p> : null}
+      </dd>
+    </div>
+  );
+}
+
+function EditableMoney({
+  label,
+  value,
+  onSave,
+}: {
+  label: string;
+  value: string | undefined;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+
+  useEffect(() => {
+    if (!editing) setDraft(value ?? "");
+  }, [editing, value]);
+
+  async function commit() {
+    if (draft.trim() !== (value ?? "").trim()) await onSave(draft.trim());
+    setEditing(false);
+  }
+
+  return (
+    <span className="group inline-flex items-baseline gap-2">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</span>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => void commit()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") setEditing(false);
+          }}
+          className="w-24 border-b border-cobalt-400 bg-transparent py-0.5 font-[Manrope] text-xl font-bold text-ink-900 outline-none"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="font-[Manrope] text-xl font-bold text-ink-900 underline-offset-4 hover:text-cobalt-600"
+        >
+          {formatMoneyDisplay(value)}
+          <span aria-hidden="true" className="ml-1 text-xs text-ink-300 opacity-0 group-hover:opacity-100">Edit</span>
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -461,17 +608,92 @@ function ReviewSection({
   );
 }
 
-function EvidenceGroup({
-  title,
-  children,
+function EvidencePanel({
+  idea,
+  sourceIdea,
+  ideaDraft,
+  canAccessOsContent,
+  onSaveField,
 }: {
-  title: string;
-  children: ReactNode;
+  idea: ProductIdeaLifecycle;
+  sourceIdea: ProductIdeaRow;
+  ideaDraft: IdeaDraft;
+  canAccessOsContent: boolean;
+  onSaveField: (key: keyof IdeaDraft, value: string) => Promise<void>;
 }) {
+  const source = ideaDraft.source_label || idea.sourceLabel || "Scout";
+  const captured = formatDate(idea.scoutCapturedAt || idea.scannerScoredAt, "long");
+  const seasonality = ideaDraft.seasonality.trim();
+  const seasonalityValue = seasonality ? "Seasonal" : "";
+  const competition = idea.scannerCompetitionScore === null
+    ? ideaDraft.competition_notes.trim()
+    : `${idea.scannerCompetitionScore}/100${ideaDraft.competition_notes.trim() ? ` · ${ideaDraft.competition_notes.trim().replace(/^Competition score:\s*/i, "").replace(/^Competition signal:\s*/i, "")}` : ""}`;
+  const coverage = idea.scannerConfidenceScore === null
+    ? ""
+    : `${signalCoverageLabel(idea.scannerConfidenceScore).replace("Signal coverage ", "")} (${idea.scannerConfidenceScore}/100)`;
+  const missingSignals = sourceIdea.missing_signals?.trim();
+  const addable = [
+    !seasonality ? "Seasonality" : "",
+    !ideaDraft.competition_notes.trim() ? "Competition" : "",
+    !missingSignals ? "Missing signals" : "",
+  ].filter(Boolean);
+
   return (
-    <section className="rounded-xl border border-ink-100 bg-white p-4">
-      <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">{title}</h3>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    <section id="idea-evidence" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Idea evidence</h2>
+
+      <div className="mt-5 divide-y divide-ink-100">
+        <section className="pb-5">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Source</h3>
+          <dl className="mt-4 space-y-3">
+            <InlineValue label="Source" value={source} onSave={(value) => onSaveField("source_label", value)} />
+            <InlineValue label="Captured" value={captured} onSave={async () => undefined} />
+            <InlineValue label="Import note" value={`Imported from ${source}`} onSave={async () => undefined} />
+            {canAccessOsContent && ideaDraft.raw_product_title ? (
+              <InlineValue label="Full title" value={ideaDraft.raw_product_title} onSave={(value) => onSaveField("raw_product_title", value)} />
+            ) : null}
+          </dl>
+        </section>
+
+        <section className="py-5">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Listing</h3>
+          <dl className="mt-4 space-y-3">
+            {sourceIdea.variant_count?.trim() ? (
+              <InlineValue label="Variant count" value={sourceIdea.variant_count.trim()} onSave={async () => undefined} />
+            ) : null}
+            {seasonalityValue ? (
+              <InlineValue
+                label="Seasonality"
+                value={seasonalityValue}
+                caption={seasonality}
+                onSave={(value) => onSaveField("seasonality", value)}
+              />
+            ) : null}
+            {competition.trim() ? (
+              <InlineValue label="Competition" value={competition} onSave={(value) => onSaveField("competition_notes", value)} />
+            ) : null}
+          </dl>
+        </section>
+
+        <section className="pt-5">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Confidence</h3>
+          <dl className="mt-4 space-y-3">
+            {coverage ? <InlineValue label="Coverage" value={coverage} onSave={async () => undefined} /> : null}
+            <InlineValue label="Missing signals" value={missingSignals || "None"} onSave={async () => undefined} />
+          </dl>
+        </section>
+      </div>
+
+      {addable.length > 0 ? (
+        <details className="mt-5">
+          <summary className="cursor-pointer text-sm font-semibold text-cobalt-600">+ Add field</summary>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {addable.map((field) => (
+              <span key={field} className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-semibold text-ink-600">{field}</span>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -542,7 +764,7 @@ function ScoutSignalSummary({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-500">
-          {idea.scannerScoredAt ? <span>Scanned {idea.scannerScoredAt}</span> : null}
+          {idea.scannerScoredAt ? <span>Scanned {formatDate(idea.scannerScoredAt, "relative")}</span> : null}
           {idea.scannerConfidenceScore !== null ? (
             <span
               className="rounded-full bg-surface-sunken px-2 py-1"
@@ -596,50 +818,45 @@ function ScoutSignalSummary({
   );
 }
 
-function EconomicsSnapshot({ economics }: { economics: InstanceRow }) {
+function EconomicsSnapshot({
+  economics,
+  onSave,
+  saving,
+}: {
+  economics: InstanceRow;
+  onSave: (values: Partial<EconomicsDraft>) => Promise<void>;
+  saving: boolean;
+}) {
   const projection = projectedEconomics(economics);
-  const hasAnyEconomics = Boolean(
-    economics.selling_price ||
-    economics.product_cost ||
-    economics.shipping_to_customer ||
-    economics.platform_fees,
-  );
-
-  const marginHeadline = projection.marginPercent === null
-    ? "Add pricing to see margin"
-    : `${formatCurrency(projection.margin)} = ${formatPercent(projection.marginPercent)} of sell price`;
 
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
-          <h2 className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">
-            {marginHeadline}
-          </h2>
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
+      <div className="mt-4 flex flex-wrap items-baseline gap-3 text-ink-900">
+        <EditableMoney
+          label="Sell"
+          value={economics.selling_price}
+          onSave={(value) => onSave({ selling_price: value })}
+        />
+        <span className="text-lg font-semibold text-ink-300">−</span>
+        <EditableMoney
+          label="Cost"
+          value={economics.product_cost}
+          onSave={(value) => onSave({ product_cost: value })}
+        />
+        <span className="text-lg font-semibold text-ink-300">=</span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">Margin</span>
+          <span className={`font-[Manrope] text-xl font-bold ${marginTone(projection.marginPercent).includes("success") ? "text-[#005e3f]" : marginTone(projection.marginPercent).includes("amber") ? "text-[#835700]" : "text-error-700"}`}>
+            {formatCurrency(projection.margin)}
+          </span>
+          <span className={`text-sm font-bold ${marginTone(projection.marginPercent).includes("success") ? "text-[#005e3f]" : marginTone(projection.marginPercent).includes("amber") ? "text-[#835700]" : "text-error-700"}`}>
+            ({projection.marginPercent === null ? "—" : formatPercent(projection.marginPercent)})
+          </span>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg bg-surface-sunken px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Sell</p>
-          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyDisplay(economics.selling_price)}</p>
-        </div>
-        <div className="rounded-lg bg-surface-sunken px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Cost</p>
-          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyDisplay(economics.product_cost)}</p>
-        </div>
-        <div className="rounded-lg bg-surface-sunken px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Margin</p>
-          <p className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-sm font-bold ${marginTone(projection.marginPercent)}`}>
-            {projection.marginPercent === null ? "Not known" : formatPercent(projection.marginPercent)}
-          </p>
-        </div>
-      </div>
-      {!hasAnyEconomics ? (
-        <p className="mt-3 text-xs leading-5 text-ink-500">
-          Add sell price and product cost from the workspace table, then complete shipping and fees when you need the full margin.
-        </p>
-      ) : projection.missingNumbers && projection.margin !== null ? (
+      {saving ? <p className="mt-3 text-xs font-semibold text-ink-500">Saving economics...</p> : null}
+      {projection.missingNumbers && projection.margin !== null ? (
         <p className="mt-3 text-xs leading-5 text-ink-500">
           This margin uses sell price minus product cost. Add shipping and platform fees later for the full economics.
         </p>
@@ -664,7 +881,7 @@ function IdeaSummarySection({
       <SummaryCard
         label="Product score"
         value={idea.scannerScore === null ? "-" : String(idea.scannerScore)}
-        detail={idea.scannerScoredAt ? `${compactScoreLabel(idea.scannerScore)} on ${idea.scannerScoredAt}` : compactScoreLabel(idea.scannerScore)}
+        detail={idea.scannerScoredAt ? `${compactScoreLabel(idea.scannerScore)} on ${formatDate(idea.scannerScoredAt, "relative")}` : compactScoreLabel(idea.scannerScore)}
         tone={scoreTone(idea.scannerScore)}
       />
       <SummaryCard
@@ -680,7 +897,7 @@ function IdeaSummarySection({
       <SummaryCard
         label="Linked metrics"
         value={String(idea.metricEntries.length)}
-        detail={latestMetric ? `${latestMetric.entryType === "validation" ? "Marketplace" : "Store"}: ${latestMetric.weekEnding}` : "No linked metrics yet"}
+        detail={latestMetric ? `${latestMetric.entryType === "validation" ? "Marketplace" : "Store"}: ${formatDate(latestMetric.weekEnding, "relative")}` : "No linked metrics yet"}
       />
     </section>
   );
@@ -738,7 +955,7 @@ function MetricsSection({ idea }: { idea: ProductIdeaLifecycle }) {
                 <p className="font-[Manrope] text-sm font-bold text-ink-900">
                   {entry.entryType === "validation" ? "Marketplace metrics" : "Store metrics"}
                 </p>
-                <span className="text-xs text-ink-500">{entry.weekEnding}</span>
+                <span className="text-xs text-ink-500">{formatDate(entry.weekEnding, "relative")}</span>
               </div>
               <p className="mt-1 text-sm leading-6 text-ink-600">{entry.summary}</p>
             </div>
@@ -858,20 +1075,28 @@ function activitySourceLabel(
 function NotesSection({
   idea,
   canAccessOsContent,
+  notes,
   noteDraft,
   status,
+  deletedNote,
   onChange,
   onSave,
+  onUpdateNote,
+  onDeleteNote,
+  onUndoDelete,
 }: {
   idea: ProductIdeaLifecycle;
   canAccessOsContent: boolean;
+  notes: ProductIdeaLifecycle["notes"];
   noteDraft: string;
   status: SaveState;
+  deletedNote: { note: NoteRow; index: number } | null;
   onChange: (value: string) => void;
   onSave: () => Promise<void>;
+  onUpdateNote: (noteId: string, value: string) => Promise<void>;
+  onDeleteNote: (noteId: string) => Promise<void>;
+  onUndoDelete: () => Promise<void>;
 }) {
-  const userNotes = idea.notes.filter((note) => !isScoutImportNote(note));
-
   return (
     <div id="history" className="space-y-6">
       <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
@@ -932,24 +1157,103 @@ function NotesSection({
         </div>
       </form>
 
-      {userNotes.length === 0 ? (
+      {deletedNote ? (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-2 text-sm text-ink-700">
+          <span>Note deleted.</span>
+          <button type="button" onClick={() => void onUndoDelete()} className="font-semibold text-cobalt-600 underline-offset-4 hover:underline">
+            Undo
+          </button>
+        </div>
+      ) : null}
+
+      {notes.length === 0 ? (
         <p className="mt-5 rounded-xl border border-dashed border-ink-100 bg-surface-sunken p-4 text-sm leading-6 text-ink-500">
-          No user notes yet.
+          No notes yet. Add your first decision note above.
         </p>
       ) : (
-        <div className="mt-5 divide-y divide-ink-100">
-          {userNotes.map((note) => (
-            <div key={note.id} className="py-4 first:pt-0 last:pb-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-                {note.createdAt}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-ink-700">{note.note}</p>
-            </div>
+        <div className="mt-5 space-y-3">
+          {notes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note}
+              onUpdate={onUpdateNote}
+              onDelete={onDeleteNote}
+            />
           ))}
         </div>
       )}
       </section>
     </div>
+  );
+}
+
+function NoteCard({
+  note,
+  onUpdate,
+  onDelete,
+}: {
+  note: ProductIdeaLifecycle["notes"][number];
+  onUpdate: (noteId: string, value: string) => Promise<void>;
+  onDelete: (noteId: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [draft, setDraft] = useState(note.note);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  async function save() {
+    await onUpdate(note.id, draft.trim());
+    setEditing(false);
+  }
+
+  return (
+    <article className="rounded-xl bg-surface-sunken p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-xs font-semibold text-ink-500">{formatDate(note.createdAt, "relative")}</p>
+        <div className="relative">
+          <ActionMenu
+            ariaLabel="Note actions"
+            items={[
+              { label: "Edit", onClick: () => setEditing(true) },
+              { label: "Delete", icon: <TrashIcon />, variant: "destructive", onClick: () => setConfirmDelete(true) },
+            ]}
+          />
+          {confirmDelete ? (
+            <div className="absolute right-0 z-20 mt-2 w-40 rounded-lg border border-ink-100 bg-white p-3 shadow-card">
+              <p className="text-sm font-semibold text-ink-900">Delete note?</p>
+              <div className="mt-3 flex gap-2">
+                <button type="button" onClick={() => void onDelete(note.id)} className="rounded-md bg-error-100 px-3 py-1.5 text-xs font-semibold text-error-700">Delete</button>
+                <button type="button" onClick={() => setConfirmDelete(false)} className="rounded-md bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-ink-600">Cancel</button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+      {editing ? (
+        <div className="mt-3">
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            className={`${inputBase} min-h-28`}
+          />
+          <div className="mt-3 flex gap-2">
+            <PrimaryButton type="button" disabled={!draft.trim()} onClick={() => void save()} className="px-4 py-2">Save</PrimaryButton>
+            <SecondaryButton type="button" onClick={() => { setDraft(note.note); setEditing(false); }} className="px-4 py-2">Cancel</SecondaryButton>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className={`mt-3 whitespace-pre-wrap text-sm leading-6 text-ink-800 ${expanded ? "" : "line-clamp-4"}`}>
+            {note.note}
+          </p>
+          {note.note.length > 220 ? (
+            <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-2 text-xs font-semibold text-cobalt-600 underline-offset-4 hover:underline">
+              {expanded ? "Show less" : "Show more"}
+            </button>
+          ) : null}
+        </>
+      )}
+    </article>
   );
 }
 
@@ -1093,6 +1397,8 @@ export function IdeaDetailClient({
     decision: idea.isTestIdea ? responses.decision ?? "" : "",
   });
   const [noteDraft, setNoteDraft] = useState("");
+  const [localNoteRows, setLocalNoteRows] = useState<NoteRow[]>(noteRows);
+  const [deletedNote, setDeletedNote] = useState<{ note: NoteRow; index: number } | null>(null);
   const [localIdeaView, setLocalIdeaView] = useState({
     status: idea.status,
     statusLabel: idea.statusLabel,
@@ -1129,6 +1435,16 @@ export function IdeaDetailClient({
     setStatus((prev) => ({ ...prev, [section]: value }));
   };
 
+  const localNotes = localNoteRows
+    .filter((note) => (note.idea_id ?? "").trim() === idea.ideaId && (note.note ?? "").trim() && !(note.note ?? "").trim().startsWith("Imported from Scout on"))
+    .map((note, index) => ({
+      id: (note.note_id ?? "").trim() || `note-${index}`,
+      ideaId: idea.ideaId,
+      createdAt: (note.created_at ?? "").trim() || "Undated",
+      note: (note.note ?? "").trim(),
+    }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
   const saveIdea = async () => {
     setSectionStatus("idea", "saving");
     const nextRows = productIdeas.map((row, index) =>
@@ -1146,6 +1462,19 @@ export function IdeaDetailClient({
       setEditSection(null);
       router.refresh();
     }
+  };
+
+  const saveIdeaField = async (key: keyof IdeaDraft, value: string) => {
+    const nextDraft = { ...ideaDraft, [key]: value };
+    setIdeaDraft(nextDraft);
+    setSectionStatus("idea", "saving");
+    const nextRows = productIdeas.map((row, index) =>
+      getProductIdeaId(row, index) === idea.ideaId
+        ? { ...row, ...nextDraft, idea_id: idea.ideaId }
+        : row,
+    );
+    const result = await writeWorksheetField("product_ideas", JSON.stringify(nextRows), "ideas-worksheet");
+    setSectionStatus("idea", result.ok ? "saved" : "error");
   };
 
   const saveEconomics = async () => {
@@ -1177,6 +1506,21 @@ export function IdeaDetailClient({
       });
       router.refresh();
     }
+  };
+
+  const saveEconomicsPatch = async (patch: Partial<EconomicsDraft>) => {
+    const nextDraft = { ...economicsDraft, ...patch };
+    setEconomicsDraft(nextDraft);
+    setSectionStatus("economics", "saving");
+    const nextRows = economicsRows.map((row) => ({ ...row }));
+    nextRows[economicsMatch.index] = {
+      ...(nextRows[economicsMatch.index] ?? {}),
+      ...nextDraft,
+      idea_id: idea.ideaId,
+      idea_name: ideaDraft.idea_description || idea.label,
+    };
+    const result = await writeWorksheetField("idea_economics", JSON.stringify(nextRows), "unit-economics-worksheet");
+    setSectionStatus("economics", result.ok ? "saved" : "error");
   };
 
   const saveTest = async () => {
@@ -1214,8 +1558,9 @@ export function IdeaDetailClient({
         created_at: todayISO(),
         note: trimmed,
       },
-      ...noteRows,
+      ...localNoteRows,
     ];
+    setLocalNoteRows(nextRows);
     const result = await writeWorksheetField(
       "product_idea_notes",
       JSON.stringify(nextRows),
@@ -1224,56 +1569,89 @@ export function IdeaDetailClient({
     setSectionStatus("notes", result.ok ? "saved" : "error");
     if (result.ok) {
       setNoteDraft("");
+      window.setTimeout(() => setSectionStatus("notes", "idle"), 2000);
       router.refresh();
     }
+  };
+
+  const updateNote = async (noteId: string, value: string) => {
+    const nextRows = localNoteRows.map((note) => (
+      (note.note_id ?? "") === noteId ? { ...note, note: value } : note
+    ));
+    setLocalNoteRows(nextRows);
+    await writeWorksheetField("product_idea_notes", JSON.stringify(nextRows), "ideas-worksheet");
+  };
+
+  const deleteNote = async (noteId: string) => {
+    const index = localNoteRows.findIndex((note) => (note.note_id ?? "") === noteId);
+    if (index < 0) return;
+    const note = localNoteRows[index];
+    const nextRows = localNoteRows.filter((_, rowIndex) => rowIndex !== index);
+    setDeletedNote({ note, index });
+    setLocalNoteRows(nextRows);
+    await writeWorksheetField("product_idea_notes", JSON.stringify(nextRows), "ideas-worksheet");
+    window.setTimeout(() => setDeletedNote(null), 8000);
+  };
+
+  const undoDeleteNote = async () => {
+    if (!deletedNote) return;
+    const nextRows = [...localNoteRows];
+    nextRows.splice(deletedNote.index, 0, deletedNote.note);
+    setLocalNoteRows(nextRows);
+    setDeletedNote(null);
+    await writeWorksheetField("product_idea_notes", JSON.stringify(nextRows), "ideas-worksheet");
   };
 
   return (
     <div className="space-y-6">
       <GhostButton href="/ideas">Back to ideas</GhostButton>
 
-      <PageHero
-        label="Product candidate"
-        title={ideaDraft.idea_description || idea.label}
-        description={showRawTitle ? rawTitle : displayIdea.latestSignal}
-      >
-        <div className="flex flex-wrap items-start gap-5">
-          {ideaDraft.product_image_url ? (
-            <img
-              src={ideaDraft.product_image_url}
-              alt=""
-              className="h-24 w-24 rounded-lg border border-ink-100 object-cover"
-            />
-          ) : (
-            <div
-              aria-label="No product image"
-              className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed border-ink-100 bg-surface-sunken text-[10px] font-bold uppercase tracking-[0.1em] text-ink-300"
-            >
-              Image
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
-                {displayIdea.statusLabel}
-              </span>
-              {ideaDraft.source_url ? (
-                <a
-                  href={ideaDraft.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-lg border border-ink-100 bg-surface-raised px-4 py-2 text-[13px] font-medium text-ink-900 transition hover:border-cobalt-500 hover:bg-surface-sunken hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
-                >
-                  View on {ideaDraft.source_label || displayIdea.sourceLabel || "source"}
-                </a>
-              ) : null}
-            </div>
+      <header className="flex min-h-20 items-start gap-4">
+        {ideaDraft.product_image_url ? (
+          <img
+            src={ideaDraft.product_image_url}
+            alt=""
+            className="h-20 w-20 shrink-0 rounded-lg border border-ink-100 object-cover"
+          />
+        ) : (
+          <div
+            aria-label="No product image"
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-ink-100 bg-surface-sunken text-[10px] font-bold uppercase tracking-[0.1em] text-ink-300"
+          >
+            Image
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <h1 title={showRawTitle ? rawTitle : ideaDraft.idea_description} className="line-clamp-2 font-[Manrope] text-2xl font-bold leading-tight text-ink-900">
+            {ideaDraft.idea_description || idea.label}
+          </h1>
+          <p className="mt-1 text-sm text-ink-500">
+            from {ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} · captured {formatDate(displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt, "relative").toLowerCase()}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
+              {displayIdea.statusLabel}
+            </span>
+            {ideaDraft.source_url ? (
+              <a
+                href={ideaDraft.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-cobalt-600 underline-offset-4 hover:underline"
+              >
+                View on {ideaDraft.source_label || displayIdea.sourceLabel || "source"} ↗
+              </a>
+            ) : null}
           </div>
         </div>
-      </PageHero>
+      </header>
 
       <ScoutSignalSummary idea={displayIdea} sourceIdea={sourceIdea} />
-      <EconomicsSnapshot economics={economicsDraft} />
+      <EconomicsSnapshot
+        economics={economicsDraft}
+        saving={status.economics === "saving"}
+        onSave={saveEconomicsPatch}
+      />
 
       {canAccessOsContent ? (
         <section className="rounded-xl border border-cobalt-100 bg-white p-5 shadow-card">
@@ -1294,20 +1672,6 @@ export function IdeaDetailClient({
       {canAccessOsContent ? (
         <IdeaSummarySection idea={displayIdea} economics={economicsDraft} />
       ) : null}
-
-      <nav className="rounded-xl border border-ink-100 bg-surface-raised px-4 py-3 shadow-card">
-        <div className="flex flex-wrap gap-4 text-sm font-semibold text-cobalt-600">
-          <a href="#idea-evidence" className="underline-offset-4 hover:underline">Idea evidence</a>
-          {canAccessOsContent ? (
-            <>
-              <a href="#economics" className="underline-offset-4 hover:underline">Economics</a>
-              <a href="#marketplace-test" className="underline-offset-4 hover:underline">Test</a>
-              <a href="#projected-actual" className="underline-offset-4 hover:underline">Projection</a>
-            </>
-          ) : null}
-          <a href="#history" className="underline-offset-4 hover:underline">History</a>
-        </div>
-      </nav>
 
       {canAccessOsContent ? (
         <div id="projected-actual">
@@ -1366,32 +1730,13 @@ export function IdeaDetailClient({
               />
             </EditableSection>
           ) : (
-            <ReviewSection
-              id="idea-evidence"
-              title="Idea evidence"
-              description=""
-              onEdit={() => setEditSection("idea")}
-            >
-              <div className="md:col-span-2 grid gap-4 xl:grid-cols-3">
-                <EvidenceGroup title="Source">
-                  <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} />
-                  <ReviewValue label="Captured" value={formatCapturedAt(displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt)} />
-                  <ReviewValue label="Import note" value={`Imported from ${ideaDraft.source_label || displayIdea.sourceLabel || "Scout"}`} wide />
-                </EvidenceGroup>
-                <EvidenceGroup title="Listing data">
-                  <ReviewValue label="Variant count" value={sourceIdea.variant_count?.trim() || "Not captured"} />
-                  {ideaDraft.seasonality.trim() ? (
-                    <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
-                  ) : null}
-                  <ReviewValue label="Competition" value={ideaDraft.competition_notes || "Not captured"} wide />
-                </EvidenceGroup>
-                <EvidenceGroup title="Data quality">
-                  <ReviewValue label="Signal coverage" value={scoreOutOfHundred(displayIdea.scannerConfidenceScore)} />
-                  <ReviewValue label="Missing signals" value={sourceIdea.missing_signals || "None captured"} />
-                  <ReviewValue label="Demand notes" value={ideaDraft.demand_evidence || "Not captured"} wide />
-                </EvidenceGroup>
-              </div>
-            </ReviewSection>
+            <EvidencePanel
+              idea={displayIdea}
+              sourceIdea={sourceIdea}
+              ideaDraft={ideaDraft}
+              canAccessOsContent={canAccessOsContent}
+              onSaveField={saveIdeaField}
+            />
           )}
 
           {!canAccessOsContent ? <ScoutUpgradePanel canUseResearchWorkspace={canUseResearchWorkspace} /> : null}
@@ -1552,10 +1897,15 @@ export function IdeaDetailClient({
           <NotesSection
             idea={idea}
             canAccessOsContent={canAccessOsContent}
+            notes={localNotes}
             noteDraft={noteDraft}
             status={status.notes}
+            deletedNote={deletedNote}
             onChange={setNoteDraft}
             onSave={saveNote}
+            onUpdateNote={updateNote}
+            onDeleteNote={deleteNote}
+            onUndoDelete={undoDeleteNote}
           />
           {canAccessOsContent ? <MetricsSection idea={idea} /> : null}
         </aside>

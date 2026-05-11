@@ -3,6 +3,7 @@
 import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { PrimaryButton } from "@/components/design-system";
+import { formatDate } from "@/lib/format-date";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
   type ProductIdeaLifecycle,
@@ -882,7 +883,7 @@ export function IdeasIndexClient({
                             </div>
                           </details>
                           {idea.scannerScoredAt ? (
-                            <span className="text-[10px] font-semibold text-ink-400">Scanned {idea.scannerScoredAt}</span>
+                            <span className="text-[10px] font-semibold text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
                           ) : null}
                           {idea.sourceUrl ? (
                             <a
