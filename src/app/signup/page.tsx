@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/browser";
 
-const SCOUT_EXTENSION_URL = process.env.NEXT_PUBLIC_SCOUT_EXTENSION_URL || "/scout";
-
 function getEmailRedirectTo() {
   if (typeof window === "undefined") return undefined;
   return `${window.location.origin}/auth/callback`;
@@ -181,20 +179,7 @@ export default function SignupPage() {
               {isResending ? "Sending…" : "Resend confirmation email"}
             </button>
           </div>
-        ) : (
-          <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
-            <p className="font-semibold">Next step</p>
-            <p className="mt-2 leading-6">
-              Install Scout, scan a product page, then save useful candidates into your Workspace.
-            </p>
-            <a
-              href={SCOUT_EXTENSION_URL}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-cobalt-600/20 bg-cobalt-600 px-4 py-3 text-sm font-semibold !text-white transition hover:bg-[#0047bc] focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:ring-offset-2"
-            >
-              Get Scout extension
-            </a>
-          </div>
-        )}
+        ) : null}
 
         <div className="mt-5 text-sm">
           <Link
