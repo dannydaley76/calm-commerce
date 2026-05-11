@@ -416,7 +416,7 @@ export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClien
               <ScoreMetric label="Opportunity" value={parsedPayload?.opportunityScore} suffix="/100" />
               <ScoreMetric label="Demand" value={parsedPayload?.demandScore} />
               <ScoreMetric label="Competition" value={parsedPayload?.competitionScore} />
-              <ScoreMetric label="Confidence" value={parsedPayload?.confidenceScore} />
+              <ScoreMetric label="Signal coverage" value={parsedPayload?.confidenceScore} />
             </div>
           </div>
         </div>

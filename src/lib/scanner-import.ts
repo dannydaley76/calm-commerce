@@ -280,7 +280,7 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
   const noteParts = [
     payload?.notes,
     payload?.differentiationAngle ? `Differentiation angle: ${payload.differentiationAngle}` : "",
-    payload?.confidenceScore !== undefined ? `Confidence score: ${payload.confidenceScore}/100` : "",
+    payload?.confidenceScore !== undefined ? `Signal coverage: ${payload.confidenceScore}/100` : "",
     payload?.missingSignals?.length ? `Missing signals: ${payload.missingSignals.join(", ")}` : "",
   ].filter(Boolean);
 

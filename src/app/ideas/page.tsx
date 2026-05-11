@@ -20,13 +20,14 @@ async function getIdeaData(): Promise<{
   authenticated: boolean;
   canAccessOsContent: boolean;
   canUseScannerImport: boolean;
+  canUseResearchWorkspace: boolean;
   ideas: ProductIdeaLifecycle[];
   error?: string;
 }> {
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) {
-      return { authenticated: false, canAccessOsContent: false, canUseScannerImport: false, ideas: [] };
+      return { authenticated: false, canAccessOsContent: false, canUseScannerImport: false, canUseResearchWorkspace: false, ideas: [] };
     }
 
     const access = await getAccessStateForCurrentUser();
@@ -60,6 +61,7 @@ async function getIdeaData(): Promise<{
       authenticated: true,
       canAccessOsContent: access.canAccessOsContent,
       canUseScannerImport: access.canUseScannerImport,
+      canUseResearchWorkspace: access.canUseResearchWorkspace,
       ideas: getProductIdeaLifecycles(responses, (metricRows ?? []) as MetricEntry[]),
     };
   } catch (error) {
@@ -67,6 +69,7 @@ async function getIdeaData(): Promise<{
       authenticated: true,
       canAccessOsContent: false,
       canUseScannerImport: false,
+      canUseResearchWorkspace: false,
       ideas: [],
       error: error instanceof Error ? error.message : "Unable to load your ideas right now.",
     };
@@ -213,6 +216,8 @@ export default async function IdeasPage({
           <IdeasIndexClient
             ideas={data.ideas}
             canAccessOsContent={data.canAccessOsContent}
+            canUseScannerImport={data.canUseScannerImport}
+            canUseResearchWorkspace={data.canUseResearchWorkspace}
             highlightedIdeaId={params?.imported}
           />
         )}

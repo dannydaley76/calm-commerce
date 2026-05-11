@@ -60,18 +60,31 @@ function compactScoreLabel(idea: ProductIdeaLifecycle): string {
   return "Weak";
 }
 
-function signalLabel(score: number | null): string {
-  if (score === null) return "Missing";
-  if (score >= 70) return "Strong";
-  if (score >= 40) return "Moderate";
-  return "Weak";
+function demandTone(score: number | null): string {
+  if (score === null) return "bg-surface-sunken text-ink-500";
+  if (score <= 20) return "bg-error-100 text-error-700";
+  if (score <= 60) return "bg-amber-100 text-amber-700";
+  return "bg-success-100 text-[#005e3f]";
 }
 
-function signalTone(score: number | null): string {
-  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
-  if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
-  if (score >= 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
-  return "border-error-100 bg-error-100 text-error-700";
+function competitionTone(score: number | null): string {
+  if (score === null) return "bg-surface-sunken text-ink-500";
+  if (score <= 30) return "bg-success-100 text-[#005e3f]";
+  if (score <= 70) return "bg-amber-100 text-amber-700";
+  return "bg-error-100 text-error-700";
+}
+
+function riskTone(value: string | null): string {
+  if (!value) return "bg-success-100 text-[#005e3f]";
+  const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
+  return flags.length > 1 ? "bg-error-100 text-error-700" : "bg-amber-100 text-amber-700";
+}
+
+function riskLabel(value: string | null): string {
+  if (!value) return "None";
+  const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
+  if (flags.length > 1) return "Multiple";
+  return /season/i.test(flags[0] ?? "") ? "Seasonal" : "Flagged";
 }
 
 function ideaDetailHref(idea: ProductIdeaLifecycle): string {
@@ -99,15 +112,14 @@ function compactActionLabel(label: string): string {
   return labels[label] ?? label;
 }
 
-function clippedIdeaName(name: string): string {
-  return name.length > 90 ? `${name.slice(0, 87).trim()}...` : name;
+function clippedIdeaName(name: string, max = 58): string {
+  return name.length > max ? `${name.slice(0, max - 3).trim()}...` : name;
 }
 
-function latestSignalText(idea: ProductIdeaLifecycle, canAccessOsContent: boolean): string {
-  if (!canAccessOsContent && idea.status === "draft") {
-    return "Imported from Scout.";
-  }
-  return idea.latestSignal;
+function marketplaceTitle(idea: ProductIdeaLifecycle): string | null {
+  const raw = idea.rawProductTitle?.trim();
+  if (!raw || raw === idea.label) return null;
+  return raw;
 }
 
 function ideaActionPriority(status: ProductIdeaLifecycleStatus): number {
@@ -160,10 +172,25 @@ function marginTone(value: number | null): string {
   return "border-error-100 bg-error-100 text-error-700";
 }
 
+function simpleMarginPercent(sellingPrice: string, productCost: string): number | null {
+  const sell = numericValue(sellingPrice);
+  const cost = numericValue(productCost);
+  if (!Number.isFinite(sell) || !Number.isFinite(cost) || sell <= 0) return null;
+  return ((sell - cost) / sell) * 100;
+}
+
 function compactNumber(value: string | null): string {
   const parsed = numericValue(value);
   if (!Number.isFinite(parsed)) return value?.trim() || "-";
   return parsed.toLocaleString("en-GB");
+}
+
+function ratingText(value: string | null): string {
+  return value?.trim() ? ` · ★ ${value.trim()}` : "";
+}
+
+function currencySymbol() {
+  return "£";
 }
 
 function scoreValue(value: number | null): number {
@@ -232,11 +259,11 @@ function IdeaImage({ idea }: { idea: ProductIdeaLifecycle }) {
 
 function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className={`inline-flex min-w-24 flex-col rounded-xl px-3 py-2 ${scoreTone(idea.scannerScore)}`}>
-      <span className="font-[Manrope] text-2xl font-bold leading-none">
+    <div className="inline-flex min-w-24 flex-col items-start">
+      <span className="font-[Manrope] text-[28px] font-bold leading-none text-ink-900">
         {idea.scannerScore === null ? "-" : idea.scannerScore}
       </span>
-      <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em]">
+      <span className={`mt-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${scoreTone(idea.scannerScore)}`}>
         {compactScoreLabel(idea)}
       </span>
     </div>
@@ -246,41 +273,39 @@ function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
 function SignalChip({
   label,
   value,
-  tone = "border-ink-100 bg-surface-sunken text-ink-700",
+  tone = "bg-surface-sunken text-ink-700",
 }: {
   label: string;
   value: string;
   tone?: string;
 }) {
   return (
-    <div className={`rounded-lg border px-2.5 py-2 ${tone}`}>
-      <p className="text-[9px] font-bold uppercase tracking-[0.12em] opacity-70">{label}</p>
-      <p className="mt-1 text-xs font-bold leading-none">{value}</p>
-    </div>
+    <span className={`inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] leading-none ${tone}`}>
+      <span className="font-bold uppercase tracking-[0.08em] opacity-70">{label}</span>
+      <span className="font-bold">{value}</span>
+    </span>
   );
 }
 
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
-      <SignalChip label="Orders" value={compactNumber(idea.observedOrderCount)} />
-      <SignalChip label="Reviews" value={compactNumber(idea.observedReviewCount)} />
-      <SignalChip label="Rating" value={idea.observedRating ?? "-"} />
+    <div className="flex flex-wrap items-center gap-1.5">
       <SignalChip
-        label="Demand"
-        value={idea.scannerDemandScore === null ? "-" : `${idea.scannerDemandScore} ${signalLabel(idea.scannerDemandScore)}`}
-        tone={signalTone(idea.scannerDemandScore)}
+        label="DMND"
+        value={idea.scannerDemandScore === null ? "-" : String(idea.scannerDemandScore)}
+        tone={demandTone(idea.scannerDemandScore)}
       />
       <SignalChip
-        label="Competition"
-        value={idea.scannerCompetitionScore === null ? "-" : `${idea.scannerCompetitionScore} ${signalLabel(idea.scannerCompetitionScore)}`}
-        tone={signalTone(idea.scannerCompetitionScore)}
+        label="COMP"
+        value={idea.scannerCompetitionScore === null ? "-" : String(idea.scannerCompetitionScore)}
+        tone={competitionTone(idea.scannerCompetitionScore)}
       />
       <SignalChip
-        label="Risk"
-        value={idea.seasonality ? "Seasonal" : "None"}
-        tone={idea.seasonality ? "border-amber-100 bg-[#fff8e6] text-[#835700]" : "border-success-100 bg-success-100 text-[#005e3f]"}
+        label="RISK"
+        value={riskLabel(idea.seasonality)}
+        tone={riskTone(idea.seasonality)}
       />
+      <SignalChip label="ORD" value={`${compactNumber(idea.observedOrderCount)}${ratingText(idea.observedRating)}`} />
     </div>
   );
 }
@@ -288,20 +313,33 @@ function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
 function PricingEditor({
   idea,
   saving,
+  saved,
+  canUseScannerImport,
+  canUseResearchWorkspace,
   onSave,
 }: {
   idea: ProductIdeaLifecycle;
   saving: boolean;
+  saved: boolean;
+  canUseScannerImport: boolean;
+  canUseResearchWorkspace: boolean;
   onSave: (idea: ProductIdeaLifecycle, values: { sellingPrice: string; productCost: string }) => void;
 }) {
   const [sellingPrice, setSellingPrice] = useState(formatMoneyValue(idea.sellingPrice));
   const [productCost, setProductCost] = useState(formatMoneyValue(idea.productCost));
   const [dirty, setDirty] = useState(false);
   const economics = economicsForIdea({ ...idea, sellingPrice, productCost });
+  const quickMargin = simpleMarginPercent(sellingPrice, productCost);
+  const marginPercent = economics.marginPercent ?? quickMargin;
   const hasAnyPricing = Boolean(sellingPrice.trim() || productCost.trim());
-  const marginLabel = economics.marginPercent === null
-    ? hasAnyPricing ? "Need shipping/fees" : "Add pricing"
-    : `${formatMarginPercent(economics.marginPercent)} margin`;
+  const hasBothCoreValues = Boolean(sellingPrice.trim() && productCost.trim());
+  const marginLabel = marginPercent === null
+    ? hasAnyPricing ? "Need sell/cost" : "No pricing"
+    : `${formatMarginPercent(marginPercent)} margin`;
+  const syncStatus = (idea as ProductIdeaLifecycle & {
+    pricingSyncStatus?: "failed" | "pending";
+    pricingSyncFailedAt?: string | null;
+  }).pricingSyncStatus;
 
   function commit() {
     if (!dirty || saving) return;
@@ -311,49 +349,71 @@ function PricingEditor({
 
   return (
     <div className="space-y-2">
-      <div className="grid gap-2">
+      {!hasAnyPricing ? (
+        <p className="text-[10px] font-semibold leading-4 text-ink-500">
+          {!canUseScannerImport
+            ? "Add manually"
+            : canUseResearchWorkspace
+              ? syncStatus === "failed"
+                ? `Pricing sync failed${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt ? ` · ${(idea as ProductIdeaLifecycle & { pricingSyncFailedAt?: string | null }).pricingSyncFailedAt}` : ""}`
+                : "Awaiting extension sync"
+              : "Add manually"}
+        </p>
+      ) : null}
+      <div className="grid gap-1.5">
         <label className="block">
           <span className="sr-only">Selling price for {idea.label}</span>
-          <input
-            value={sellingPrice}
-            disabled={saving}
-            onChange={(event) => {
-              setSellingPrice(event.target.value);
-              setDirty(true);
-            }}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.currentTarget.blur();
-              }
-            }}
-            placeholder="Add sell"
-            className="w-full rounded-lg border border-ink-100 bg-white px-2 py-1.5 text-xs font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60"
-          />
+          <span className="flex items-center rounded-lg border border-ink-100 bg-white text-xs font-semibold text-ink-900 transition focus-within:border-cobalt-500 focus-within:ring-2 focus-within:ring-cobalt-100">
+            <span className="pl-2 text-ink-400">{currencySymbol()}</span>
+            <input
+              value={sellingPrice}
+              disabled={saving}
+              onChange={(event) => {
+                setSellingPrice(event.target.value);
+                setDirty(true);
+              }}
+              onBlur={commit}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+              placeholder="Sell"
+              className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1.5 outline-none placeholder:text-ink-300 disabled:opacity-60"
+            />
+          </span>
         </label>
         <label className="block">
           <span className="sr-only">Product cost for {idea.label}</span>
-          <input
-            value={productCost}
-            disabled={saving}
-            onChange={(event) => {
-              setProductCost(event.target.value);
-              setDirty(true);
-            }}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.currentTarget.blur();
-              }
-            }}
-            placeholder="Add cost"
-            className="w-full rounded-lg border border-ink-100 bg-white px-2 py-1.5 text-xs font-semibold text-ink-900 outline-none transition placeholder:text-ink-300 focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60"
-          />
+          <span className="flex items-center rounded-lg border border-ink-100 bg-white text-xs font-semibold text-ink-900 transition focus-within:border-cobalt-500 focus-within:ring-2 focus-within:ring-cobalt-100">
+            <span className="pl-2 text-ink-400">{currencySymbol()}</span>
+            <input
+              value={productCost}
+              disabled={saving}
+              onChange={(event) => {
+                setProductCost(event.target.value);
+                setDirty(true);
+              }}
+              onBlur={commit}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.currentTarget.blur();
+                }
+              }}
+              placeholder="Cost"
+              className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1.5 outline-none placeholder:text-ink-300 disabled:opacity-60"
+            />
+          </span>
         </label>
       </div>
-      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${marginTone(economics.marginPercent)}`}>
-        {marginLabel}
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        {hasBothCoreValues ? (
+          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] ${marginTone(marginPercent)}`}>
+            {marginLabel}
+          </span>
+        ) : null}
+        {saved ? <span className="text-[10px] font-bold text-[#005e3f]">Saved</span> : null}
+      </div>
     </div>
   );
 }
@@ -387,7 +447,10 @@ function SortHeader({
 function IdeaMobileCard({
   idea,
   canAccessOsContent,
+  canUseScannerImport,
+  canUseResearchWorkspace,
   saving,
+  saved,
   onStatusChange,
   onArchive,
   onRestore,
@@ -396,7 +459,10 @@ function IdeaMobileCard({
 }: {
   idea: ProductIdeaLifecycle;
   canAccessOsContent: boolean;
+  canUseScannerImport: boolean;
+  canUseResearchWorkspace: boolean;
   saving: boolean;
+  saved: boolean;
   onStatusChange: (idea: ProductIdeaLifecycle, status: ProductIdeaWorkspaceStatus) => void;
   onArchive: (idea: ProductIdeaLifecycle) => void;
   onRestore: (idea: ProductIdeaLifecycle) => void;
@@ -415,7 +481,9 @@ function IdeaMobileCard({
           >
             {clippedIdeaName(idea.label)}
           </a>
-          <p className="mt-1 text-sm leading-6 text-ink-600">{latestSignalText(idea, canAccessOsContent)}</p>
+          {marketplaceTitle(idea) ? (
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{marketplaceTitle(idea)}</p>
+          ) : null}
         </div>
       </div>
 
@@ -428,7 +496,14 @@ function IdeaMobileCard({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <SignalStrip idea={idea} />
-        <PricingEditor idea={idea} saving={saving} onSave={onPricingSave} />
+        <PricingEditor
+          idea={idea}
+          saving={saving}
+          saved={saved}
+          canUseScannerImport={canUseScannerImport}
+          canUseResearchWorkspace={canUseResearchWorkspace}
+          onSave={onPricingSave}
+        />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -483,10 +558,14 @@ function EmptyFilteredState() {
 export function IdeasIndexClient({
   ideas,
   canAccessOsContent,
+  canUseScannerImport,
+  canUseResearchWorkspace,
   highlightedIdeaId,
 }: {
   ideas: ProductIdeaLifecycle[];
   canAccessOsContent: boolean;
+  canUseScannerImport: boolean;
+  canUseResearchWorkspace: boolean;
   highlightedIdeaId?: string;
 }) {
   const [localIdeas, setLocalIdeas] = useState(ideas);
@@ -494,6 +573,7 @@ export function IdeasIndexClient({
   const [view, setView] = useState<ViewFilter>("new");
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null);
+  const [savedPricingIdeaId, setSavedPricingIdeaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const filteredIdeas = useMemo(() => {
@@ -504,7 +584,7 @@ export function IdeasIndexClient({
         idea.workspaceStatus === view;
       const matchesQuery = !normalizedQuery || [
         idea.label,
-        latestSignalText(idea, canAccessOsContent),
+        marketplaceTitle(idea) ?? "",
         idea.workspaceStatusLabel,
         idea.sourceLabel ?? "",
         idea.demandEvidence ?? "",
@@ -513,7 +593,7 @@ export function IdeasIndexClient({
       return matchesView && matchesQuery;
     });
     return sortIdeas(filtered, sortKey);
-  }, [canAccessOsContent, localIdeas, query, view, sortKey]);
+  }, [localIdeas, query, view, sortKey]);
 
   const counts = useMemo(() => ({
     all: localIdeas.length,
@@ -532,6 +612,7 @@ export function IdeasIndexClient({
     status?: ProductIdeaWorkspaceStatus,
   ) {
     setSavingIdeaId(idea.ideaId);
+    setSavedPricingIdeaId(null);
     setError(null);
     try {
       await updateWorkspaceIdea(idea.ideaId, action, status);
@@ -563,6 +644,10 @@ export function IdeasIndexClient({
     )));
     try {
       await updateWorkspaceIdea(idea.ideaId, "update_economics", undefined, values);
+      setSavedPricingIdeaId(idea.ideaId);
+      window.setTimeout(() => setSavedPricingIdeaId((current) => (
+        current === idea.ideaId ? null : current
+      )), 1800);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update pricing.");
       setLocalIdeas((current) => current.map((item) => (
@@ -660,7 +745,10 @@ export function IdeasIndexClient({
               key={idea.ideaId}
               idea={idea}
               canAccessOsContent={canAccessOsContent}
+              canUseScannerImport={canUseScannerImport}
+              canUseResearchWorkspace={canUseResearchWorkspace}
               saving={savingIdeaId === idea.ideaId}
+              saved={savedPricingIdeaId === idea.ideaId}
               onStatusChange={(target, status) => void mutateIdea(target, "set_status", status)}
               onArchive={(target) => void mutateIdea(target, "archive")}
               onRestore={(target) => void mutateIdea(target, "restore")}
@@ -673,15 +761,17 @@ export function IdeasIndexClient({
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
-                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
-                <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[9%]" />
-                <th className="w-[11%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Status</th>
-                <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[14%]" />
-                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[20%]" />
+                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[22%]" />
+                <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[8%]" />
+                <th className="w-[7%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+                  <span className="sr-only">Status</span>
+                </th>
+                <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[13%]" />
+                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
                 {canAccessOsContent ? (
-                  <th className="w-[10%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
+                  <th className="w-[8%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
-                <th className="w-[12%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actions</th>
+                <th className="w-[10%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -704,9 +794,11 @@ export function IdeasIndexClient({
                         >
                           {clippedIdeaName(idea.label)}
                         </a>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">
-                          {latestSignalText(idea, canAccessOsContent)}
-                        </p>
+                        {marketplaceTitle(idea) ? (
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">
+                            {marketplaceTitle(idea)}
+                          </p>
+                        ) : null}
                         {idea.sourceUrl ? (
                           <a
                             href={idea.sourceUrl}
@@ -751,6 +843,9 @@ export function IdeasIndexClient({
                     <PricingEditor
                       idea={idea}
                       saving={savingIdeaId === idea.ideaId}
+                      saved={savedPricingIdeaId === idea.ideaId}
+                      canUseScannerImport={canUseScannerImport}
+                      canUseResearchWorkspace={canUseResearchWorkspace}
                       onSave={(target, values) => void savePricing(target, values)}
                     />
                   </td>

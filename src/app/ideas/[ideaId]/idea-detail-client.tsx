@@ -98,6 +98,13 @@ function scoreOutOfHundred(score: number | null): string {
   return `${score}/100`;
 }
 
+function signalCoverageLabel(score: number | null): string {
+  if (score === null) return "Signal coverage not captured";
+  if (score >= 100) return "Signal coverage high";
+  if (score >= 60) return "Signal coverage medium";
+  return "Signal coverage low";
+}
+
 function scoreBorderTone(score: number | null): string {
   if (score === null) return "border-ink-100 bg-surface-sunken text-ink-600";
   if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
@@ -464,8 +471,11 @@ function ScoutSignalSummary({
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-500">
           {idea.scannerScoredAt ? <span>Scanned {idea.scannerScoredAt}</span> : null}
           {idea.scannerConfidenceScore !== null ? (
-            <span className="rounded-full bg-surface-sunken px-2 py-1">
-              Confidence {idea.scannerConfidenceScore}/100
+            <span
+              className="rounded-full bg-surface-sunken px-2 py-1"
+              title="Signal coverage measures how much usable scan data Scout found. It is not a product quality score."
+            >
+              {signalCoverageLabel(idea.scannerConfidenceScore)} · {idea.scannerConfidenceScore}/100
             </span>
           ) : null}
         </div>
@@ -1259,6 +1269,7 @@ export function IdeaDetailClient({
             >
               <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Not added"} />
               <ReviewValue label="Captured" value={displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt || "Not captured"} />
+              <ReviewValue label="Signal coverage" value={scoreOutOfHundred(displayIdea.scannerConfidenceScore)} />
               <ReviewValue label="Listing price" value={sourceIdea.observed_price} />
               <ReviewValue label="Variant count" value={sourceIdea.variant_count} />
               <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />

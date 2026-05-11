@@ -27,6 +27,7 @@ export type ProductIdeaWorkspaceStatus =
 export type ProductIdeaLifecycle = {
   ideaId: string;
   label: string;
+  rawProductTitle: string | null;
   productImageUrl: string | null;
   sourceUrl: string | null;
   sourceLabel: string | null;
@@ -558,6 +559,7 @@ export function getProductIdeaLifecycles(
     return {
       ideaId,
       label,
+      rawProductTitle: normalize(idea.raw_product_title) || null,
       productImageUrl: normalize(idea.product_image_url) || null,
       sourceUrl: normalize(idea.source_url) || null,
       sourceLabel: normalize(idea.source_label) || null,
