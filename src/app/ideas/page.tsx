@@ -37,7 +37,7 @@ async function getIdeaData(): Promise<{
       .eq("project_id", projectId);
     const scopedResponseQuery = access.canAccessOsContent
       ? responseQuery
-      : responseQuery.eq("worksheet_id", "ideas-worksheet");
+      : responseQuery.in("worksheet_id", ["ideas-worksheet", "unit-economics-worksheet"]);
 
     const { data } = await scopedResponseQuery;
     const metricRows = access.canAccessOsContent

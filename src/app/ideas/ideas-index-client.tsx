@@ -61,23 +61,25 @@ function compactScoreLabel(idea: ProductIdeaLifecycle): string {
 }
 
 function demandTone(score: number | null): string {
-  if (score === null) return "bg-surface-sunken text-ink-500";
-  if (score <= 20) return "bg-error-100 text-error-700";
-  if (score <= 60) return "bg-amber-100 text-amber-700";
-  return "bg-success-100 text-[#005e3f]";
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score <= 20) return "border-error-100 bg-error-100 text-error-700";
+  if (score <= 60) return "border-amber-100 bg-amber-100 text-amber-700";
+  return "border-success-100 bg-success-100 text-[#005e3f]";
 }
 
 function competitionTone(score: number | null): string {
-  if (score === null) return "bg-surface-sunken text-ink-500";
-  if (score <= 30) return "bg-success-100 text-[#005e3f]";
-  if (score <= 70) return "bg-amber-100 text-amber-700";
-  return "bg-error-100 text-error-700";
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score <= 30) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (score <= 70) return "border-amber-100 bg-amber-100 text-amber-700";
+  return "border-error-100 bg-error-100 text-error-700";
 }
 
 function riskTone(value: string | null): string {
-  if (!value) return "bg-success-100 text-[#005e3f]";
+  if (!value) return "border-success-100 bg-success-100 text-[#005e3f]";
   const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
-  return flags.length > 1 ? "bg-error-100 text-error-700" : "bg-amber-100 text-amber-700";
+  return flags.length > 1
+    ? "border-error-100 bg-error-100 text-error-700"
+    : "border-amber-100 bg-amber-100 text-amber-700";
 }
 
 function riskLabel(value: string | null): string {
@@ -110,6 +112,16 @@ function compactActionLabel(label: string): string {
     "Add next idea": "Add idea",
   };
   return labels[label] ?? label;
+}
+
+function workflowText(idea: ProductIdeaLifecycle, canAccessOsContent: boolean): string {
+  if (canAccessOsContent) return idea.nextAction.note;
+  if (idea.workspaceStatus === "new") return "Next: review signals and add pricing.";
+  if (idea.workspaceStatus === "reviewing") return "Next: compare demand, competition, and margin.";
+  if (idea.workspaceStatus === "shortlist") return "Next: shortlist for supplier or marketplace checks.";
+  if (idea.workspaceStatus === "testing") return "Next: record what happens in the test.";
+  if (idea.workspaceStatus === "archived") return "Archived.";
+  return "Next: review this candidate.";
 }
 
 function clippedIdeaName(name: string, max = 58): string {
@@ -280,7 +292,7 @@ function SignalChip({
   tone?: string;
 }) {
   return (
-    <span className={`inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[11px] leading-none ${tone}`}>
+    <span className={`inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-[10px] leading-none ${tone}`}>
       <span className="font-bold uppercase tracking-[0.08em] opacity-70">{label}</span>
       <span className="font-bold">{value}</span>
     </span>
@@ -289,7 +301,7 @@ function SignalChip({
 
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex max-w-full flex-wrap items-center gap-1.5 overflow-hidden">
       <SignalChip
         label="DMND"
         value={idea.scannerDemandScore === null ? "-" : String(idea.scannerDemandScore)}
@@ -305,7 +317,11 @@ function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
         value={riskLabel(idea.seasonality)}
         tone={riskTone(idea.seasonality)}
       />
-      <SignalChip label="ORD" value={`${compactNumber(idea.observedOrderCount)}${ratingText(idea.observedRating)}`} />
+      <SignalChip
+        label="ORD"
+        value={`${compactNumber(idea.observedOrderCount)}${ratingText(idea.observedRating)}`}
+        tone="border-ink-100 bg-surface-sunken text-ink-700"
+      />
     </div>
   );
 }
@@ -484,6 +500,9 @@ function IdeaMobileCard({
           {marketplaceTitle(idea) ? (
             <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{marketplaceTitle(idea)}</p>
           ) : null}
+          <p className="mt-2 text-xs font-semibold leading-5 text-ink-600">
+            {workflowText(idea, canAccessOsContent)}
+          </p>
         </div>
       </div>
 
@@ -761,13 +780,13 @@ export function IdeasIndexClient({
           <table className="w-full table-fixed border-collapse text-left">
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
-                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[22%]" />
+                <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
                 <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[8%]" />
                 <th className="w-[7%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
                   <span className="sr-only">Status</span>
                 </th>
                 <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[13%]" />
-                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[24%]" />
+                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[26%]" />
                 {canAccessOsContent ? (
                   <th className="w-[8%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
@@ -799,6 +818,9 @@ export function IdeasIndexClient({
                             {marketplaceTitle(idea)}
                           </p>
                         ) : null}
+                        <p className="mt-2 line-clamp-2 text-xs font-semibold leading-5 text-ink-600">
+                          {workflowText(idea, canAccessOsContent)}
+                        </p>
                         {idea.sourceUrl ? (
                           <a
                             href={idea.sourceUrl}
