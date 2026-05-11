@@ -112,6 +112,20 @@ function scoreBorderTone(score: number | null): string {
   return "border-error-100 bg-error-100 text-error-700";
 }
 
+function demandBorderTone(score: number | null): string {
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (score <= 20) return "border-error-100 bg-error-100 text-error-700";
+  if (score <= 60) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-success-100 bg-success-100 text-[#005e3f]";
+}
+
+function competitionBorderTone(score: number | null): string {
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (score <= 30) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (score <= 70) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
 function seasonalityTone(value: string | null | undefined): string {
   const normalised = (value ?? "").trim().toLowerCase();
   if (!normalised) return "border-ink-100 bg-surface-sunken text-ink-600";
@@ -141,6 +155,25 @@ function formatMoneyInput(value: string): string {
   return value.trim() || "Not added";
 }
 
+function formatMoneyDisplay(value: string | null | undefined): string {
+  const parsed = parsedMoney(value);
+  if (parsed === null) return "Not added";
+  return formatCurrency(parsed);
+}
+
+function formatCapturedAt(value: string | null | undefined): string {
+  if (!value) return "Not captured";
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(parsed));
+}
+
 function projectedEconomics(row: InstanceRow): {
   sellingPrice: number | null;
   margin: number | null;
@@ -163,6 +196,7 @@ function projectedEconomics(row: InstanceRow): {
 
 function marginTone(value: number | null): string {
   if (value === null) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (value <= 0) return "border-error-100 bg-error-100 text-error-700";
   if (value >= 40) return "border-success-100 bg-success-100 text-[#005e3f]";
   if (value >= 20) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
   return "border-error-100 bg-error-100 text-error-700";
@@ -427,6 +461,21 @@ function ReviewSection({
   );
 }
 
+function EvidenceGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-ink-100 bg-white p-4">
+      <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-cobalt-600">{title}</h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
 function SummaryCard({
   label,
   value,
@@ -481,7 +530,6 @@ function ScoutSignalSummary({
     ["Orders", compactNumber(sourceIdea.observed_order_count), hasUnusualRatio ? "Unusual ratio" : ""],
     ["Reviews", compactNumber(sourceIdea.observed_review_count), ""],
     sourceIdea.observed_rating?.trim() ? ["Rating", sourceIdea.observed_rating.trim(), ""] : null,
-    ["Listing price", sourceIdea.observed_price?.trim() || "Not captured", ""],
   ].filter(Boolean) as Array<[string, string, string]>;
 
   return (
@@ -517,18 +565,18 @@ function ScoutSignalSummary({
           label="Demand"
           value={scoreOutOfHundred(idea.scannerDemandScore)}
           detail={compactScoreLabel(idea.scannerDemandScore)}
-          tone={scoreBorderTone(idea.scannerDemandScore)}
+          tone={demandBorderTone(idea.scannerDemandScore)}
         />
         <SignalCard
           label="Competition"
           value={scoreOutOfHundred(idea.scannerCompetitionScore)}
           detail={compactScoreLabel(idea.scannerCompetitionScore)}
-          tone={scoreBorderTone(idea.scannerCompetitionScore)}
+          tone={competitionBorderTone(idea.scannerCompetitionScore)}
         />
         <SignalCard
           label="Seasonality"
           value={idea.seasonality ? "Flagged" : "None"}
-          detail={idea.seasonality ? "Review timing risk" : "No risk captured"}
+          detail={idea.seasonality ? "Review timing risk" : ""}
           tone={seasonalityTone(idea.seasonality)}
         />
       </div>
@@ -557,31 +605,34 @@ function EconomicsSnapshot({ economics }: { economics: InstanceRow }) {
     economics.platform_fees,
   );
 
+  const marginHeadline = projection.marginPercent === null
+    ? "Add pricing to see margin"
+    : `${formatCurrency(projection.margin)} = ${formatPercent(projection.marginPercent)} of sell price`;
+
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
           <h2 className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">
-            {projection.marginPercent === null ? "Add pricing to see margin" : `${formatPercent(projection.marginPercent)} projected margin`}
+            {marginHeadline}
           </h2>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${marginTone(projection.marginPercent)}`}>
-          {projection.marginPercent === null ? "Incomplete" : "Margin"}
-        </span>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg bg-surface-sunken px-3 py-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Sell</p>
-          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyInput(economics.selling_price ?? "")}</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyDisplay(economics.selling_price)}</p>
         </div>
         <div className="rounded-lg bg-surface-sunken px-3 py-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Cost</p>
-          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyInput(economics.product_cost ?? "")}</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyDisplay(economics.product_cost)}</p>
         </div>
         <div className="rounded-lg bg-surface-sunken px-3 py-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Margin</p>
-          <p className="mt-1 text-sm font-bold text-ink-900">{formatCurrency(projection.margin)}</p>
+          <p className={`mt-1 inline-flex rounded-full border px-2.5 py-1 text-sm font-bold ${marginTone(projection.marginPercent)}`}>
+            {projection.marginPercent === null ? "Not known" : formatPercent(projection.marginPercent)}
+          </p>
         </div>
       </div>
       {!hasAnyEconomics ? (
@@ -820,38 +871,22 @@ function NotesSection({
   onSave: () => Promise<void>;
 }) {
   const userNotes = idea.notes.filter((note) => !isScoutImportNote(note));
-  const activity = [
-    ...idea.timeline.map((event) => ({ type: "system" as const, key: event.key, event })),
-    ...userNotes.map((note) => ({ type: "note" as const, key: `note-${note.id}`, note })),
-  ];
 
   return (
     <div id="history" className="space-y-6">
       <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
         <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Activity</h2>
         <p className="mt-2 text-sm leading-6 text-ink-500">
-          System events and notes for this product candidate.
+          System events for this product candidate.
         </p>
         <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
-          {activity.map((item) => {
-            if (item.type === "note") {
-              return (
-                <li key={item.key} className="relative">
-                  <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-ink-300 ring-4 ring-surface-raised" />
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-[Manrope] text-sm font-bold text-ink-900">Note added</p>
-                    <span className="text-[10px] font-bold tracking-[0.08em] text-ink-500">{item.note.createdAt}</span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-ink-500">{item.note.note}</p>
-                </li>
-              );
-            }
-            const source = activitySourceLabel(item.event, canAccessOsContent);
+          {idea.timeline.map((event) => {
+            const source = activitySourceLabel(event, canAccessOsContent);
             return (
-              <li key={item.key} className="relative">
+              <li key={event.key} className="relative">
                 <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-[Manrope] text-sm font-bold text-ink-900">{item.event.label}</p>
+                  <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
                   <a
                     href={source.href}
                     className="text-[10px] font-bold tracking-[0.08em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
@@ -860,9 +895,9 @@ function NotesSection({
                   </a>
                 </div>
                 <p className="mt-1 text-xs leading-5 text-ink-500">
-                  {!canAccessOsContent && item.event.key === "captured"
+                  {!canAccessOsContent && event.key === "captured"
                     ? "Imported into Scout Workspace."
-                    : item.event.detail.replace(/Chapter 3|Chapter 5|Chapter 6/g, "Scout")}
+                    : event.detail.replace(/Chapter 3|Chapter 5|Chapter 6/g, "Scout")}
                 </p>
               </li>
             );
@@ -1334,17 +1369,28 @@ export function IdeaDetailClient({
             <ReviewSection
               id="idea-evidence"
               title="Idea evidence"
-              description="Source and provenance for this candidate. The scorecard above is the decision summary."
+              description=""
               onEdit={() => setEditSection("idea")}
             >
-              <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Not added"} />
-              <ReviewValue label="Captured" value={displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt || "Not captured"} />
-              <ReviewValue label="Signal coverage" value={scoreOutOfHundred(displayIdea.scannerConfidenceScore)} />
-              <ReviewValue label="Listing price" value={sourceIdea.observed_price} />
-              <ReviewValue label="Variant count" value={sourceIdea.variant_count} />
-              <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
-              <ReviewValue label="Competition signal" value={ideaDraft.competition_notes} wide />
-              <ReviewValue label="Risk notes" value={ideaDraft.demand_evidence} wide />
+              <div className="md:col-span-2 grid gap-4 xl:grid-cols-3">
+                <EvidenceGroup title="Source">
+                  <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} />
+                  <ReviewValue label="Captured" value={formatCapturedAt(displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt)} />
+                  <ReviewValue label="Import note" value={`Imported from ${ideaDraft.source_label || displayIdea.sourceLabel || "Scout"}`} wide />
+                </EvidenceGroup>
+                <EvidenceGroup title="Listing data">
+                  <ReviewValue label="Variant count" value={sourceIdea.variant_count?.trim() || "Not captured"} />
+                  {ideaDraft.seasonality.trim() ? (
+                    <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
+                  ) : null}
+                  <ReviewValue label="Competition" value={ideaDraft.competition_notes || "Not captured"} wide />
+                </EvidenceGroup>
+                <EvidenceGroup title="Data quality">
+                  <ReviewValue label="Signal coverage" value={scoreOutOfHundred(displayIdea.scannerConfidenceScore)} />
+                  <ReviewValue label="Missing signals" value={sourceIdea.missing_signals || "None captured"} />
+                  <ReviewValue label="Demand notes" value={ideaDraft.demand_evidence || "Not captured"} wide />
+                </EvidenceGroup>
+              </div>
             </ReviewSection>
           )}
 
