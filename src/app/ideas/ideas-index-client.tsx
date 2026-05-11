@@ -319,10 +319,12 @@ function SignalChip({
   return (
     <span
       title={title}
-      className={`inline-flex h-7 max-w-full items-baseline gap-1.5 whitespace-nowrap rounded-full border px-2 leading-none ${tone}`}
+      className={`inline-flex h-8 max-w-full items-center gap-2 whitespace-nowrap rounded-full border px-2.5 ${tone}`}
     >
-      <span className="text-[10px] font-medium opacity-70">{label}</span>
-      <span className="truncate text-[13px] font-bold">{value}</span>
+      <span className="flex min-w-0 items-center gap-1.5 leading-none">
+        <span className="shrink-0 text-[10px] font-medium leading-none opacity-70">{label}</span>
+        <span className="truncate text-[13px] font-bold leading-none">{value}</span>
+      </span>
     </span>
   );
 }
@@ -330,7 +332,7 @@ function SignalChip({
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
   const flags = flagsLabel(idea.seasonality);
   return (
-    <div className="flex max-w-full flex-wrap items-center gap-1.5">
+    <div className="flex max-w-full flex-wrap items-center gap-2">
       <SignalChip
         label="Demand"
         value={idea.scannerDemandScore === null ? "-" : String(idea.scannerDemandScore)}
@@ -950,9 +952,6 @@ export function IdeasIndexClient({
                             saved={savedStatusIdeaId === idea.ideaId}
                             onChange={(target, status) => void mutateIdea(target, "set_status", status)}
                           />
-                          {idea.scannerScoredAt ? (
-                            <span className="text-[10px] font-semibold text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
-                          ) : null}
                           {idea.sourceUrl ? (
                             <a
                               href={idea.sourceUrl}
@@ -969,7 +968,14 @@ export function IdeasIndexClient({
                     </div>
                   </td>
                   <td className="px-3 py-4 text-center">
-                    <ScoreBadge idea={idea} />
+                    <div className="flex min-h-[86px] flex-col items-center justify-between">
+                      <ScoreBadge idea={idea} />
+                      {idea.scannerScoredAt ? (
+                        <span className="mt-3 text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
+                      ) : (
+                        <span aria-hidden="true" />
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-4">
                     <PricingEditor
