@@ -1,6 +1,6 @@
 # Pre-Launch Checklist
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 This file tracks the practical work needed before taking Scout / Calm Commerce into paid launch traffic.
 
@@ -103,6 +103,12 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Launch QA
 
+- [ ] **Very important:** run end-to-end margin calculation QA before launch.
+  - Do this after development / staging / production environments are separated.
+  - Cover AliExpress and Amazon scans from popup preview → payload → Workspace list → product detail page.
+  - Verify simple known cases such as sell price `£20`, product cost `£10`, shipping `£0`.
+  - Confirm whether platform fees, shipping, cached inputs, or old extension state are affecting displayed margin.
+  - Add regression tests or documented fixtures once the expected calculation rules are final.
 - [ ] Run a blank-account production smoke test.
   - Signup confirmation email redirects to production, not localhost.
   - Stripe checkout redirects back to production.
