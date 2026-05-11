@@ -47,10 +47,17 @@ function workspaceTone(status: ProductIdeaWorkspaceStatus): string {
 }
 
 function scoreTone(score: number | null): string {
-  if (score === null) return "bg-surface-sunken text-ink-500";
-  if (score >= 70) return "bg-success-100 text-[#005e3f]";
-  if (score >= 40) return "bg-[#fff8e6] text-[#835700]";
-  return "bg-error-100 text-error-700";
+  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (score >= 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
+function scoreNumberTone(score: number | null): string {
+  if (score === null) return "text-ink-500";
+  if (score >= 70) return "text-[#005e3f]";
+  if (score >= 40) return "text-[#835700]";
+  return "text-error-700";
 }
 
 function compactScoreLabel(idea: ProductIdeaLifecycle): string {
@@ -61,25 +68,25 @@ function compactScoreLabel(idea: ProductIdeaLifecycle): string {
 }
 
 function demandTone(score: number | null): string {
-  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score === null) return "border-transparent bg-surface-sunken text-ink-500";
   if (score <= 20) return "border-error-100 bg-error-100 text-error-700";
-  if (score <= 60) return "border-amber-100 bg-amber-100 text-amber-700";
+  if (score <= 60) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
   return "border-success-100 bg-success-100 text-[#005e3f]";
 }
 
 function competitionTone(score: number | null): string {
-  if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (score === null) return "border-transparent bg-surface-sunken text-ink-500";
   if (score <= 30) return "border-success-100 bg-success-100 text-[#005e3f]";
-  if (score <= 70) return "border-amber-100 bg-amber-100 text-amber-700";
+  if (score <= 70) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
   return "border-error-100 bg-error-100 text-error-700";
 }
 
 function riskTone(value: string | null): string {
-  if (!value) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (!value) return "border-transparent bg-surface-sunken text-ink-500";
   const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
   return flags.length > 1
     ? "border-error-100 bg-error-100 text-error-700"
-    : "border-amber-100 bg-amber-100 text-amber-700";
+    : "border-amber-100 bg-[#fff8e6] text-[#835700]";
 }
 
 function riskLabel(value: string | null): string {
@@ -175,6 +182,7 @@ function formatMarginPercent(value: number | null): string {
 
 function marginTone(value: number | null): string {
   if (value === null) return "border-ink-100 bg-surface-sunken text-ink-500";
+  if (value <= 0) return "border-error-100 bg-error-100 text-error-700";
   if (value >= 40) return "border-success-100 bg-success-100 text-[#005e3f]";
   if (value >= 20) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
   return "border-error-100 bg-error-100 text-error-700";
@@ -268,10 +276,10 @@ function IdeaImage({ idea }: { idea: ProductIdeaLifecycle }) {
 function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
     <div className="inline-flex min-w-24 flex-col items-start">
-      <span className="font-[Manrope] text-[28px] font-bold leading-none text-ink-900">
+      <span className={`font-[Manrope] text-[28px] font-bold leading-none ${scoreNumberTone(idea.scannerScore)}`}>
         {idea.scannerScore === null ? "-" : idea.scannerScore}
       </span>
-      <span className={`mt-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${scoreTone(idea.scannerScore)}`}>
+      <span className={`mt-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${scoreTone(idea.scannerScore)}`}>
         {compactScoreLabel(idea)}
       </span>
     </div>
@@ -296,6 +304,7 @@ function SignalChip({
 }
 
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
+  const hasRisk = Boolean(idea.seasonality?.trim());
   return (
     <div className="flex max-w-full flex-wrap items-center gap-1.5">
       <SignalChip
@@ -308,11 +317,13 @@ function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
         value={idea.scannerCompetitionScore === null ? "-" : String(idea.scannerCompetitionScore)}
         tone={competitionTone(idea.scannerCompetitionScore)}
       />
-      <SignalChip
-        label="RISK"
-        value={riskLabel(idea.seasonality)}
-        tone={riskTone(idea.seasonality)}
-      />
+      {hasRisk ? (
+        <SignalChip
+          label="RISK"
+          value={riskLabel(idea.seasonality)}
+          tone={riskTone(idea.seasonality)}
+        />
+      ) : null}
       <SignalChip
         label="ORD"
         value={`${compactNumber(idea.observedOrderCount)}${ratingText(idea.observedRating)}`}
@@ -441,12 +452,14 @@ function PricingEditor({
           className="group w-full rounded-lg px-2 py-1.5 text-left transition hover:bg-surface-sunken disabled:opacity-60"
         >
           {hasAnyPricing ? (
-            <span className="block space-y-0.5">
-              <span className="block text-sm font-semibold leading-5 text-ink-900">
-                {displayMoneyValue(sellingPrice)} <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">sell</span>
+            <span className="block space-y-1">
+              <span className="grid grid-cols-[2.7rem_minmax(0,1fr)] items-baseline gap-2 text-sm leading-5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">Sell</span>
+                <span className="font-semibold tabular-nums text-ink-900">{displayMoneyValue(sellingPrice)}</span>
               </span>
-              <span className="block text-sm font-semibold leading-5 text-ink-700">
-                {displayMoneyValue(productCost)} <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">cost</span>
+              <span className="grid grid-cols-[2.7rem_minmax(0,1fr)] items-baseline gap-2 text-sm leading-5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-400">Cost</span>
+                <span className="font-semibold tabular-nums text-ink-700">{displayMoneyValue(productCost)}</span>
               </span>
             </span>
           ) : (
