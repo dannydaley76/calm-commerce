@@ -40,31 +40,40 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
   return "bg-surface-sunken text-ink-500";
 }
 
-function workspaceTone(status: ProductIdeaWorkspaceStatus): string {
-  if (status === "shortlist") return "bg-success-100 text-[#005e3f]";
-  if (status === "reviewing" || status === "testing") return "bg-[#eef4ff] text-cobalt-600";
-  if (status === "archived") return "bg-surface-sunken text-ink-500";
-  return "bg-surface-sunken text-ink-700";
+function workspaceDotTone(status: ProductIdeaWorkspaceStatus): string {
+  if (status === "shortlist") return "bg-[#007a52]";
+  if (status === "reviewing") return "bg-cobalt-600";
+  if (status === "testing") return "bg-[#b7791f]";
+  if (status === "archived") return "bg-ink-300";
+  return "bg-ink-400";
+}
+
+function workspaceSelectorTone(status: ProductIdeaWorkspaceStatus): string {
+  if (status === "shortlist") return "border-success-100 bg-success-100 text-[#005e3f] hover:bg-[#d9f4e8]";
+  if (status === "reviewing") return "border-cobalt-100 bg-[#eef4ff] text-cobalt-600 hover:bg-[#e2ecff]";
+  if (status === "testing") return "border-amber-100 bg-[#fff8e6] text-[#835700] hover:bg-[#fff0c2]";
+  if (status === "archived") return "border-ink-100 bg-surface-sunken text-ink-500 hover:bg-ink-50";
+  return "border-ink-100 bg-surface-sunken text-ink-700 hover:bg-ink-50";
 }
 
 function scoreTone(score: number | null): string {
   if (score === null) return "border-ink-100 bg-surface-sunken text-ink-500";
   if (score >= 70) return "border-success-100 bg-success-100 text-[#005e3f]";
-  if (score >= 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  if (score > 40) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
   return "border-error-100 bg-error-100 text-error-700";
 }
 
 function scoreNumberTone(score: number | null): string {
   if (score === null) return "text-ink-500";
   if (score >= 70) return "text-[#005e3f]";
-  if (score >= 40) return "text-[#835700]";
+  if (score > 40) return "text-[#835700]";
   return "text-error-700";
 }
 
 function compactScoreLabel(idea: ProductIdeaLifecycle): string {
   if (idea.scannerScore === null) return "Not scored";
   if (idea.scannerScore >= 70) return "Strong";
-  if (idea.scannerScore >= 40) return "Moderate";
+  if (idea.scannerScore > 40) return "Moderate";
   return "Weak";
 }
 
@@ -82,19 +91,28 @@ function competitionTone(score: number | null): string {
   return "border-error-100 bg-error-100 text-error-700";
 }
 
-function riskTone(value: string | null): string {
-  if (!value) return "border-transparent bg-surface-sunken text-ink-500";
-  const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
-  return flags.length > 1
+function flagParts(value: string | null): string[] {
+  return value?.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean) ?? [];
+}
+
+function flagsTone(value: string | null): string {
+  const flags = flagParts(value);
+  if (flags.length === 0) return "border-transparent bg-surface-sunken text-ink-500";
+  const hasSevereFlag = flags.some((flag) => /ban|counterfeit|restricted|illegal|prohibited/i.test(flag));
+  return hasSevereFlag
     ? "border-error-100 bg-error-100 text-error-700"
     : "border-amber-100 bg-[#fff8e6] text-[#835700]";
 }
 
-function riskLabel(value: string | null): string {
-  if (!value) return "None";
-  const flags = value.split(/\n|,/).map((flag) => flag.trim()).filter(Boolean);
-  if (flags.length > 1) return "Multiple";
-  return /season/i.test(flags[0] ?? "") ? "Seasonal" : "Flagged";
+function flagsLabel(value: string | null): string {
+  const labels = flagParts(value).map((flag) => {
+    if (/season/i.test(flag)) return "Seasonal";
+    if (/trend/i.test(flag)) return "Trending down";
+    if (/ban/i.test(flag)) return "Banned";
+    if (/counterfeit/i.test(flag)) return "Counterfeit";
+    return "Flagged";
+  });
+  return labels.length > 0 ? labels.join(", ") : "None";
 }
 
 function ideaDetailHref(idea: ProductIdeaLifecycle): string {
@@ -276,8 +294,8 @@ function IdeaImage({ idea }: { idea: ProductIdeaLifecycle }) {
 
 function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
   return (
-    <div className="inline-flex min-w-24 flex-col items-start">
-      <span className={`font-[Manrope] text-[28px] font-bold leading-none ${scoreNumberTone(idea.scannerScore)}`}>
+    <div className="inline-flex w-full flex-col items-center justify-center text-center">
+      <span className={`font-[Manrope] text-[30px] font-bold leading-none ${scoreNumberTone(idea.scannerScore)}`}>
         {idea.scannerScore === null ? "-" : idea.scannerScore}
       </span>
       <span className={`mt-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${scoreTone(idea.scannerScore)}`}>
@@ -290,47 +308,108 @@ function ScoreBadge({ idea }: { idea: ProductIdeaLifecycle }) {
 function SignalChip({
   label,
   value,
+  title,
   tone = "bg-surface-sunken text-ink-700",
 }: {
   label: string;
   value: string;
+  title?: string;
   tone?: string;
 }) {
   return (
-    <span className={`inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-[10px] leading-none ${tone}`}>
-      <span className="font-bold uppercase tracking-[0.08em] opacity-70">{label}</span>
-      <span className="font-bold">{value}</span>
+    <span
+      title={title}
+      className={`inline-flex h-7 max-w-full items-baseline gap-1.5 whitespace-nowrap rounded-full border px-2 leading-none ${tone}`}
+    >
+      <span className="text-[10px] font-medium opacity-70">{label}</span>
+      <span className="truncate text-[13px] font-bold">{value}</span>
     </span>
   );
 }
 
 function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
-  const hasRisk = Boolean(idea.seasonality?.trim());
+  const flags = flagsLabel(idea.seasonality);
   return (
     <div className="flex max-w-full flex-wrap items-center gap-1.5">
       <SignalChip
-        label="DMND"
+        label="Demand"
         value={idea.scannerDemandScore === null ? "-" : String(idea.scannerDemandScore)}
         tone={demandTone(idea.scannerDemandScore)}
       />
       <SignalChip
-        label="COMP"
+        label="Competition"
         value={idea.scannerCompetitionScore === null ? "-" : String(idea.scannerCompetitionScore)}
         tone={competitionTone(idea.scannerCompetitionScore)}
       />
-      {hasRisk ? (
-        <SignalChip
-          label="RISK"
-          value={riskLabel(idea.seasonality)}
-          tone={riskTone(idea.seasonality)}
-        />
-      ) : null}
       <SignalChip
-        label="ORD"
+        label="Flags"
+        value={flags}
+        title={flags === "None" ? undefined : flags}
+        tone={flagsTone(idea.seasonality)}
+      />
+      <SignalChip
+        label="Orders"
         value={`${compactNumber(idea.observedOrderCount)}${ratingText(idea.observedRating)}`}
         tone="border-ink-100 bg-surface-sunken text-ink-700"
       />
     </div>
+  );
+}
+
+function StatusSelector({
+  idea,
+  saving,
+  saved,
+  onChange,
+}: {
+  idea: ProductIdeaLifecycle;
+  saving: boolean;
+  saved: boolean;
+  onChange: (idea: ProductIdeaLifecycle, status: ProductIdeaWorkspaceStatus) => void;
+}) {
+  return (
+    <details className="group relative">
+      <summary
+        title="Change status"
+        className={[
+          "inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] transition",
+          "focus:outline-none focus:ring-2 focus:ring-cobalt-100",
+          workspaceSelectorTone(idea.workspaceStatus),
+          saved ? "ring-2 ring-success-100" : "",
+        ].join(" ")}
+      >
+        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${workspaceDotTone(idea.workspaceStatus)}`} />
+        <span>{idea.workspaceStatusLabel}</span>
+        <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3 opacity-65">
+          <path d="M3 4.5 6 7.5l3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </summary>
+      <div className="absolute left-0 z-30 mt-2 w-40 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
+        {WORKSPACE_STATUS_OPTIONS.map((item) => {
+          const isCurrent = item.value === idea.workspaceStatus;
+          return (
+            <button
+              key={item.value}
+              type="button"
+              disabled={saving}
+              onClick={(event) => {
+                event.currentTarget.closest("details")?.removeAttribute("open");
+                if (!isCurrent) onChange(idea, item.value);
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
+            >
+              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${workspaceDotTone(item.value)}`} />
+              <span className="flex-1">{item.label}</span>
+              {isCurrent ? (
+                <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3.5 w-3.5 text-cobalt-600">
+                  <path d="m2.5 6 2 2 5-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </details>
   );
 }
 
@@ -518,6 +597,7 @@ function IdeaMobileCard({
   canUseResearchWorkspace,
   saving,
   saved,
+  savedStatus,
   onStatusChange,
   onArchive,
   onRestore,
@@ -530,6 +610,7 @@ function IdeaMobileCard({
   canUseResearchWorkspace: boolean;
   saving: boolean;
   saved: boolean;
+  savedStatus: boolean;
   onStatusChange: (idea: ProductIdeaLifecycle, status: ProductIdeaWorkspaceStatus) => void;
   onArchive: (idea: ProductIdeaLifecycle) => void;
   onRestore: (idea: ProductIdeaLifecycle) => void;
@@ -556,9 +637,15 @@ function IdeaMobileCard({
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <ScoreBadge idea={idea} />
-        <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${workspaceTone(idea.workspaceStatus)}`}>
-          {idea.workspaceStatusLabel}
-        </span>
+        <StatusSelector
+          idea={idea}
+          saving={saving}
+          saved={savedStatus}
+          onChange={onStatusChange}
+        />
+        {idea.scannerScoredAt ? (
+          <span className="text-[10px] font-semibold text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -574,20 +661,6 @@ function IdeaMobileCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-          Move to
-        </span>
-        <select
-          aria-label={`Workspace status for ${idea.label}`}
-          value={idea.workspaceStatus}
-          disabled={saving}
-          onChange={(event) => onStatusChange(idea, event.target.value as ProductIdeaWorkspaceStatus)}
-          className="rounded-lg border border-ink-100 bg-surface-raised px-3 py-2 text-sm font-semibold text-ink-900 outline-none transition focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100 disabled:opacity-60"
-        >
-          {WORKSPACE_STATUS_OPTIONS.map((item) => (
-            <option key={item.value} value={item.value}>{item.label}</option>
-          ))}
-        </select>
         {idea.sourceUrl ? (
           <a
             href={idea.sourceUrl}
@@ -641,6 +714,7 @@ export function IdeasIndexClient({
   const [sortKey, setSortKey] = useState<SortKey>("newest");
   const [savingIdeaId, setSavingIdeaId] = useState<string | null>(null);
   const [savedPricingIdeaId, setSavedPricingIdeaId] = useState<string | null>(null);
+  const [savedStatusIdeaId, setSavedStatusIdeaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const filteredIdeas = useMemo(() => {
@@ -680,6 +754,7 @@ export function IdeasIndexClient({
   ) {
     setSavingIdeaId(idea.ideaId);
     setSavedPricingIdeaId(null);
+    setSavedStatusIdeaId(null);
     setError(null);
     try {
       await updateWorkspaceIdea(idea.ideaId, action, status);
@@ -693,6 +768,10 @@ export function IdeasIndexClient({
             ? { ...item, workspaceStatus: nextStatus, workspaceStatusLabel: nextLabel }
             : item
         )));
+        setSavedStatusIdeaId(idea.ideaId);
+        window.setTimeout(() => setSavedStatusIdeaId((current) => (
+          current === idea.ideaId ? null : current
+        )), 1200);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update Scout Workspace.");
@@ -816,6 +895,7 @@ export function IdeasIndexClient({
               canUseResearchWorkspace={canUseResearchWorkspace}
               saving={savingIdeaId === idea.ideaId}
               saved={savedPricingIdeaId === idea.ideaId}
+              savedStatus={savedStatusIdeaId === idea.ideaId}
               onStatusChange={(target, status) => void mutateIdea(target, "set_status", status)}
               onArchive={(target) => void mutateIdea(target, "archive")}
               onRestore={(target) => void mutateIdea(target, "restore")}
@@ -829,9 +909,9 @@ export function IdeasIndexClient({
             <thead>
               <tr className="border-b border-ink-100 bg-surface-sunken/60">
                 <SortHeader label="Product" sort="name" activeSort={sortKey} onSort={setSortKey} className="w-[30%]" />
-                <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[8%]" />
+                <SortHeader label="Score" sort="scanner_score" activeSort={sortKey} onSort={setSortKey} className="w-[9%]" />
                 <SortHeader label="Pricing" sort="margin" activeSort={sortKey} onSort={setSortKey} className="w-[16%]" />
-                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[28%]" />
+                <SortHeader label="Signals" sort="orders" activeSort={sortKey} onSort={setSortKey} className="w-[27%]" />
                 {canAccessOsContent ? (
                   <th className="w-[8%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">OS</th>
                 ) : null}
@@ -864,24 +944,12 @@ export function IdeasIndexClient({
                           </p>
                         ) : null}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <details className="group relative">
-                            <summary className={`inline-flex cursor-pointer list-none rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] ${workspaceTone(idea.workspaceStatus)}`}>
-                              {idea.workspaceStatusLabel}
-                            </summary>
-                            <div className="absolute left-0 z-30 mt-2 w-36 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
-                              {WORKSPACE_STATUS_OPTIONS.map((item) => (
-                                <button
-                                  key={item.value}
-                                  type="button"
-                                  disabled={savingIdeaId === idea.ideaId}
-                                  onClick={() => void mutateIdea(idea, "set_status", item.value)}
-                                  className="block w-full rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
-                                >
-                                  {item.label}
-                                </button>
-                              ))}
-                            </div>
-                          </details>
+                          <StatusSelector
+                            idea={idea}
+                            saving={savingIdeaId === idea.ideaId}
+                            saved={savedStatusIdeaId === idea.ideaId}
+                            onChange={(target, status) => void mutateIdea(target, "set_status", status)}
+                          />
                           {idea.scannerScoredAt ? (
                             <span className="text-[10px] font-semibold text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
                           ) : null}
@@ -900,7 +968,7 @@ export function IdeasIndexClient({
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-4">
+                  <td className="px-3 py-4 text-center">
                     <ScoreBadge idea={idea} />
                   </td>
                   <td className="px-3 py-4">
