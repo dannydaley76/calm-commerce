@@ -114,10 +114,30 @@ function seasonalityTone(value: string | null | undefined): string {
   return "border-success-100 bg-success-100 text-[#005e3f]";
 }
 
-function compactNumber(value: string | undefined): string {
+function compactNumber(value: string | null | undefined): string {
   const parsed = Number.parseFloat((value ?? "").replace(/,/g, ""));
   if (!Number.isFinite(parsed)) return value?.trim() || "Not captured";
   return parsed.toLocaleString("en-GB");
+}
+
+function parsedNumber(value: string | null | undefined): number | null {
+  const parsed = Number.parseFloat((value ?? "").replace(/,/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMoneyInput(value: string): string {
+  return value.trim() || "Not added";
+}
+
+function marginTone(value: number | null): string {
+  if (value === null) return "border-ink-100 bg-surface-sunken text-ink-600";
+  if (value >= 40) return "border-success-100 bg-success-100 text-[#005e3f]";
+  if (value >= 20) return "border-amber-100 bg-[#fff8e6] text-[#835700]";
+  return "border-error-100 bg-error-100 text-error-700";
+}
+
+function isScoutImportNote(note: ProductIdeaLifecycle["notes"][number]): boolean {
+  return note.note.trim().startsWith("Imported from Scout on");
 }
 
 function cleanEvidenceText(value: string | null | undefined): string {
@@ -126,6 +146,7 @@ function cleanEvidenceText(value: string | null | undefined): string {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
+    .filter((line) => !/^(observed orders|observed reviews|observed rating|observed price|scout score|demand score|competition score|preview margin):/i.test(line))
     .filter((line) => {
       const key = line
         .replace(/Observed reviews:\s*([0-9,]+)/i, (_, count) => `Observed reviews:${String(count).replace(/,/g, "")}`)
@@ -258,6 +279,18 @@ function SaveButton({ state }: { state: SaveState }) {
     <div className="flex flex-wrap items-center gap-3">
       <PrimaryButton type="submit" disabled={state === "saving"}>
         {state === "saving" ? "Saving" : "Save changes"}
+      </PrimaryButton>
+      {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">Saved</span> : null}
+      {state === "error" ? <span className="text-sm font-semibold text-error-700">Not saved</span> : null}
+    </div>
+  );
+}
+
+function NoteSaveButton({ state, disabled }: { state: SaveState; disabled: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <PrimaryButton type="submit" disabled={disabled || state === "saving"}>
+        {state === "saving" ? "Saving" : "Save note"}
       </PrimaryButton>
       {state === "saved" ? <span className="text-sm font-semibold text-[#005e3f]">Saved</span> : null}
       {state === "error" ? <span className="text-sm font-semibold text-error-700">Not saved</span> : null}
@@ -409,12 +442,15 @@ function ScoutSignalSummary({
   idea: ProductIdeaLifecycle;
   sourceIdea: ProductIdeaRow;
 }) {
+  const orders = parsedNumber(sourceIdea.observed_order_count);
+  const reviews = parsedNumber(sourceIdea.observed_review_count);
+  const hasUnusualRatio = orders !== null && reviews !== null && orders <= 5 && reviews >= 500;
   const observed = [
-    ["Orders", compactNumber(sourceIdea.observed_order_count)],
-    ["Reviews", compactNumber(sourceIdea.observed_review_count)],
-    ["Rating", sourceIdea.observed_rating?.trim() || "Not captured"],
-    ["Price", sourceIdea.observed_price?.trim() || "Not captured"],
-  ];
+    ["Orders", compactNumber(sourceIdea.observed_order_count), hasUnusualRatio ? "Unusual ratio" : ""],
+    ["Reviews", compactNumber(sourceIdea.observed_review_count), ""],
+    sourceIdea.observed_rating?.trim() ? ["Rating", sourceIdea.observed_rating.trim(), ""] : null,
+    ["Listing price", sourceIdea.observed_price?.trim() || "Not captured", ""],
+  ].filter(Boolean) as Array<[string, string, string]>;
 
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
@@ -425,12 +461,17 @@ function ScoutSignalSummary({
             {idea.scannerVerdict || compactScoreLabel(idea.scannerScore)}
           </h2>
         </div>
-        {idea.scannerScoredAt ? (
-          <p className="text-xs font-semibold text-ink-500">Scanned {idea.scannerScoredAt}</p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-500">
+          {idea.scannerScoredAt ? <span>Scanned {idea.scannerScoredAt}</span> : null}
+          {idea.scannerConfidenceScore !== null ? (
+            <span className="rounded-full bg-surface-sunken px-2 py-1">
+              Confidence {idea.scannerConfidenceScore}/100
+            </span>
+          ) : null}
+        </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SignalCard
           label="Scout score"
           value={scoreOutOfTen(idea.scannerScore)}
@@ -450,12 +491,6 @@ function ScoutSignalSummary({
           tone={scoreBorderTone(idea.scannerCompetitionScore)}
         />
         <SignalCard
-          label="Confidence"
-          value={scoreOutOfHundred(idea.scannerConfidenceScore)}
-          detail={compactScoreLabel(idea.scannerConfidenceScore)}
-          tone={scoreBorderTone(idea.scannerConfidenceScore)}
-        />
-        <SignalCard
           label="Seasonality"
           value={idea.seasonality ? "Flagged" : "None"}
           detail={idea.seasonality ? "Review timing risk" : "No risk captured"}
@@ -464,13 +499,61 @@ function ScoutSignalSummary({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
-        {observed.map(([label, value]) => (
+        {observed.map(([label, value, badge]) => (
           <div key={label} className="rounded-lg bg-surface-sunken px-3 py-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">{label}</p>
             <p className="mt-1 text-sm font-bold text-ink-900">{value}</p>
+            {badge ? (
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700">{badge}</p>
+            ) : null}
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function EconomicsSnapshot({ economics }: { economics: InstanceRow }) {
+  const projection = calculateUnitEconomics(economics);
+  const hasAnyEconomics = Boolean(
+    economics.selling_price ||
+    economics.product_cost ||
+    economics.shipping_to_customer ||
+    economics.platform_fees,
+  );
+
+  return (
+    <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
+          <h2 className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">
+            {projection.marginPercent === null ? "Add pricing to see margin" : `${formatPercent(projection.marginPercent)} projected margin`}
+          </h2>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${marginTone(projection.marginPercent)}`}>
+          {projection.marginPercent === null ? "Incomplete" : "Margin"}
+        </span>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg bg-surface-sunken px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Sell</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyInput(economics.selling_price ?? "")}</p>
+        </div>
+        <div className="rounded-lg bg-surface-sunken px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Cost</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{formatMoneyInput(economics.product_cost ?? "")}</p>
+        </div>
+        <div className="rounded-lg bg-surface-sunken px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">Margin</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{formatCurrency(projection.margin)}</p>
+        </div>
+      </div>
+      {!hasAnyEconomics ? (
+        <p className="mt-3 text-xs leading-5 text-ink-500">
+          Add sell price and product cost from the workspace table, then complete shipping and fees when you need the full margin.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -684,54 +767,16 @@ function NotesSection({
   onChange: (value: string) => void;
   onSave: () => Promise<void>;
 }) {
+  const userNotes = idea.notes.filter((note) => !isScoutImportNote(note));
+
   return (
-    <section id="history" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void onSave();
-        }}
-      >
-        <div>
-          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">History and decision log</h2>
-          <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
-            Add dated notes and review the main events for this idea in one place.
-          </p>
-        </div>
-        <label className="mt-5 block">
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
-          <textarea
-            className={`${inputBase} min-h-28`}
-            value={noteDraft}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
-          />
-        </label>
-        <div className="mt-4">
-          <SaveButton state={status} />
-        </div>
-      </form>
-
-      {idea.notes.length === 0 ? (
-        <p className="mt-5 rounded-xl border border-dashed border-ink-100 bg-surface-sunken p-4 text-sm leading-6 text-ink-500">
-          No decision notes yet.
+    <div id="history" className="space-y-6">
+      <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+        <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Activity</h2>
+        <p className="mt-2 text-sm leading-6 text-ink-500">
+          System events for this product candidate.
         </p>
-      ) : (
-        <div className="mt-5 divide-y divide-ink-100">
-          {idea.notes.map((note) => (
-            <div key={note.id} className="py-4 first:pt-0 last:pb-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
-                {note.createdAt}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-ink-700">{note.note}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-6 border-t border-ink-100 pt-5">
-        <h3 className="font-[Manrope] text-sm font-bold text-ink-900">Programme timeline</h3>
-        <ol className="mt-4 space-y-4 border-l border-ink-100 pl-4">
+        <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
           {idea.timeline.map((event) => (
             <li key={event.key} className="relative">
               <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
@@ -748,8 +793,53 @@ function NotesSection({
             </li>
           ))}
         </ol>
-      </div>
-    </section>
+      </section>
+
+      <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSave();
+        }}
+      >
+        <div>
+          <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Notes</h2>
+          <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
+            Add your own decision notes and supplier follow-ups.
+          </p>
+        </div>
+        <label className="mt-5 block">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
+          <textarea
+            className={`${inputBase} min-h-28`}
+            value={noteDraft}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
+          />
+        </label>
+        <div className="mt-4">
+          <NoteSaveButton state={status} disabled={!noteDraft.trim()} />
+        </div>
+      </form>
+
+      {userNotes.length === 0 ? (
+        <p className="mt-5 rounded-xl border border-dashed border-ink-100 bg-surface-sunken p-4 text-sm leading-6 text-ink-500">
+          No user notes yet.
+        </p>
+      ) : (
+        <div className="mt-5 divide-y divide-ink-100">
+          {userNotes.map((note) => (
+            <div key={note.id} className="py-4 first:pt-0 last:pb-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+                {note.createdAt}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ink-700">{note.note}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      </section>
+    </div>
   );
 }
 
@@ -1051,8 +1141,7 @@ export function IdeaDetailClient({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm leading-6 text-ink-700">{displayIdea.latestSignal}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
                 {displayIdea.statusLabel}
               </span>
@@ -1072,6 +1161,7 @@ export function IdeaDetailClient({
       </PageHero>
 
       <ScoutSignalSummary idea={displayIdea} sourceIdea={sourceIdea} />
+      <EconomicsSnapshot economics={economicsDraft} />
 
       {canAccessOsContent ? (
         <section className="rounded-xl border border-cobalt-100 bg-white p-5 shadow-card">
@@ -1164,13 +1254,16 @@ export function IdeaDetailClient({
             <ReviewSection
               id="idea-evidence"
               title="Idea evidence"
-              description="Demand, competition, source, and seasonality captured for this candidate."
+              description="Source and provenance for this candidate. The scorecard above is the decision summary."
               onEdit={() => setEditSection("idea")}
             >
               <ReviewValue label="Source" value={ideaDraft.source_label || displayIdea.sourceLabel || "Not added"} />
+              <ReviewValue label="Captured" value={displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt || "Not captured"} />
+              <ReviewValue label="Listing price" value={sourceIdea.observed_price} />
+              <ReviewValue label="Variant count" value={sourceIdea.variant_count} />
               <ReviewValue label="Seasonality" value={ideaDraft.seasonality} />
-              <ReviewValue label="Demand evidence" value={ideaDraft.demand_evidence} wide />
-              <ReviewValue label="Competition notes" value={ideaDraft.competition_notes} wide />
+              <ReviewValue label="Competition signal" value={ideaDraft.competition_notes} wide />
+              <ReviewValue label="Risk notes" value={ideaDraft.demand_evidence} wide />
             </ReviewSection>
           )}
 

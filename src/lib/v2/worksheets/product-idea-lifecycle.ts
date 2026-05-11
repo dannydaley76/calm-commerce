@@ -381,7 +381,6 @@ function buildTimeline({
   isTestIdea,
   responses,
   metricEntries,
-  notes,
 }: {
   idea: ProductIdeaRow;
   label: string;
@@ -390,7 +389,6 @@ function buildTimeline({
   isTestIdea: boolean;
   responses: LifecycleResponses;
   metricEntries: ProductIdeaMetricEntry[];
-  notes: ProductIdeaNote[];
 }): ProductIdeaTimelineEvent[] {
   const events: ProductIdeaTimelineEvent[] = [
     {
@@ -467,16 +465,6 @@ function buildTimeline({
       detail: `${entry.weekEnding}: ${entry.summary}.`,
       chapter: entry.entryType === "validation" ? "Metrics" : "Dashboard",
       href: entry.entryType === "validation" ? "/metrics" : "/",
-    });
-  }
-
-  for (const note of notes.slice(0, 4).reverse()) {
-    events.push({
-      key: `note-${note.id}`,
-      label: "Decision note added",
-      detail: `${formatDisplayDate(note.createdAt)}: ${note.note}`,
-      chapter: "Idea notes",
-      href: "#notes",
     });
   }
 
@@ -612,7 +600,7 @@ export function getProductIdeaLifecycles(
       testLearning: isTestIdea ? normalize(responses.what_you_learned) || null : null,
       metricEntries,
       notes,
-      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses, metricEntries, notes }),
+      timeline: buildTimeline({ idea, label, economics, isChosen, isTestIdea, responses, metricEntries }),
     };
   });
 }

@@ -166,7 +166,7 @@ describe("getProductIdeaLifecycles", () => {
     });
   });
 
-  it("adds idea notes to the idea timeline when linked by idea ID", () => {
+  it("keeps idea notes out of the system activity timeline", () => {
     const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
     const [lifecycle] = getProductIdeaLifecycles({
       product_ideas: JSON.stringify(ideas),
@@ -181,12 +181,11 @@ describe("getProductIdeaLifecycles", () => {
     });
 
     expect(lifecycle.notes).toHaveLength(1);
-    expect(lifecycle.timeline.at(-1)?.key).toBe("note-note-1");
-    expect(lifecycle.timeline.at(-1)?.detail).toContain("6 May 2026");
-    expect(lifecycle.timeline.at(-1)?.detail).toContain("Supplier confirmed lower MOQ");
+    expect(lifecycle.notes[0].note).toContain("Supplier confirmed lower MOQ");
+    expect(lifecycle.timeline.map((event) => event.key)).not.toContain("note-note-1");
   });
 
-  it("keeps decision notes newest first in the log but oldest first in the timeline", () => {
+  it("keeps decision notes newest first in the notes log only", () => {
     const ideas = ensureProductIdeaIds([{ idea_description: "Desk shelf" }]);
     const [lifecycle] = getProductIdeaLifecycles({
       product_ideas: JSON.stringify(ideas),
@@ -207,10 +206,7 @@ describe("getProductIdeaLifecycles", () => {
     });
 
     expect(lifecycle.notes.map((note) => note.id)).toEqual(["note-2", "note-1"]);
-    expect(lifecycle.timeline.slice(-2).map((event) => event.key)).toEqual([
-      "note-note-1",
-      "note-note-2",
-    ]);
+    expect(lifecycle.timeline.map((event) => event.key)).toEqual(["captured"]);
   });
 
   it("derives a next action from the idea status", () => {

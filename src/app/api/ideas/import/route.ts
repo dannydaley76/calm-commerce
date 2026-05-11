@@ -35,10 +35,6 @@ function parseRows<T extends Record<string, string | undefined>>(raw: string): T
   }
 }
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function nowISO(): string {
   return new Date().toISOString();
 }
@@ -56,10 +52,6 @@ function scoreValue(score: number | undefined): string {
 
 function createIdeaId(): string {
   return `idea_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function createNoteId(): string {
-  return `note_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
 
 function valueFor(rows: WorksheetRow[], worksheetId: string, fieldKey: string): string {
@@ -145,7 +137,6 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
   const rows = (data ?? []) as WorksheetRow[];
   const productIdeas = parseRows(valueFor(rows, "ideas-worksheet", "product_ideas"));
   const ideaEconomics = parseRows(valueFor(rows, "unit-economics-worksheet", "idea_economics"));
-  const ideaNotes = parseRows(valueFor(rows, "ideas-worksheet", "product_idea_notes"));
   const sourceUrl = draft.sourceUrl.trim();
   const duplicateIndex = sourceUrl
     ? productIdeas.findIndex((idea) => (idea.source_url ?? "").trim() === sourceUrl)
@@ -245,30 +236,6 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
       worksheet_id: "unit-economics-worksheet",
       field_key: "idea_economics",
       value_json: JSON.stringify(nextEconomics),
-    });
-  }
-
-  const sourceLines = [
-    `Imported from Scout on ${draft.scannedAt || todayISO()}.`,
-    draft.rawProductTitle && draft.rawProductTitle !== title ? `Raw product title: ${draft.rawProductTitle}` : "",
-    draft.sourceUrl ? `Source: ${sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product")}` : "",
-    draft.notes,
-  ].filter(Boolean);
-
-  if (sourceLines.length > 0) {
-    upserts.push({
-      project_id: projectId,
-      worksheet_id: "ideas-worksheet",
-      field_key: "product_idea_notes",
-      value_json: JSON.stringify([
-        {
-          note_id: createNoteId(),
-          idea_id: ideaId,
-          created_at: todayISO(),
-          note: sourceLines.join("\n"),
-        },
-        ...ideaNotes,
-      ]),
     });
   }
 
