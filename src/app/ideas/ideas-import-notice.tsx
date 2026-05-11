@@ -12,19 +12,44 @@ type ImportNoticeProps = {
 };
 
 export function IdeasImportNotice({ title, body, tone, cta }: ImportNoticeProps) {
-  const storageKey = `ideas-import-notice:${tone}:${title}:${body}`;
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    setDismissed(window.sessionStorage.getItem(storageKey) === "dismissed");
-  }, [storageKey]);
+    if (tone !== "success") return;
+
+    const timeout = window.setTimeout(() => setDismissed(true), 5000);
+    return () => window.clearTimeout(timeout);
+  }, [tone]);
 
   function dismiss() {
-    window.sessionStorage.setItem(storageKey, "dismissed");
     setDismissed(true);
   }
 
   if (dismissed) return null;
+
+  if (tone === "success") {
+    return (
+      <div className="fixed bottom-5 right-5 z-50 max-w-sm rounded-xl border border-success-100 bg-white px-5 py-4 text-sm leading-6 text-[#005e3f] shadow-[0_18px_48px_rgba(11,42,57,0.18)]">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-100 text-xs font-black">
+            ✓
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-[Manrope] text-base font-bold">{title}</h2>
+            <p className="mt-1">{body}</p>
+          </div>
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Dismiss notification"
+            className="ml-auto rounded-md px-2 py-1 text-xs font-bold text-ink-500 transition hover:bg-surface-sunken hover:text-ink-900 focus:outline-none focus:ring-2 focus:ring-cobalt-500"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const errorStyle: CSSProperties | undefined = tone === "error"
     ? {

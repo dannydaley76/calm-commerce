@@ -113,6 +113,17 @@ Possible UI locations:
 - Lean Canvas side panel.
 - Product detail page linked from worksheets and metrics.
 
+### Scout Workspace Economics Visibility
+
+Scout captures useful economics inputs in the extension popup, but the Workspace index and product detail page do not yet make those inputs visible enough.
+
+Future UI review:
+
+- Show projected margin on the Scout Workspace table when selling price, product cost, shipping, and platform fees are available.
+- Add a compact "has notes" indicator to the table so saved research context is visible without opening every product.
+- Review the product detail page hierarchy so imported economics, notes, and risk evidence are easy to find, not buried below less important panels.
+- Keep the table scannable for dozens of products by using compact columns, filters, and progressive disclosure rather than turning every row into a full report.
+
 ### Testing Cycle UX
 
 Make it obvious that going back to Chapter 3 is part of the system, not a backward step.

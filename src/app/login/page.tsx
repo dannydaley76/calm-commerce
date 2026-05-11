@@ -119,7 +119,7 @@ export default function LoginPage() {
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-surface p-6">
         <p className="text-sm text-muted">Calm Commerce OS</p>
         <h1 className="mt-1 text-2xl font-semibold">Sign in</h1>
-        <p className="mt-2 text-sm text-muted">Use your email and password to pick up your progress, worksheet answers, and operating canvas.</p>
+        <p className="mt-2 text-sm text-muted">Use your email and password to continue.</p>
 
         <form onSubmit={handlePasswordSignIn} className="mt-6 space-y-4">
           <input
@@ -146,11 +146,6 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
-
-        <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
-          <p className="font-semibold">What happens after sign-in?</p>
-          <p className="mt-2 leading-6">You’ll return to the page you were trying to open, or your learner dashboard if you started here directly.</p>
-        </div>
 
         <div className="mt-5 flex flex-col gap-2 text-sm">
           <Link

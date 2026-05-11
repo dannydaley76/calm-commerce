@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "../../lib/supabase/browser";
 
+const SCOUT_EXTENSION_URL = process.env.NEXT_PUBLIC_SCOUT_EXTENSION_URL || "/scout";
+
 function getEmailRedirectTo() {
   if (typeof window === "undefined") return undefined;
   return `${window.location.origin}/auth/callback`;
@@ -125,7 +127,7 @@ export default function SignupPage() {
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-surface p-6">
         <p className="text-sm text-muted">Calm Commerce OS</p>
         <h1 className="mt-1 text-2xl font-semibold">Create account</h1>
-        <p className="mt-2 text-sm text-muted">Set up your learner account so you can save progress, worksheet answers, and your operating canvas.</p>
+        <p className="mt-2 text-sm text-muted">Create an account so Scout can save products to your Workspace.</p>
 
         <form onSubmit={handleSignup} className="mt-6 space-y-4">
           <input
@@ -181,8 +183,16 @@ export default function SignupPage() {
           </div>
         ) : (
           <div className="mt-5 rounded-xl bg-[#f4f8ff] p-4 text-sm text-[#23408e]">
-            <p className="font-semibold">What you get with an account</p>
-            <p className="mt-2 leading-6">Your Chapter 3 progress, worksheet responses, and next-step flow stay attached to your learner account instead of disappearing between sessions.</p>
+            <p className="font-semibold">Next step</p>
+            <p className="mt-2 leading-6">
+              Install Scout, scan a product page, then save useful candidates into your Workspace.
+            </p>
+            <a
+              href={SCOUT_EXTENSION_URL}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-cobalt-600/20 bg-cobalt-600 px-4 py-3 text-sm font-semibold !text-white transition hover:bg-[#0047bc] focus:outline-none focus:ring-2 focus:ring-cobalt-500 focus:ring-offset-2"
+            >
+              Get Scout extension
+            </a>
           </div>
         )}
 

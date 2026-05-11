@@ -74,6 +74,8 @@ async function getIdeaData(): Promise<{
 }
 
 function EmptyIdeas() {
+  const scoutExtensionUrl = process.env.NEXT_PUBLIC_SCOUT_EXTENSION_URL || "/scout";
+
   return (
     <section className="rounded-xl border border-dashed border-ink-100 bg-surface-raised p-8">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
@@ -86,9 +88,9 @@ function EmptyIdeas() {
         Scan products with Scout. This workspace is where new products become a shortlist you can review, test, or archive.
       </p>
       <div className="mt-5">
-        <SecondaryButton href="/scout">
+        <PrimaryButton href={scoutExtensionUrl}>
           Get Scout extension
-        </SecondaryButton>
+        </PrimaryButton>
       </div>
     </section>
   );
