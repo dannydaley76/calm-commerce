@@ -144,6 +144,19 @@ for select using (
   )
 );
 
+create policy "entitlements_insert_own_preview" on learner_entitlements
+for insert with check (
+  status = 'preview'
+  and access_level = 'preview'
+  and product_code = 'calm_commerce_os'
+  and billing_type = 'preview'
+  and exists (
+    select 1 from learners l
+    where l.id = learner_entitlements.learner_id
+      and l.auth_user_id = auth.uid()
+  )
+);
+
 -- Projects: learner owner can read/write own projects
 create policy "projects_select_own" on projects
 for select using (

@@ -103,6 +103,7 @@ Useful future shape:
 - Source URL, source label, product image, scanned date, and notes for auditability.
 - A comparison view showing whether the idea is getting stronger, weaker, or simply better understood over time.
 - A way to mark one scan as the current reference supplier or current reference competitor.
+- A "rescan" action on saved products so the user can refresh price, image, reviews, demand, competition, trend, and risk evidence without creating a duplicate idea.
 
 This should eventually move into a dedicated research snapshot structure or table. The Ideas index can continue to show the latest/current score, while the idea detail page shows the evidence trail behind that score.
 
