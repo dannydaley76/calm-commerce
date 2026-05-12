@@ -1075,6 +1075,7 @@ function activitySourceLabel(
 function NotesSection({
   idea,
   canAccessOsContent,
+  canWriteNotes,
   notes,
   noteDraft,
   status,
@@ -1087,6 +1088,7 @@ function NotesSection({
 }: {
   idea: ProductIdeaLifecycle;
   canAccessOsContent: boolean;
+  canWriteNotes: boolean;
   notes: ProductIdeaLifecycle["notes"];
   noteDraft: string;
   status: SaveState;
@@ -1131,31 +1133,44 @@ function NotesSection({
       </section>
 
       <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void onSave();
-        }}
-      >
         <div>
           <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Notes</h2>
           <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
             Add your own decision notes and supplier follow-ups.
           </p>
         </div>
-        <label className="mt-5 block">
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
-          <textarea
-            className={`${inputBase} min-h-28`}
-            value={noteDraft}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
-          />
-        </label>
-        <div className="mt-4">
-          <NoteSaveButton state={status} disabled={!noteDraft.trim()} />
+
+      {canWriteNotes ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onSave();
+          }}
+        >
+          <label className="mt-5 block">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">New note</span>
+            <textarea
+              className={`${inputBase} min-h-28`}
+              value={noteDraft}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="Example: Supplier confirmed lower MOQ after follow-up, so this is cheaper to test than expected."
+            />
+          </label>
+          <div className="mt-4">
+            <NoteSaveButton state={status} disabled={!noteDraft.trim()} />
+          </div>
+        </form>
+      ) : (
+        <div className="mt-5 rounded-xl border border-cobalt-100 bg-[#f4f8ff] p-4">
+          <p className="text-sm font-semibold text-ink-900">Upgrade Scout to add notes</p>
+          <p className="mt-1 text-sm leading-6 text-ink-600">
+            Free Scout captures let you save a few products. Notes, follow-ups, and ongoing workspace organisation are included with Scout Basic and Pro.
+          </p>
+          <PrimaryButton href="/upgrade" className="mt-3 px-4 py-2">
+            Upgrade Scout
+          </PrimaryButton>
         </div>
-      </form>
+      )}
 
       {deletedNote ? (
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-2 text-sm text-ink-700">
@@ -1176,6 +1191,7 @@ function NotesSection({
             <NoteCard
               key={note.id}
               note={note}
+              editable={canWriteNotes}
               onUpdate={onUpdateNote}
               onDelete={onDeleteNote}
             />
@@ -1189,10 +1205,12 @@ function NotesSection({
 
 function NoteCard({
   note,
+  editable,
   onUpdate,
   onDelete,
 }: {
   note: ProductIdeaLifecycle["notes"][number];
+  editable: boolean;
   onUpdate: (noteId: string, value: string) => Promise<void>;
   onDelete: (noteId: string) => Promise<void>;
 }) {
@@ -1210,24 +1228,26 @@ function NoteCard({
     <article className="rounded-xl bg-surface-sunken p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-semibold text-ink-500">{formatDate(note.createdAt, "relative")}</p>
-        <div className="relative">
-          <ActionMenu
-            ariaLabel="Note actions"
-            items={[
-              { label: "Edit", onClick: () => setEditing(true) },
-              { label: "Delete", icon: <TrashIcon />, variant: "destructive", onClick: () => setConfirmDelete(true) },
-            ]}
-          />
-          {confirmDelete ? (
-            <div className="absolute right-0 z-20 mt-2 w-40 rounded-lg border border-ink-100 bg-white p-3 shadow-card">
-              <p className="text-sm font-semibold text-ink-900">Delete note?</p>
-              <div className="mt-3 flex gap-2">
-                <button type="button" onClick={() => void onDelete(note.id)} className="rounded-md bg-error-100 px-3 py-1.5 text-xs font-semibold text-error-700">Delete</button>
-                <button type="button" onClick={() => setConfirmDelete(false)} className="rounded-md bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-ink-600">Cancel</button>
+        {editable ? (
+          <div className="relative">
+            <ActionMenu
+              ariaLabel="Note actions"
+              items={[
+                { label: "Edit", onClick: () => setEditing(true) },
+                { label: "Delete", icon: <TrashIcon />, variant: "destructive", onClick: () => setConfirmDelete(true) },
+              ]}
+            />
+            {confirmDelete ? (
+              <div className="absolute right-0 z-20 mt-2 w-40 rounded-lg border border-ink-100 bg-white p-3 shadow-card">
+                <p className="text-sm font-semibold text-ink-900">Delete note?</p>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => void onDelete(note.id)} className="rounded-md bg-error-100 px-3 py-1.5 text-xs font-semibold text-error-700">Delete</button>
+                  <button type="button" onClick={() => setConfirmDelete(false)} className="rounded-md bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-ink-600">Cancel</button>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       {editing ? (
         <div className="mt-3">
@@ -1344,11 +1364,13 @@ export function IdeaDetailClient({
   idea,
   responses,
   canAccessOsContent,
+  canUseScannerImport,
   canUseResearchWorkspace,
 }: {
   idea: ProductIdeaLifecycle;
   responses: ResponseMap;
   canAccessOsContent: boolean;
+  canUseScannerImport: boolean;
   canUseResearchWorkspace: boolean;
 }) {
   const router = useRouter();
@@ -1548,6 +1570,7 @@ export function IdeaDetailClient({
   };
 
   const saveNote = async () => {
+    if (!canUseScannerImport) return;
     const trimmed = noteDraft.trim();
     if (!trimmed) return;
     setSectionStatus("notes", "saving");
@@ -1897,6 +1920,7 @@ export function IdeaDetailClient({
           <NotesSection
             idea={idea}
             canAccessOsContent={canAccessOsContent}
+            canWriteNotes={canUseScannerImport}
             notes={localNotes}
             noteDraft={noteDraft}
             status={status.notes}

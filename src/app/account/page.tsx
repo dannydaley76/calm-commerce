@@ -125,6 +125,7 @@ export default async function AccountPage({
                     <AccessStatusBadge
                       status={state.access.entitlementStatus}
                       level={state.access.accessLevel}
+                      activeProducts={state.access.activeProducts}
                       compact
                     />
                   </div>

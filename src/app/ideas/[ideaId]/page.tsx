@@ -19,6 +19,7 @@ type MetricEntry = {
 async function getIdeaDetail(ideaId: string): Promise<{
   authenticated: boolean;
   canAccessOsContent: boolean;
+  canUseScannerImport: boolean;
   canUseResearchWorkspace: boolean;
   idea: ProductIdeaLifecycle | null;
   responses: ResponseMap;
@@ -27,7 +28,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
   try {
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
     if (!user || !projectId) {
-      return { authenticated: false, canAccessOsContent: false, canUseResearchWorkspace: false, idea: null, responses: {} };
+      return { authenticated: false, canAccessOsContent: false, canUseScannerImport: false, canUseResearchWorkspace: false, idea: null, responses: {} };
     }
 
     const access = await getAccessStateForCurrentUser();
@@ -61,6 +62,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
     return {
       authenticated: true,
       canAccessOsContent: access.canAccessOsContent,
+      canUseScannerImport: access.canUseScannerImport,
       canUseResearchWorkspace: access.canUseResearchWorkspace,
       idea: ideas.find((item) => item.ideaId === ideaId) ?? null,
       responses,
@@ -69,6 +71,7 @@ async function getIdeaDetail(ideaId: string): Promise<{
     return {
       authenticated: true,
       canAccessOsContent: false,
+      canUseScannerImport: false,
       canUseResearchWorkspace: false,
       idea: null,
       responses: {},
@@ -118,6 +121,7 @@ export default async function IdeaDetailPage({
           idea={data.idea}
           responses={data.responses}
           canAccessOsContent={data.canAccessOsContent}
+          canUseScannerImport={data.canUseScannerImport}
           canUseResearchWorkspace={data.canUseResearchWorkspace}
         />
       )}

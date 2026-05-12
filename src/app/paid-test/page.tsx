@@ -28,7 +28,7 @@ export default async function PaidTestPage() {
         <div className="rounded-[2rem] bg-white p-8 shadow-[0px_24px_48px_rgba(11,42,57,0.08)] lg:p-10">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0f7b53]">Paid access active</p>
-            <AccessStatusBadge status={access.entitlementStatus} level={access.accessLevel} compact />
+            <AccessStatusBadge status={access.entitlementStatus} level={access.accessLevel} activeProducts={access.activeProducts} compact />
           </div>
           <h2 className="mt-4 font-[Manrope] text-4xl font-extrabold tracking-tight">You can see this because your entitlement is active</h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-500">

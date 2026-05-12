@@ -476,6 +476,7 @@ export default async function DashboardPage() {
             <AccessStatusBadge
               status={access.entitlementStatus}
               level={access.accessLevel}
+              activeProducts={access.activeProducts}
               compact
             />
           </div>

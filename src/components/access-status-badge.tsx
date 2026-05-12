@@ -1,6 +1,9 @@
+import type { ProductCode } from "@/lib/auth/get-access-state";
+
 type AccessStatusBadgeProps = {
   status: string | null;
   level: string | null;
+  activeProducts?: ProductCode[];
   compact?: boolean;
   inverse?: boolean;
 };
@@ -14,25 +17,41 @@ type AccessStatusBadgeProps = {
 export function AccessStatusBadge({
   status,
   level,
+  activeProducts = [],
   compact = false,
   inverse = false,
 }: AccessStatusBadgeProps) {
   const isPaid     = status === "active" && level === "full";
   const isInactive = status === "expired" || status === "cancelled";
+  const hasOs = activeProducts.includes("calm_commerce_os");
+  const hasPro = activeProducts.includes("research_workspace");
+  const hasBasic = activeProducts.includes("scanner_extension");
 
   const pillState = isPaid ? "paid" : isInactive ? "not-started" : "active";
 
   const label = isPaid
-    ? "Paid access active"
+    ? hasOs
+      ? "Calm Commerce OS active"
+      : hasPro
+        ? "Scout Pro active"
+        : hasBasic
+          ? "Scout Basic active"
+          : "Paid access active"
     : isInactive
       ? "Access inactive"
-      : "Preview mode";
+      : "Free Scout access";
 
   const helper = isPaid
-    ? "Paid access is active for this account."
+    ? hasOs
+      ? "Calm Commerce OS access is active for this account."
+      : hasPro
+        ? "Scout Pro access is active for this account."
+        : hasBasic
+          ? "Scout Basic access is active for this account."
+          : "Paid access is active for this account."
     : isInactive
       ? "Paid access is inactive for this account."
-      : "Preview mode: payment access is not active for this account yet.";
+      : "Free Scout access is active for this account.";
 
   /* inverse variant: override colours for dark backgrounds */
   const inverseClass = inverse
