@@ -112,6 +112,16 @@ Defined in `tailwind.config.ts` and `globals.css`.
 | `ink-900` | `#0B2A39` |
 | `surface-canvas` | `#EAF1F5` |
 
+## Links
+
+Use blue for text links across the app so interactive text is easy to recognise.
+
+- Default link colour: `text-cobalt-600`.
+- Hover/focus: underline with `underline-offset-4`; keep the text blue rather than switching to danger or neutral colours.
+- Links inside calm body copy should look like links, not buttons: no pill backgrounds, no all-caps labels.
+- Reserve button styling for primary commands. Use sentence-case link text for contextual actions such as `Upgrade Scout to Pro`.
+- Always include a visible focus ring on custom link-like controls: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2`.
+
 ---
 
 ## Typography

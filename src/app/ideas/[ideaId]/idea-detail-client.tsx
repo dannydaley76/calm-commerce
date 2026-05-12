@@ -632,12 +632,6 @@ function EvidencePanel({
     : `${idea.scannerCompetitionScore}/100${ideaDraft.competition_notes.trim() ? ` · ${ideaDraft.competition_notes.trim().replace(/^Competition score:\s*/i, "").replace(/^Competition signal:\s*/i, "")}` : ""}`;
   const pageSignals = pageSignalsSummary(sourceIdea);
   const missingSignals = sourceIdea.missing_signals?.trim();
-  const addable = [
-    !seasonality ? "Seasonality" : "",
-    !ideaDraft.competition_notes.trim() ? "Competition" : "",
-    pageSignals.missingLabels.length > 0 ? "Page facts" : "",
-    !missingSignals ? "Calculated signal gaps" : "",
-  ].filter(Boolean);
 
   return (
     <section id="idea-evidence" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
@@ -647,9 +641,8 @@ function EvidencePanel({
         <section className="pb-5">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Source</h3>
           <dl className="mt-4 space-y-3">
-            <InlineValue label="Source" value={source} onSave={(value) => onSaveField("source_label", value)} />
+            <InlineValue label="Imported from" value={source} onSave={(value) => onSaveField("source_label", value)} />
             <InlineValue label="Captured" value={captured} onSave={async () => undefined} />
-            <InlineValue label="Import note" value={`Imported from ${source}`} onSave={async () => undefined} />
             {canAccessOsContent && ideaDraft.raw_product_title ? (
               <InlineValue label="Full title" value={ideaDraft.raw_product_title} onSave={(value) => onSaveField("raw_product_title", value)} />
             ) : null}
@@ -687,17 +680,6 @@ function EvidencePanel({
           </dl>
         </section>
       </div>
-
-      {addable.length > 0 ? (
-        <details className="mt-5">
-          <summary className="cursor-pointer text-sm font-semibold text-cobalt-600">+ Add field</summary>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {addable.map((field) => (
-              <span key={field} className="rounded-full bg-surface-sunken px-3 py-1 text-xs font-semibold text-ink-600">{field}</span>
-            ))}
-          </div>
-        </details>
-      ) : null}
     </section>
   );
 }
