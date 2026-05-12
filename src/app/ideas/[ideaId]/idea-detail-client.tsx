@@ -876,20 +876,23 @@ function ScoutSignalSummary({
 
       {!canUseResearchWorkspace ? (
         <>
-          <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+          <div className="mt-6">
             <div>
               <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Pro research signals</h3>
               <p className="mt-1 text-xs text-ink-500">Extra decision support available in Scout Pro.</p>
             </div>
-            <SecondaryButton href="/upgrade" className="px-4 py-2">
-              Upgrade Scout
-            </SecondaryButton>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <LockedSignalCard label="Trend direction" detail="See whether interest is rising, stable, or falling." />
             <LockedSignalCard label="AI evidence summary" detail="Turn noisy page data into a clearer opportunity read." />
             <LockedSignalCard label="Any-site analysis" detail="Scan product pages beyond Amazon and AliExpress." />
           </div>
+          <p className="mt-3 text-sm text-ink-500">
+            <a href="/upgrade" className="font-semibold text-cobalt-600 underline-offset-4 hover:underline">
+              Upgrade Scout to Pro
+            </a>{" "}
+            to unlock AI research features.
+          </p>
         </>
       ) : null}
     </section>
