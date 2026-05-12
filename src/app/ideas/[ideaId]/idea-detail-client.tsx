@@ -7,7 +7,7 @@ import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/design
 import { writeWorksheetField } from "@/components/lean-canvas/write-worksheet-field";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { formatDate } from "@/lib/format-date";
-import { capturedSignalsSummary } from "@/lib/scout-signals";
+import { pageSignalsSummary } from "@/lib/scout-signals";
 import {
   ensureProductIdeaIds,
   getProductIdeaId,
@@ -630,12 +630,13 @@ function EvidencePanel({
   const competition = idea.scannerCompetitionScore === null
     ? ideaDraft.competition_notes.trim()
     : `${idea.scannerCompetitionScore}/100${ideaDraft.competition_notes.trim() ? ` · ${ideaDraft.competition_notes.trim().replace(/^Competition score:\s*/i, "").replace(/^Competition signal:\s*/i, "")}` : ""}`;
+  const pageSignals = pageSignalsSummary(sourceIdea);
   const missingSignals = sourceIdea.missing_signals?.trim();
-  const capturedSignals = capturedSignalsSummary(idea.scannerConfidenceScore, missingSignals);
   const addable = [
     !seasonality ? "Seasonality" : "",
     !ideaDraft.competition_notes.trim() ? "Competition" : "",
-    !missingSignals ? "Missing signals" : "",
+    pageSignals.missingLabels.length > 0 ? "Page facts" : "",
+    !missingSignals ? "Calculated signal gaps" : "",
   ].filter(Boolean);
 
   return (
@@ -679,10 +680,10 @@ function EvidencePanel({
         </section>
 
         <section className="pt-5">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Captured signals</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Page facts</h3>
           <dl className="mt-4 space-y-3">
-            <InlineValue label="Signals" value={capturedSignals.label} caption={capturedSignals.detail} onSave={async () => undefined} />
-            <InlineValue label="Missing signals" value={capturedSignals.missing.length ? capturedSignals.missing.join(", ") : "None"} onSave={async () => undefined} />
+            <InlineValue label="Captured" value={pageSignals.label} caption={pageSignals.detail} onSave={async () => undefined} />
+            <InlineValue label="Calculated signal gaps" value={missingSignals || "None"} onSave={async () => undefined} />
           </dl>
         </section>
       </div>
@@ -726,17 +727,70 @@ function SignalCard({
   value,
   detail,
   tone,
+  meta = "Calculated",
 }: {
   label: string;
   value: string;
   detail: string;
   tone: string;
+  meta?: "Calculated" | "Captured" | "Locked";
 }) {
   return (
     <div className={`rounded-xl border px-4 py-3 ${tone}`}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-75">{label}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-75">{label}</p>
+        <span className="rounded-full bg-white/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] opacity-75">
+          {meta}
+        </span>
+      </div>
       <p className="mt-2 font-[Manrope] text-2xl font-bold leading-none">{value}</p>
       <p className="mt-2 text-xs font-semibold leading-5 opacity-85">{detail}</p>
+    </div>
+  );
+}
+
+function CapturedFactCard({
+  label,
+  value,
+  badge,
+}: {
+  label: string;
+  value: string;
+  badge?: string;
+}) {
+  return (
+    <div className="rounded-lg bg-surface-sunken px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">{label}</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-ink-400">
+          Captured
+        </span>
+      </div>
+      <p className="mt-1 text-sm font-bold text-ink-900">{value}</p>
+      {badge ? (
+        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700">{badge}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function LockedSignalCard({
+  label,
+  detail,
+}: {
+  label: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-sunken px-4 py-3 text-ink-500">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em]">{label}</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-cobalt-600">
+          Pro
+        </span>
+      </div>
+      <p className="mt-2 font-[Manrope] text-lg font-bold text-ink-700">Locked</p>
+      <p className="mt-1 text-xs leading-5">{detail}</p>
     </div>
   );
 }
@@ -744,18 +798,23 @@ function SignalCard({
 function ScoutSignalSummary({
   idea,
   sourceIdea,
+  canUseResearchWorkspace,
 }: {
   idea: ProductIdeaLifecycle;
   sourceIdea: ProductIdeaRow;
+  canUseResearchWorkspace: boolean;
 }) {
   const orders = parsedNumber(sourceIdea.observed_order_count);
   const reviews = parsedNumber(sourceIdea.observed_review_count);
   const hasUnusualRatio = orders !== null && reviews !== null && orders <= 5 && reviews >= 500;
-  const capturedSignals = capturedSignalsSummary(idea.scannerConfidenceScore, sourceIdea.missing_signals);
+  const pageSignals = pageSignalsSummary(sourceIdea);
   const observed = [
+    sourceIdea.observed_price?.trim() ? ["Listing price", sourceIdea.observed_price.trim(), ""] : null,
     ["Orders", compactNumber(sourceIdea.observed_order_count), hasUnusualRatio ? "Unusual ratio" : ""],
     ["Reviews", compactNumber(sourceIdea.observed_review_count), ""],
     sourceIdea.observed_rating?.trim() ? ["Rating", sourceIdea.observed_rating.trim(), ""] : null,
+    sourceIdea.variant_count?.trim() ? ["Variants", sourceIdea.variant_count.trim(), ""] : null,
+    sourceIdea.observed_bsr?.trim() ? ["BSR", sourceIdea.observed_bsr.trim(), ""] : null,
   ].filter(Boolean) as Array<[string, string, string]>;
 
   return (
@@ -766,20 +825,16 @@ function ScoutSignalSummary({
           <h2 className="mt-2 font-[Manrope] text-xl font-bold text-ink-900">
             {idea.scannerVerdict || compactScoreLabel(idea.scannerScore)}
           </h2>
+          <p className="mt-1 text-sm text-ink-500">Calculated from captured page facts and Scout rules.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-500">
           {idea.scannerScoredAt ? <span>Scanned {formatDate(idea.scannerScoredAt, "relative")}</span> : null}
-          {idea.scannerConfidenceScore !== null ? (
-            <span
-              className="rounded-full bg-surface-sunken px-2 py-1"
-              title={`${capturedSignals.detail} This is not a product quality score.`}
-            >
-              Captured signals · {capturedSignals.label}
-            </span>
-          ) : null}
         </div>
       </div>
 
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Calculated scores</h3>
+      </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SignalCard
           label="Scout score"
@@ -807,17 +862,36 @@ function ScoutSignalSummary({
         />
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Captured page facts</h3>
+          <p className="mt-1 text-xs text-ink-500" title={pageSignals.detail}>{pageSignals.label}</p>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-4">
         {observed.map(([label, value, badge]) => (
-          <div key={label} className="rounded-lg bg-surface-sunken px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink-500">{label}</p>
-            <p className="mt-1 text-sm font-bold text-ink-900">{value}</p>
-            {badge ? (
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700">{badge}</p>
-            ) : null}
-          </div>
+          <CapturedFactCard key={label} label={label} value={value} badge={badge} />
         ))}
       </div>
+
+      {!canUseResearchWorkspace ? (
+        <>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Pro research signals</h3>
+              <p className="mt-1 text-xs text-ink-500">Extra decision support available in Scout Pro.</p>
+            </div>
+            <SecondaryButton href="/upgrade" className="px-4 py-2">
+              Upgrade Scout
+            </SecondaryButton>
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <LockedSignalCard label="Trend direction" detail="See whether interest is rising, stable, or falling." />
+            <LockedSignalCard label="AI evidence summary" detail="Turn noisy page data into a clearer opportunity read." />
+            <LockedSignalCard label="Any-site analysis" detail="Scan product pages beyond Amazon and AliExpress." />
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
@@ -2099,7 +2173,11 @@ export function IdeaDetailClient({
         </div>
       </header>
 
-      <ScoutSignalSummary idea={displayIdea} sourceIdea={sourceIdea} />
+      <ScoutSignalSummary
+        idea={displayIdea}
+        sourceIdea={sourceIdea}
+        canUseResearchWorkspace={canUseResearchWorkspace}
+      />
       <EconomicsSnapshot
         economics={economicsDraft}
         saving={status.economics === "saving"}

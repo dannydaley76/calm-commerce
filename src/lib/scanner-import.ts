@@ -1,4 +1,4 @@
-import { capturedSignalsSummary } from "@/lib/scout-signals";
+import { pageSignalsSummary } from "@/lib/scout-signals";
 
 export type ScannerImportPayload = {
   source?: "scanner" | "research_workspace";
@@ -305,13 +305,23 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
     evidenceLine("Competition score", payload?.competitionScore !== undefined ? `${payload.competitionScore}/100` : undefined),
     payload?.competitionNotes,
   ].filter((line): line is string => !!line);
-  const capturedSignals = payload?.confidenceScore !== undefined || payload?.missingSignals?.length
-    ? capturedSignalsSummary(payload?.confidenceScore, payload?.missingSignals).label.toLowerCase()
+  const pageSignals = payload
+    ? pageSignalsSummary({
+      idea_description: payload.displayTitle || payload.productTitle,
+      raw_product_title: payload.productTitle,
+      product_image_url: payload.productImageUrl,
+      source_url: payload.sourceUrl,
+      observed_price: payload.observedPrice,
+      observed_order_count: payload.observedOrderCount,
+      observed_review_count: payload.observedReviewCount,
+      observed_rating: payload.observedRating,
+      variant_count: payload.variantCount,
+    }).label.toLowerCase()
     : "";
   const noteParts = [
     payload?.notes,
     payload?.differentiationAngle ? `Differentiation angle: ${payload.differentiationAngle}` : "",
-    capturedSignals ? `Captured signals: ${capturedSignals}` : "",
+    pageSignals ? `Captured page facts: ${pageSignals}` : "",
     payload?.missingSignals?.length ? `Missing signals: ${payload.missingSignals.join(", ")}` : "",
   ].filter(Boolean);
 

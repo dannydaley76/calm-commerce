@@ -9,7 +9,7 @@ import {
   sourceLabelForUrl,
   type ScannerImportDraft,
 } from "@/lib/scanner-import";
-import { capturedSignalsSummary } from "@/lib/scout-signals";
+import { pageSignalsSummary } from "@/lib/scout-signals";
 
 type ImportIdeaClientProps = {
   payloadParam?: string;
@@ -231,7 +231,17 @@ export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClien
   const [editingEconomics, setEditingEconomics] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const sourceLabel = sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product");
-  const capturedSignals = capturedSignalsSummary(parsedPayload?.confidenceScore, parsedPayload?.missingSignals);
+  const pageSignals = pageSignalsSummary({
+    idea_description: parsedPayload?.displayTitle || parsedPayload?.productTitle,
+    raw_product_title: parsedPayload?.productTitle,
+    product_image_url: parsedPayload?.productImageUrl,
+    source_url: parsedPayload?.sourceUrl,
+    observed_price: parsedPayload?.observedPrice,
+    observed_order_count: parsedPayload?.observedOrderCount,
+    observed_review_count: parsedPayload?.observedReviewCount,
+    observed_rating: parsedPayload?.observedRating,
+    variant_count: parsedPayload?.variantCount,
+  });
 
   if (!payloadResult.ok && payloadResult.code === "missing") {
     return (
@@ -418,7 +428,7 @@ export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClien
               <ScoreMetric label="Opportunity" value={parsedPayload?.opportunityScore} suffix="/100" />
               <ScoreMetric label="Demand" value={parsedPayload?.demandScore} />
               <ScoreMetric label="Competition" value={parsedPayload?.competitionScore} />
-              <SummaryMetric label="Captured signals" value={capturedSignals.label} />
+              <SummaryMetric label="Captured page facts" value={pageSignals.label} />
             </div>
           </div>
         </div>
