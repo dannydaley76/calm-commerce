@@ -63,6 +63,7 @@ const upfrontRiskOptions = ["", "Low: can test without buying much stock", "Medi
 const testSpeedOptions = ["", "Fast: can list this week", "Medium: needs sample, prep, or supplier confirmation", "Slow: needs production, customisation, or more setup", "Unknown"];
 const confidenceOptions = ["", "High: real quotes and known fees", "Medium: close estimates", "Low: mostly guesses", "Unknown: missing key costs"];
 const viableOptions = ["", "Yes: proceed", "Marginal: possible with adjustments", "No: eliminate"];
+const seasonalityEvidenceOptions = ["", "Seasonal", "Possibly seasonal", "Evergreen", "Trend unknown"];
 const marketplaceOptions = ["", "eBay", "Etsy", "Amazon", "Vinted", "Facebook Marketplace", "Other"];
 const resultOptions = ["", "Sold: strong demand", "Interest but no sale", "Views but no engagement", "Very few views", "Still running"];
 const decisionOptions = ["", "Proceed: build the store", "Iterate and retest: adjust listing or price", "Pivot: try a different product"];
@@ -458,6 +459,67 @@ function InlineValue({
   );
 }
 
+function EvidenceValue({
+  label,
+  value,
+  caption,
+}: {
+  label: string;
+  value: string;
+  caption?: string;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-start">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</dt>
+      <dd className="min-w-0">
+        <p className="text-sm leading-6 text-ink-800">{value || "Not captured"}</p>
+        {caption ? <p className="mt-1 text-xs italic leading-5 text-ink-500">{caption}</p> : null}
+      </dd>
+    </div>
+  );
+}
+
+function EvidenceSelectValue({
+  label,
+  value,
+  options,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onSave: (value: string) => Promise<void>;
+}) {
+  const [state, setState] = useState<SaveState>("idle");
+
+  async function save(value: string) {
+    setState("saving");
+    await onSave(value);
+    setState("saved");
+    window.setTimeout(() => setState("idle"), 1600);
+  }
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-start">
+      <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</dt>
+      <dd className="min-w-0">
+        <select
+          value={value}
+          onChange={(event) => void save(event.target.value)}
+          className="block max-w-xs rounded-lg border border-ink-100 bg-white px-3 py-2 text-sm font-medium text-ink-900 outline-none transition focus:border-cobalt-500 focus:ring-2 focus:ring-cobalt-100"
+        >
+          <option value="">None</option>
+          {options.filter(Boolean).map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+        {state === "saving" ? <p className="mt-1 text-xs font-semibold text-ink-500">Saving...</p> : null}
+        {state === "saved" ? <p className="mt-1 text-xs font-semibold text-[#005e3f]">Saved</p> : null}
+      </dd>
+    </div>
+  );
+}
+
 function EditableMoney({
   label,
   value,
@@ -609,24 +671,23 @@ function EvidencePanel({
   idea,
   sourceIdea,
   ideaDraft,
-  canAccessOsContent,
   onSaveField,
 }: {
   idea: ProductIdeaLifecycle;
   sourceIdea: ProductIdeaRow;
   ideaDraft: IdeaDraft;
-  canAccessOsContent: boolean;
   onSaveField: (key: keyof IdeaDraft, value: string) => Promise<void>;
 }) {
   const source = ideaDraft.source_label || idea.sourceLabel || "Scout";
-  const captured = formatDate(idea.scoutCapturedAt || idea.scannerScoredAt, "long");
+  const scanned = formatDate(idea.scannerScoredAt || idea.scoutCapturedAt, "long");
+  const imported = idea.scoutCapturedAt ? formatDate(idea.scoutCapturedAt, "long") : "";
   const observedPriceLabel = idea.observedPriceType === "supplier_cost"
     ? "Observed supplier price"
     : idea.observedPriceType === "retail_price"
       ? "Observed retail price"
       : "Observed price";
   const seasonality = ideaDraft.seasonality.trim();
-  const seasonalityValue = seasonality ? "Seasonal" : "";
+  const seasonalityValue = seasonality || "";
   const competition = idea.scannerCompetitionScore === null
     ? ideaDraft.competition_notes.trim()
     : `${idea.scannerCompetitionScore}/100${ideaDraft.competition_notes.trim() ? ` · ${ideaDraft.competition_notes.trim().replace(/^Competition score:\s*/i, "").replace(/^Competition signal:\s*/i, "")}` : ""}`;
@@ -641,10 +702,12 @@ function EvidencePanel({
         <section className="pb-5">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Source</h3>
           <dl className="mt-4 space-y-3">
-            <InlineValue label="Imported from" value={source} onSave={(value) => onSaveField("source_label", value)} />
-            <InlineValue label="Captured" value={captured} onSave={async () => undefined} />
-            {canAccessOsContent && ideaDraft.raw_product_title ? (
-              <InlineValue label="Full title" value={ideaDraft.raw_product_title} onSave={(value) => onSaveField("raw_product_title", value)} />
+            <InlineValue label="Idea name" value={ideaDraft.idea_description} onSave={(value) => onSaveField("idea_description", value)} />
+            <EvidenceValue label="Imported from" value={source} />
+            <EvidenceValue label="Scanned" value={scanned} />
+            {imported ? <EvidenceValue label="Imported" value={imported} /> : null}
+            {ideaDraft.raw_product_title ? (
+              <EvidenceValue label="Marketplace title" value={ideaDraft.raw_product_title} />
             ) : null}
           </dl>
         </section>
@@ -653,21 +716,19 @@ function EvidencePanel({
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Listing</h3>
           <dl className="mt-4 space-y-3">
             {idea.observedPrice ? (
-              <InlineValue label={observedPriceLabel} value={idea.observedPrice} onSave={async () => undefined} />
+              <EvidenceValue label={observedPriceLabel} value={idea.observedPrice} />
             ) : null}
             {sourceIdea.variant_count?.trim() ? (
-              <InlineValue label="Variant count" value={sourceIdea.variant_count.trim()} onSave={async () => undefined} />
+              <EvidenceValue label="Variant count" value={sourceIdea.variant_count.trim()} />
             ) : null}
-            {seasonalityValue ? (
-              <InlineValue
-                label="Seasonality"
-                value={seasonalityValue}
-                caption={seasonality}
-                onSave={(value) => onSaveField("seasonality", value)}
-              />
-            ) : null}
+            <EvidenceSelectValue
+              label="Seasonality"
+              value={seasonalityValue}
+              options={seasonalityEvidenceOptions}
+              onSave={(value) => onSaveField("seasonality", value)}
+            />
             {competition.trim() ? (
-              <InlineValue label="Competition" value={competition} onSave={(value) => onSaveField("competition_notes", value)} />
+              <EvidenceValue label="Competition" value={competition} />
             ) : null}
           </dl>
         </section>
@@ -675,8 +736,8 @@ function EvidencePanel({
         <section className="pt-5">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Page facts</h3>
           <dl className="mt-4 space-y-3">
-            <InlineValue label="Captured" value={pageSignals.label} caption={pageSignals.detail} onSave={async () => undefined} />
-            <InlineValue label="Calculated signal gaps" value={missingSignals || "None"} onSave={async () => undefined} />
+            <EvidenceValue label="Captured" value={pageSignals.label} caption={pageSignals.detail} />
+            <EvidenceValue label="Calculated signal gaps" value={missingSignals || "None"} />
           </dl>
         </section>
       </div>
@@ -870,7 +931,7 @@ function ScoutSignalSummary({
             <LockedSignalCard label="Any-site analysis" detail="Scan product pages beyond Amazon and AliExpress." />
           </div>
           <p className="mt-3 text-sm text-ink-500">
-            <a href="/upgrade" className="font-semibold text-cobalt-600 underline-offset-4 hover:underline">
+            <a href="/upgrade" className="font-semibold !text-cobalt-600 underline-offset-4 hover:!text-cobalt-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2">
               Upgrade Scout to Pro
             </a>{" "}
             to unlock AI research features.
@@ -1551,9 +1612,48 @@ function activitySourceLabel(
   return { label: "Scout", href: "/ideas" };
 }
 
-function NotesSection({
+function ActivitySection({
   idea,
   canAccessOsContent,
+}: {
+  idea: ProductIdeaLifecycle;
+  canAccessOsContent: boolean;
+}) {
+  return (
+    <section id="history" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Activity</h2>
+      <p className="mt-2 text-sm leading-6 text-ink-500">
+        System events for this product candidate.
+      </p>
+      <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
+        {idea.timeline.map((event) => {
+          const source = activitySourceLabel(event, canAccessOsContent);
+          return (
+            <li key={event.key} className="relative">
+              <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
+                <a
+                  href={source.href}
+                  className="text-[10px] font-bold tracking-[0.08em] !text-cobalt-600 underline-offset-4 hover:!text-cobalt-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+                >
+                  {source.label}
+                </a>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-ink-500">
+                {!canAccessOsContent && event.key === "captured"
+                  ? "Imported into Scout Workspace."
+                  : event.detail.replace(/Chapter 3|Chapter 5|Chapter 6/g, "Scout")}
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function NotesSection({
   canWriteNotes,
   notes,
   noteDraft,
@@ -1565,8 +1665,6 @@ function NotesSection({
   onDeleteNote,
   onUndoDelete,
 }: {
-  idea: ProductIdeaLifecycle;
-  canAccessOsContent: boolean;
   canWriteNotes: boolean;
   notes: ProductIdeaLifecycle["notes"];
   noteDraft: string;
@@ -1579,39 +1677,7 @@ function NotesSection({
   onUndoDelete: () => Promise<void>;
 }) {
   return (
-    <div id="history" className="space-y-6">
-      <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
-        <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Activity</h2>
-        <p className="mt-2 text-sm leading-6 text-ink-500">
-          System events for this product candidate.
-        </p>
-        <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
-          {idea.timeline.map((event) => {
-            const source = activitySourceLabel(event, canAccessOsContent);
-            return (
-              <li key={event.key} className="relative">
-                <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-cobalt-600 ring-4 ring-surface-raised" />
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
-                  <a
-                    href={source.href}
-                    className="text-[10px] font-bold tracking-[0.08em] text-ink-500 underline-offset-4 hover:text-cobalt-600 hover:underline"
-                  >
-                    {source.label}
-                  </a>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-ink-500">
-                  {!canAccessOsContent && event.key === "captured"
-                    ? "Imported into Scout Workspace."
-                    : event.detail.replace(/Chapter 3|Chapter 5|Chapter 6/g, "Scout")}
-                </p>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
+      <section id="notes" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
         <div>
           <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Notes</h2>
           <p className="mt-2 max-w-[620px] text-sm leading-6 text-ink-500">
@@ -1678,7 +1744,6 @@ function NotesSection({
         </div>
       )}
       </section>
-    </div>
   );
 }
 
@@ -2138,7 +2203,7 @@ export function IdeaDetailClient({
             {ideaDraft.idea_description || idea.label}
           </h1>
           <p className="mt-1 text-sm text-ink-500">
-            from {ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} · captured {formatDate(displayIdea.scoutCapturedAt || displayIdea.scannerScoredAt, "relative").toLowerCase()}
+            from {ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} · scanned {formatDate(displayIdea.scannerScoredAt || displayIdea.scoutCapturedAt, "relative").toLowerCase()}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
@@ -2202,8 +2267,8 @@ export function IdeaDetailClient({
               id="idea-evidence"
               title="Idea evidence"
               description={canAccessOsContent
-                ? "Edit the original demand signals and market notes from Chapter 3 without returning to the lesson."
-                : "Edit the product source, scan evidence, and market notes captured from Scout."
+                ? "Edit the user-facing idea name and seasonality judgement."
+                : "Edit the user-facing idea name and seasonality judgement."
               }
               state={status.idea}
               onSubmit={saveIdea}
@@ -2214,35 +2279,11 @@ export function IdeaDetailClient({
                 value={ideaDraft.idea_description}
                 onChange={(value) => setIdeaDraft((prev) => ({ ...prev, idea_description: value }))}
               />
-              <Field
-                label="Product image URL"
-                value={ideaDraft.product_image_url}
-                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, product_image_url: value }))}
-              />
-              <Field
-                label="Source URL"
-                value={ideaDraft.source_url}
-                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_url: value }))}
-              />
-              <Field
-                label="Source label"
-                value={ideaDraft.source_label}
-                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, source_label: value }))}
-              />
-              <Field
+              <SelectField
                 label="Seasonality"
                 value={ideaDraft.seasonality}
+                options={seasonalityEvidenceOptions}
                 onChange={(value) => setIdeaDraft((prev) => ({ ...prev, seasonality: value }))}
-              />
-              <TextArea
-                label="Demand evidence"
-                value={ideaDraft.demand_evidence}
-                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, demand_evidence: value }))}
-              />
-              <TextArea
-                label="Competition notes"
-                value={ideaDraft.competition_notes}
-                onChange={(value) => setIdeaDraft((prev) => ({ ...prev, competition_notes: value }))}
               />
             </EditableSection>
           ) : (
@@ -2250,10 +2291,22 @@ export function IdeaDetailClient({
               idea={displayIdea}
               sourceIdea={sourceIdea}
               ideaDraft={ideaDraft}
-              canAccessOsContent={canAccessOsContent}
               onSaveField={saveIdeaField}
             />
           )}
+
+          <NotesSection
+            canWriteNotes={canUseScannerImport}
+            notes={localNotes}
+            noteDraft={noteDraft}
+            status={status.notes}
+            deletedNote={deletedNote}
+            onChange={setNoteDraft}
+            onSave={saveNote}
+            onUpdateNote={updateNote}
+            onDeleteNote={deleteNote}
+            onUndoDelete={undoDeleteNote}
+          />
 
           {!canAccessOsContent ? <ScoutUpgradePanel canUseResearchWorkspace={canUseResearchWorkspace} /> : null}
 
@@ -2410,19 +2463,9 @@ export function IdeaDetailClient({
         </div>
 
         <aside className="space-y-6">
-          <NotesSection
+          <ActivitySection
             idea={idea}
             canAccessOsContent={canAccessOsContent}
-            canWriteNotes={canUseScannerImport}
-            notes={localNotes}
-            noteDraft={noteDraft}
-            status={status.notes}
-            deletedNote={deletedNote}
-            onChange={setNoteDraft}
-            onSave={saveNote}
-            onUpdateNote={updateNote}
-            onDeleteNote={deleteNote}
-            onUndoDelete={undoDeleteNote}
           />
           {canAccessOsContent ? <MetricsSection idea={idea} /> : null}
         </aside>
