@@ -194,6 +194,13 @@ function displayMoneyValue(value: string, empty = "£ —"): string {
   return /^[£$€]/.test(trimmed) ? trimmed : `${currencySymbol()}${trimmed}`;
 }
 
+function observedPriceLabel(idea: ProductIdeaLifecycle): string | null {
+  if (!idea.observedPrice) return null;
+  if (idea.observedPriceType === "supplier_cost") return `Observed supplier ${idea.observedPrice}`;
+  if (idea.observedPriceType === "retail_price") return `Observed retail ${idea.observedPrice}`;
+  return `Observed ${idea.observedPrice}`;
+}
+
 function formatMarginPercent(value: number | null): string {
   if (value === null) return "";
   return `${value.toFixed(0)}%`;
@@ -439,6 +446,7 @@ function PricingEditor({
   const marginPercent = economics.marginPercent ?? quickMargin;
   const hasAnyPricing = Boolean(sellingPrice.trim() || productCost.trim());
   const hasBothCoreValues = Boolean(sellingPrice.trim() && productCost.trim());
+  const observedLabel = observedPriceLabel(idea);
   const marginLabel = marginPercent === null
     ? hasAnyPricing ? "Need sell/cost" : "No pricing"
     : `${formatMarginPercent(marginPercent)} margin`;
@@ -526,6 +534,9 @@ function PricingEditor({
 
   return (
     <div className="min-w-0 space-y-2">
+      {observedLabel ? (
+        <p className="px-2 text-[10px] font-semibold leading-4 text-ink-400">{observedLabel}</p>
+      ) : null}
       {isEditing ? editor : (
         <button
           type="button"

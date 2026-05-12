@@ -39,6 +39,7 @@ export type ProductIdeaLifecycle = {
   scannerScoredAt: string | null;
   scoutCapturedAt: string | null;
   observedPrice: string | null;
+  observedPriceType: string | null;
   observedRating: string | null;
   observedReviewCount: string | null;
   observedOrderCount: string | null;
@@ -571,6 +572,7 @@ export function getProductIdeaLifecycles(
       scannerScoredAt: normalize(idea.scanner_scored_at) || null,
       scoutCapturedAt: normalize(idea.scout_captured_at) || normalize(idea.scanner_scored_at) || null,
       observedPrice: normalize(idea.observed_price) || null,
+      observedPriceType: normalize(idea.observed_price_type) || null,
       observedRating: normalize(idea.observed_rating) || null,
       observedReviewCount: normalize(idea.observed_review_count) || null,
       observedOrderCount: normalize(idea.observed_order_count) || null,

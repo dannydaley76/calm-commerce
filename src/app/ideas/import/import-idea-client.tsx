@@ -407,8 +407,8 @@ export function ImportIdeaClient({ payloadParam, limitMessage }: ImportIdeaClien
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <SummaryMetric label="Platform" value={draft.sourcePlatform} />
-              <SummaryMetric label="Selling price" value={draft.sellingPrice} />
-              <SummaryMetric label="Product cost" value={draft.productCost} />
+              <SummaryMetric label="Observed price" value={parsedPayload?.observedPrice || ""} />
+              <SummaryMetric label="Estimated cost" value={draft.productCost} />
               <SummaryMetric label="Confidence" value={draft.numbersConfidence} />
             </div>
 

@@ -65,10 +65,6 @@ function hasEconomicsDraft(draft: ScannerImportDraft): boolean {
     draft.shippingToCustomer,
     draft.platformFees,
     draft.sellingPrice,
-    draft.variantComplexity,
-    draft.upfrontCostRisk,
-    draft.testSpeed,
-    draft.numbersConfidence,
   ].some((value) => value.trim().length > 0);
 }
 
@@ -182,6 +178,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
     source_label: sourceLabelForUrl(draft.sourceUrl, draft.sourcePlatform || "Source product"),
     source_attribution: "Imported from Scout",
     observed_price: normalizedPayload?.observedPrice ?? "",
+    observed_price_type: normalizedPayload?.observedPriceType ?? "",
     observed_rating: normalizedPayload?.observedRating ?? "",
     observed_review_count: normalizedPayload?.observedReviewCount === undefined ? "" : String(normalizedPayload.observedReviewCount),
     observed_order_count: normalizedPayload?.observedOrderCount === undefined ? "" : String(normalizedPayload.observedOrderCount),

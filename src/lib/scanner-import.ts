@@ -7,6 +7,7 @@ export type ScannerImportPayload = {
   displayTitle?: string;
   productImageUrl?: string;
   observedPrice?: string;
+  observedPriceType?: "supplier_cost" | "retail_price" | "unknown";
   observedRating?: string;
   observedReviewCount?: number;
   observedOrderCount?: number;
@@ -91,6 +92,16 @@ function stringArrayValue(value: unknown): string[] {
     : [];
 }
 
+function observedPriceTypeValue(value: unknown, sourcePlatform: ScannerImportPayload["sourcePlatform"]): ScannerImportPayload["observedPriceType"] {
+  const normalized = stringValue(value);
+  if (normalized === "supplier_cost" || normalized === "retail_price" || normalized === "unknown") {
+    return normalized;
+  }
+  if (sourcePlatform === "aliexpress") return "supplier_cost";
+  if (sourcePlatform === "amazon") return "retail_price";
+  return "unknown";
+}
+
 export function normalizeScannerImportPayload(raw: unknown): ScannerImportPayload | null {
   if (!isRecord(raw)) return null;
   const sourcePlatform = stringValue(raw.sourcePlatform);
@@ -110,20 +121,23 @@ export function normalizeScannerImportPayload(raw: unknown): ScannerImportPayloa
     stringValue(raw.thumbnail) ||
     stringValue(raw.image);
 
+  const normalizedSourcePlatform = (
+    sourcePlatform === "amazon" ||
+    sourcePlatform === "aliexpress" ||
+    sourcePlatform === "shopify" ||
+    sourcePlatform === "other"
+  ) ? sourcePlatform : "other";
+
   return {
     source: source === "scanner" || source === "research_workspace" ? source : undefined,
-    sourcePlatform: (
-      sourcePlatform === "amazon" ||
-      sourcePlatform === "aliexpress" ||
-      sourcePlatform === "shopify" ||
-      sourcePlatform === "other"
-    ) ? sourcePlatform : "other",
+    sourcePlatform: normalizedSourcePlatform,
     sourceUrl,
     scannedAt: stringValue(raw.scannedAt) || stringValue(raw.scanned_at) || stringValue(raw.scan_timestamp),
     productTitle: stringValue(raw.productTitle),
     displayTitle: stringValue(raw.displayTitle),
     productImageUrl,
     observedPrice: stringValue(raw.observedPrice),
+    observedPriceType: observedPriceTypeValue(raw.observedPriceType ?? raw.observed_price_type, normalizedSourcePlatform),
     observedRating: stringValue(raw.observedRating),
     observedReviewCount: numberValue(raw.observedReviewCount),
     observedOrderCount: numberValue(raw.observedOrderCount),
@@ -265,8 +279,20 @@ export function sourceLabelForUrl(value: string | undefined, fallback = "Source 
 
 export function buildScannerImportDraft(payload: ScannerImportPayload | null): ScannerImportDraft {
   const scannedAt = payload?.scannedAt || new Date().toISOString().slice(0, 10);
+  const observedPriceType = payload?.observedPriceType || observedPriceTypeValue(undefined, payload?.sourcePlatform);
+  const estimatedProductCost = payload?.estimatedProductCost || (
+    observedPriceType === "supplier_cost" ? payload?.observedPrice || "" : ""
+  );
   const observed = [
     evidenceLine("Demand score", payload?.demandScore !== undefined ? `${payload.demandScore}/100` : undefined),
+    evidenceLine(
+      observedPriceType === "supplier_cost"
+        ? "Observed supplier price"
+        : observedPriceType === "retail_price"
+          ? "Observed retail price"
+          : "Observed page price",
+      payload?.observedPrice,
+    ),
     evidenceLine("Observed orders", payload?.observedOrderCount),
     evidenceLine("Observed rating", payload?.observedRating),
     evidenceLine("Observed reviews", payload?.observedReviewCount),
@@ -298,10 +324,10 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
     ].filter(Boolean).join("\n"),
     competitionNotes: competition.join("\n"),
     seasonality: payload?.seasonality || "",
-    productCost: payload?.estimatedProductCost || "",
+    productCost: estimatedProductCost,
     shippingToCustomer: payload?.estimatedShippingToCustomer || "",
     platformFees: payload?.platformFees || "",
-    sellingPrice: payload?.estimatedSellingPrice || payload?.observedPrice || "",
+    sellingPrice: payload?.estimatedSellingPrice || "",
     variantComplexity: payload?.variantComplexity || (
       payload?.variantCount === undefined
         ? ""

@@ -623,6 +623,11 @@ function EvidencePanel({
 }) {
   const source = ideaDraft.source_label || idea.sourceLabel || "Scout";
   const captured = formatDate(idea.scoutCapturedAt || idea.scannerScoredAt, "long");
+  const observedPriceLabel = idea.observedPriceType === "supplier_cost"
+    ? "Observed supplier price"
+    : idea.observedPriceType === "retail_price"
+      ? "Observed retail price"
+      : "Observed price";
   const seasonality = ideaDraft.seasonality.trim();
   const seasonalityValue = seasonality ? "Seasonal" : "";
   const competition = idea.scannerCompetitionScore === null
@@ -658,6 +663,9 @@ function EvidencePanel({
         <section className="py-5">
           <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Listing</h3>
           <dl className="mt-4 space-y-3">
+            {idea.observedPrice ? (
+              <InlineValue label={observedPriceLabel} value={idea.observedPrice} onSave={async () => undefined} />
+            ) : null}
             {sourceIdea.variant_count?.trim() ? (
               <InlineValue label="Variant count" value={sourceIdea.variant_count.trim()} onSave={async () => undefined} />
             ) : null}
