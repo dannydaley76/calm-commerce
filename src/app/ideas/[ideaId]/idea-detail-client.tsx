@@ -25,6 +25,14 @@ type InstanceRow = Record<string, string | undefined>;
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditSection = "idea" | "economics" | "test" | null;
 type EconomicsField = "sell" | "cost" | "shipping" | "fees";
+type LocalActivityEvent = {
+  key: string;
+  label: string;
+  detail: string;
+  createdAt: string;
+  sourceLabel: string;
+  href: string;
+};
 type IdeaDraft = {
   idea_description: string;
   raw_product_title: string;
@@ -1615,9 +1623,11 @@ function activitySourceLabel(
 function ActivitySection({
   idea,
   canAccessOsContent,
+  localEvents,
 }: {
   idea: ProductIdeaLifecycle;
   canAccessOsContent: boolean;
+  localEvents: LocalActivityEvent[];
 }) {
   return (
     <section id="history" className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
@@ -1626,6 +1636,24 @@ function ActivitySection({
         System events for this product candidate.
       </p>
       <ol className="mt-5 space-y-4 border-l border-ink-100 pl-4">
+        {localEvents.map((event) => (
+          <li key={event.key} className="relative">
+            <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-[#00756a] ring-4 ring-surface-raised" />
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-[Manrope] text-sm font-bold text-ink-900">{event.label}</p>
+              <a
+                href={event.href}
+                className="text-[10px] font-bold tracking-[0.08em] !text-cobalt-600 underline-offset-4 hover:!text-cobalt-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+              >
+                {event.sourceLabel}
+              </a>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-ink-500">{event.detail}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-300">
+              {formatDate(event.createdAt, "relative")}
+            </p>
+          </li>
+        ))}
         {idea.timeline.map((event) => {
           const source = activitySourceLabel(event, canAccessOsContent);
           return (
@@ -1965,6 +1993,7 @@ export function IdeaDetailClient({
   const [noteDraft, setNoteDraft] = useState("");
   const [localNoteRows, setLocalNoteRows] = useState<NoteRow[]>(noteRows);
   const [deletedNote, setDeletedNote] = useState<{ note: NoteRow; index: number } | null>(null);
+  const [localActivityEvents, setLocalActivityEvents] = useState<LocalActivityEvent[]>([]);
   const [localIdeaView, setLocalIdeaView] = useState({
     status: idea.status,
     statusLabel: idea.statusLabel,
@@ -1999,6 +2028,17 @@ export function IdeaDetailClient({
 
   const setSectionStatus = (section: string, value: SaveState) => {
     setStatus((prev) => ({ ...prev, [section]: value }));
+  };
+
+  const addLocalActivity = (event: Omit<LocalActivityEvent, "key" | "createdAt">) => {
+    setLocalActivityEvents((prev) => [
+      {
+        ...event,
+        key: `local-${Date.now()}-${prev.length}`,
+        createdAt: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
   };
 
   const localNotes = localNoteRows
@@ -2041,6 +2081,20 @@ export function IdeaDetailClient({
     );
     const result = await writeWorksheetField("product_ideas", JSON.stringify(nextRows), "ideas-worksheet");
     setSectionStatus("idea", result.ok ? "saved" : "error");
+    if (result.ok) {
+      const label = key === "seasonality" ? "Seasonality updated" : key === "idea_description" ? "Idea name updated" : "Evidence updated";
+      const detail = key === "seasonality"
+        ? `Seasonality set to ${value || "None"}.`
+        : key === "idea_description"
+          ? `Idea name changed to ${value || "Untitled idea"}.`
+          : "Idea evidence was updated.";
+      addLocalActivity({
+        label,
+        detail,
+        sourceLabel: "Idea evidence",
+        href: "#idea-evidence",
+      });
+    }
   };
 
   const saveEconomics = async () => {
@@ -2060,9 +2114,25 @@ export function IdeaDetailClient({
     setSectionStatus("economics", result.ok ? "saved" : "error");
     if (result.ok) {
       setEditSection(null);
+      addLocalActivity({
+        label: "Economics updated",
+        detail: projectedEconomics(economicsDraft).marginPercent === null
+          ? "Pricing inputs were saved."
+          : `Projected margin is now ${formatPercent(projectedEconomics(economicsDraft).marginPercent)}.`,
+        sourceLabel: "Economics",
+        href: "#economics",
+      });
+      const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
+      if (localIdeaView.status === "draft") {
+        addLocalActivity({
+          label: "Status changed",
+          detail: `Status changed to ${statusLabel(nextStatus)}.`,
+          sourceLabel: "Activity",
+          href: "#history",
+        });
+      }
       setLocalIdeaView((prev) => {
         if (prev.status !== "draft" && prev.status !== "economics_checked") return prev;
-        const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
         return {
           status: nextStatus,
           statusLabel: statusLabel(nextStatus),
@@ -2092,6 +2162,32 @@ export function IdeaDetailClient({
         }),
       });
       setSectionStatus("economics", response.ok ? "saved" : "error");
+      if (response.ok) {
+        const projection = projectedEconomics(nextDraft);
+        addLocalActivity({
+          label: "Economics updated",
+          detail: projection.marginPercent === null
+            ? "Pricing inputs were saved."
+            : `Projected margin is now ${formatPercent(projection.marginPercent)}.`,
+          sourceLabel: "Economics",
+          href: "#economics",
+        });
+        const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
+        if (localIdeaView.status === "draft") {
+          addLocalActivity({
+            label: "Status changed",
+            detail: `Status changed to ${statusLabel(nextStatus)}.`,
+            sourceLabel: "Activity",
+            href: "#history",
+          });
+          setLocalIdeaView({
+            status: nextStatus,
+            statusLabel: statusLabel(nextStatus),
+            latestSignal: latestSignalForLocalStatus(nextStatus, nextDraft.viable, "", ""),
+            nextAction: nextActionForStatus(nextStatus),
+          });
+        }
+      }
       return response.ok;
     } catch {
       setSectionStatus("economics", "error");
@@ -2113,6 +2209,12 @@ export function IdeaDetailClient({
     if (ok) {
       setEditSection(null);
       const nextStatus = localStatusFromTestDraft(testDraft);
+      addLocalActivity({
+        label: "Status changed",
+        detail: `Status changed to ${statusLabel(nextStatus)}.`,
+        sourceLabel: "Marketplace test",
+        href: "#marketplace-test",
+      });
       setLocalIdeaView({
         status: nextStatus,
         statusLabel: statusLabel(nextStatus),
@@ -2466,6 +2568,7 @@ export function IdeaDetailClient({
           <ActivitySection
             idea={idea}
             canAccessOsContent={canAccessOsContent}
+            localEvents={localActivityEvents}
           />
           {canAccessOsContent ? <MetricsSection idea={idea} /> : null}
         </aside>
