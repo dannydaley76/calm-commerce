@@ -23,6 +23,7 @@ type ResponseMap = Record<string, string>;
 type InstanceRow = Record<string, string | undefined>;
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditSection = "idea" | "economics" | "test" | null;
+type EconomicsField = "sell" | "cost" | "shipping" | "fees";
 type IdeaDraft = {
   idea_description: string;
   raw_product_title: string;
@@ -235,12 +236,14 @@ function cleanEvidenceText(value: string | null | undefined): string {
     .join("\n");
 }
 
-function formatCurrency(value: number | null): string {
+function formatCurrency(value: number | null, currency = "GBP"): string {
   if (value === null) return "Not logged";
-  return `£${value.toLocaleString("en-GB", {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  }).format(value);
 }
 
 function formatSignedCurrencyDelta(value: number): string {
@@ -849,12 +852,6 @@ function EconomicsSnapshot({
     shipping_to_customer: economics.shipping_to_customer ?? "",
     platform_fees: economics.platform_fees ?? "",
   });
-  const projection = projectedEconomics(displayEconomics);
-  const marginClass = marginTone(projection.marginPercent).includes("success")
-    ? "text-[#005e3f]"
-    : marginTone(projection.marginPercent).includes("amber")
-      ? "text-[#835700]"
-      : "text-error-700";
 
   useEffect(() => {
     if (editing) return;
@@ -893,88 +890,405 @@ function EconomicsSnapshot({
 
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
-          <h2 className="mt-2 font-[Manrope] text-lg font-bold text-ink-900">Projected margin</h2>
-        </div>
-        {editing ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <PrimaryButton type="button" disabled={saving} onClick={() => void saveDraft()} className="px-4 py-2">
-              {saving ? "Saving" : "Save"}
-            </PrimaryButton>
-            <SecondaryButton type="button" disabled={saving} onClick={cancelDraft} className="px-4 py-2">
-              Cancel
-            </SecondaryButton>
-          </div>
-        ) : (
-          <SecondaryButton type="button" onClick={() => setEditing(true)} className="px-4 py-2">
-            Edit economics
-          </SecondaryButton>
-        )}
-      </div>
-
       {editing ? (
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field
-            label="Sell price"
-            value={draft.selling_price}
-            onChange={(value) => setDraft((prev) => ({ ...prev, selling_price: value }))}
-          />
-          <Field
-            label="Product cost"
-            value={draft.product_cost}
-            onChange={(value) => setDraft((prev) => ({ ...prev, product_cost: value }))}
-          />
-          <Field
-            label="Shipping"
-            value={draft.shipping_to_customer}
-            onChange={(value) => setDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
-          />
-          <Field
-            label="Platform fees"
-            value={draft.platform_fees}
-            onChange={(value) => setDraft((prev) => ({ ...prev, platform_fees: value }))}
-          />
-        </div>
-      ) : (
-        <div className="mt-4 flex flex-wrap items-baseline gap-3 text-ink-900">
-          <EconomicsTerm label="Sell" value={displayEconomics.selling_price} />
-          <span className="text-lg font-semibold text-ink-300">−</span>
-          <EconomicsTerm label="Cost" value={displayEconomics.product_cost} />
-          <span className="text-lg font-semibold text-ink-300">−</span>
-          <EconomicsTerm label="Shipping" value={displayEconomics.shipping_to_customer} />
-          <span className="text-lg font-semibold text-ink-300">−</span>
-          <EconomicsTerm label="Fees" value={displayEconomics.platform_fees} />
-          <span className="text-lg font-semibold text-ink-300">=</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">Margin</span>
-            <span className={`font-[Manrope] text-xl font-bold ${marginClass}`}>
-              {formatCurrency(projection.margin)}
-            </span>
-            <span className={`text-sm font-bold ${marginClass}`}>
-              ({projection.marginPercent === null ? "—" : formatPercent(projection.marginPercent)})
-            </span>
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Economics</h2>
+              <p className="mt-1 text-sm text-ink-500">Projected margin</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <PrimaryButton type="button" disabled={saving} onClick={() => void saveDraft()} className="px-4 py-2">
+                {saving ? "Saving" : "Save"}
+              </PrimaryButton>
+              <SecondaryButton type="button" disabled={saving} onClick={cancelDraft} className="px-4 py-2">
+                Cancel
+              </SecondaryButton>
+            </div>
           </div>
-        </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field
+              label="Sell price"
+              value={draft.selling_price}
+              onChange={(value) => setDraft((prev) => ({ ...prev, selling_price: value }))}
+            />
+            <Field
+              label="Product cost"
+              value={draft.product_cost}
+              onChange={(value) => setDraft((prev) => ({ ...prev, product_cost: value }))}
+            />
+            <Field
+              label="Shipping"
+              value={draft.shipping_to_customer}
+              onChange={(value) => setDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
+            />
+            <Field
+              label="Platform fees"
+              value={draft.platform_fees}
+              onChange={(value) => setDraft((prev) => ({ ...prev, platform_fees: value }))}
+            />
+          </div>
+        </>
+      ) : (
+        <EconomicsSection
+          sell={parsedMoney(displayEconomics.selling_price)}
+          cost={parsedMoney(displayEconomics.product_cost)}
+          shipping={parsedMoney(displayEconomics.shipping_to_customer)}
+          fees={parsedMoney(displayEconomics.platform_fees)}
+          currency="GBP"
+          onEdit={() => setEditing(true)}
+        />
       )}
 
       {saving ? <p className="mt-3 text-xs font-semibold text-ink-500">Saving economics...</p> : null}
-      {projection.missingNumbers && projection.margin !== null ? (
-        <p className="mt-3 text-xs leading-5 text-ink-500">
-          This margin uses sell price minus product cost. Add shipping and platform fees later for the full economics.
-        </p>
-      ) : null}
     </section>
   );
 }
 
-function EconomicsTerm({ label, value }: { label: string; value: string | undefined }) {
+type EconomicsProps = {
+  sell: number | null;
+  cost: number | null;
+  shipping: number | null;
+  fees: number | null;
+  currency: string;
+  onEdit: (field?: EconomicsField) => void;
+};
+
+function EconomicsSection({ sell, cost, shipping, fees, currency, onEdit }: EconomicsProps) {
+  const margin = sell !== null && cost !== null ? sell - cost - (shipping ?? 0) - (fees ?? 0) : null;
+  const percent = margin !== null && sell !== null && sell > 0 ? (margin / sell) * 100 : null;
+  const hasMissingFields = shipping === null || fees === null;
+
   return (
-    <span className="inline-flex items-baseline gap-2">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</span>
-      <span className="font-[Manrope] text-xl font-bold text-ink-900">{formatMoneyDisplay(value)}</span>
+    <>
+      <SectionHeader hasMissingFields={hasMissingFields} onEdit={onEdit} />
+      <div className="mt-5">
+        <MarginFormula
+          sell={sell}
+          cost={cost}
+          shipping={shipping}
+          fees={fees}
+          margin={margin}
+          percent={percent}
+          currency={currency}
+          incomplete={hasMissingFields}
+          onEdit={onEdit}
+        />
+      </div>
+      <div className="mt-3">
+        <MarginBadge percent={percent} complete={!hasMissingFields} />
+      </div>
+      <MarginDisclaimer shipping={shipping} fees={fees} onEdit={onEdit} />
+    </>
+  );
+}
+
+function SectionHeader({
+  hasMissingFields,
+  onEdit,
+}: {
+  hasMissingFields: boolean;
+  onEdit: (field?: EconomicsField) => void;
+}) {
+  const Button = hasMissingFields ? PrimaryButton : SecondaryButton;
+
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Economics</h2>
+        <p className="mt-1 text-sm text-ink-500">Projected margin</p>
+      </div>
+      <Button type="button" onClick={() => onEdit()} className="px-4 py-2">
+        Edit economics
+      </Button>
+    </div>
+  );
+}
+
+function MarginFormula({
+  sell,
+  cost,
+  shipping,
+  fees,
+  margin,
+  percent,
+  currency,
+  incomplete,
+  onEdit,
+}: EconomicsProps & {
+  margin: number | null;
+  percent: number | null;
+  incomplete: boolean;
+}) {
+  return (
+    <>
+      <div className="hidden flex-wrap items-baseline gap-x-3 gap-y-2 md:flex md:flex-nowrap">
+        <FormulaTerm label="Sell" value={sell} currency={currency} onEdit={() => onEdit("sell")} />
+        <Operator>−</Operator>
+        <FormulaTerm label="Cost" value={cost} currency={currency} onEdit={() => onEdit("cost")} />
+        <Operator>−</Operator>
+        <FormulaTerm label="Shipping" value={shipping} currency={currency} onEdit={() => onEdit("shipping")} />
+        <Operator>−</Operator>
+        <FormulaTerm label="Fees" value={fees} currency={currency} onEdit={() => onEdit("fees")} />
+        <Operator>=</Operator>
+        <MarginResult margin={margin} percent={percent} currency={currency} incomplete={incomplete} />
+      </div>
+      <StackedMarginFormula
+        sell={sell}
+        cost={cost}
+        shipping={shipping}
+        fees={fees}
+        margin={margin}
+        percent={percent}
+        currency={currency}
+        incomplete={incomplete}
+        onEdit={onEdit}
+      />
+    </>
+  );
+}
+
+function FormulaTerm({
+  label,
+  value,
+  currency,
+  onEdit,
+}: {
+  label: string;
+  value: number | null;
+  currency: string;
+  onEdit: () => void;
+}) {
+  return (
+    <span className="inline-flex items-baseline">
+      <span className="mr-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500">{label}</span>
+      {value !== null ? (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-md px-1 py-0.5 font-[Manrope] text-base font-medium text-ink-900 transition hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          <CurrencyValue value={value} currency={currency} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-md border border-dashed border-ink-300 px-2 py-0.5 text-sm font-medium text-ink-500 transition hover:border-ink-700 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          + Add {label.toLowerCase()}
+        </button>
+      )}
     </span>
+  );
+}
+
+function Operator({ children }: { children: ReactNode }) {
+  return <span className="text-lg font-light text-ink-300">{children}</span>;
+}
+
+function MarginResult({
+  margin,
+  percent,
+  currency,
+  incomplete,
+}: {
+  margin: number | null;
+  percent: number | null;
+  currency: string;
+  incomplete: boolean;
+}) {
+  const tier = getMarginTier(percent, !incomplete);
+  const formatted = formatCurrency(margin, currency);
+  const percentLabel = percent === null ? "not known" : formatPercent(percent);
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5"
+      aria-label={`Projected margin ${formatted}, ${percentLabel}, ${tier.label}`}
+    >
+      <span className="mr-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500">Margin</span>
+      <span className="rounded-md bg-success-100 px-2 py-1 font-[Manrope] text-xl font-semibold text-[#005e3f]">
+        {formatted}
+      </span>
+      <span className="ml-1 text-sm font-semibold text-[#005e3f] opacity-80">
+        ({percent === null ? "—" : formatPercent(percent)})
+      </span>
+      {incomplete ? (
+        <button
+          type="button"
+          aria-label="Margin is estimated because shipping or fees are not yet added."
+          title="Margin is estimated. Add shipping and platform fees for a complete picture."
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          !
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
+function MarginBadge({ percent, complete }: { percent: number | null; complete: boolean }) {
+  const tier = getMarginTier(percent, complete);
+
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${tier.className}`}>
+      {tier.label}
+    </span>
+  );
+}
+
+function getMarginTier(
+  pct: number | null,
+  complete: boolean,
+): {
+  label: string;
+  className: string;
+} {
+  const suffix = complete ? "" : " (est.)";
+  if (pct === null) return { label: "Incomplete", className: "bg-surface-sunken text-ink-600" };
+  if (pct >= 60) return { label: `Strong${suffix}`, className: "bg-success-100 text-[#005e3f]" };
+  if (pct >= 30) return { label: `Healthy${suffix}`, className: "bg-[#ecfdf3] text-[#006b4a]" };
+  if (pct >= 10) return { label: `Thin${suffix}`, className: "bg-amber-100 text-amber-800" };
+  return { label: `Risky${suffix}`, className: "bg-error-100 text-error-700" };
+}
+
+function MarginDisclaimer({
+  shipping,
+  fees,
+  onEdit,
+}: {
+  shipping: number | null;
+  fees: number | null;
+  onEdit: (field?: EconomicsField) => void;
+}) {
+  if (fees === null) {
+    return (
+      <p className="mt-3 text-sm leading-6 text-ink-500">
+        Margin includes product cost{shipping !== null ? " and shipping" : ""}. Add platform fees for a complete
+        picture.
+        <button
+          type="button"
+          onClick={() => onEdit("fees")}
+          className="ml-1 text-ink-900 underline underline-offset-2 transition hover:text-cobalt-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          Add fees
+        </button>
+      </p>
+    );
+  }
+
+  return <p className="mt-3 text-sm text-ink-500">Full economics: sell price minus all costs.</p>;
+}
+
+function StackedMarginFormula({
+  sell,
+  cost,
+  shipping,
+  fees,
+  margin,
+  percent,
+  currency,
+  incomplete,
+  onEdit,
+}: EconomicsProps & {
+  margin: number | null;
+  percent: number | null;
+  incomplete: boolean;
+}) {
+  return (
+    <dl className="divide-y divide-ink-100 md:hidden">
+      <FormulaRow label="Sell" value={sell} currency={currency} onEdit={() => onEdit("sell")} />
+      <FormulaRow label="Cost" value={cost} currency={currency} sign="−" onEdit={() => onEdit("cost")} />
+      <FormulaRow label="Shipping" value={shipping} currency={currency} sign="−" onEdit={() => onEdit("shipping")} />
+      <FormulaRow label="Fees" value={fees} currency={currency} sign="−" onEdit={() => onEdit("fees")} />
+      <FormulaRow
+        label="Margin"
+        value={margin}
+        currency={currency}
+        sign="="
+        percent={percent}
+        emphasized
+        incomplete={incomplete}
+      />
+    </dl>
+  );
+}
+
+function FormulaRow({
+  label,
+  value,
+  currency,
+  sign,
+  percent,
+  emphasized = false,
+  incomplete = false,
+  onEdit,
+}: {
+  label: string;
+  value: number | null;
+  currency: string;
+  sign?: string;
+  percent?: number | null;
+  emphasized?: boolean;
+  incomplete?: boolean;
+  onEdit?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <dt className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+        {sign ? <span className="text-ink-300">{sign}</span> : null}
+        {label}
+      </dt>
+      <dd className={emphasized ? "font-[Manrope] text-lg font-bold text-[#005e3f]" : "font-[Manrope] font-semibold text-ink-900"}>
+        {onEdit ? (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="rounded-md px-1 py-0.5 transition hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+          >
+            {value === null ? `+ Add ${label.toLowerCase()}` : <CurrencyValue value={value} currency={currency} />}
+          </button>
+        ) : (
+          <>
+            {formatCurrency(value, currency)}
+            {percent !== undefined ? (
+              <span className="ml-1 text-sm font-semibold opacity-80">
+                ({percent === null ? "—" : formatPercent(percent)})
+              </span>
+            ) : null}
+            {incomplete ? (
+              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                est.
+              </span>
+            ) : null}
+          </>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function CurrencyValue({ value, currency }: { value: number; currency: string }) {
+  const parts = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).formatToParts(value);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.type === "currency" ? (
+          <span key={`${part.type}-${index}`} className="font-normal opacity-70">
+            {part.value}
+          </span>
+        ) : (
+          <span key={`${part.type}-${index}`}>{part.value}</span>
+        ),
+      )}
+    </>
   );
 }
 
