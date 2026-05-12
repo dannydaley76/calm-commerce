@@ -832,37 +832,133 @@ function EconomicsSnapshot({
   saving,
 }: {
   economics: InstanceRow;
-  onSave: (values: Partial<EconomicsDraft>) => Promise<void>;
+  onSave: (values: Partial<EconomicsDraft>) => Promise<boolean>;
   saving: boolean;
 }) {
-  const projection = projectedEconomics(economics);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    selling_price: economics.selling_price ?? "",
+    product_cost: economics.product_cost ?? "",
+    shipping_to_customer: economics.shipping_to_customer ?? "",
+    platform_fees: economics.platform_fees ?? "",
+  });
+  const [displayEconomics, setDisplayEconomics] = useState({
+    ...economics,
+    selling_price: economics.selling_price ?? "",
+    product_cost: economics.product_cost ?? "",
+    shipping_to_customer: economics.shipping_to_customer ?? "",
+    platform_fees: economics.platform_fees ?? "",
+  });
+  const projection = projectedEconomics(displayEconomics);
+  const marginClass = marginTone(projection.marginPercent).includes("success")
+    ? "text-[#005e3f]"
+    : marginTone(projection.marginPercent).includes("amber")
+      ? "text-[#835700]"
+      : "text-error-700";
+
+  useEffect(() => {
+    if (editing) return;
+    setDraft({
+      selling_price: economics.selling_price ?? "",
+      product_cost: economics.product_cost ?? "",
+      shipping_to_customer: economics.shipping_to_customer ?? "",
+      platform_fees: economics.platform_fees ?? "",
+    });
+    setDisplayEconomics({
+      ...economics,
+      selling_price: economics.selling_price ?? "",
+      product_cost: economics.product_cost ?? "",
+      shipping_to_customer: economics.shipping_to_customer ?? "",
+      platform_fees: economics.platform_fees ?? "",
+    });
+  }, [editing, economics.platform_fees, economics.product_cost, economics.selling_price, economics.shipping_to_customer]);
+
+  async function saveDraft() {
+    const saved = await onSave(draft);
+    if (saved) {
+      setDisplayEconomics((prev) => ({ ...prev, ...draft }));
+      setEditing(false);
+    }
+  }
+
+  function cancelDraft() {
+    setDraft({
+      selling_price: economics.selling_price ?? "",
+      product_cost: economics.product_cost ?? "",
+      shipping_to_customer: economics.shipping_to_customer ?? "",
+      platform_fees: economics.platform_fees ?? "",
+    });
+    setEditing(false);
+  }
 
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
-      <div className="mt-4 flex flex-wrap items-baseline gap-3 text-ink-900">
-        <EditableMoney
-          label="Sell"
-          value={economics.selling_price}
-          onSave={(value) => onSave({ selling_price: value })}
-        />
-        <span className="text-lg font-semibold text-ink-300">−</span>
-        <EditableMoney
-          label="Cost"
-          value={economics.product_cost}
-          onSave={(value) => onSave({ product_cost: value })}
-        />
-        <span className="text-lg font-semibold text-ink-300">=</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">Margin</span>
-          <span className={`font-[Manrope] text-xl font-bold ${marginTone(projection.marginPercent).includes("success") ? "text-[#005e3f]" : marginTone(projection.marginPercent).includes("amber") ? "text-[#835700]" : "text-error-700"}`}>
-            {formatCurrency(projection.margin)}
-          </span>
-          <span className={`text-sm font-bold ${marginTone(projection.marginPercent).includes("success") ? "text-[#005e3f]" : marginTone(projection.marginPercent).includes("amber") ? "text-[#835700]" : "text-error-700"}`}>
-            ({projection.marginPercent === null ? "—" : formatPercent(projection.marginPercent)})
-          </span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cobalt-600">Economics</p>
+          <h2 className="mt-2 font-[Manrope] text-lg font-bold text-ink-900">Projected margin</h2>
         </div>
+        {editing ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <PrimaryButton type="button" disabled={saving} onClick={() => void saveDraft()} className="px-4 py-2">
+              {saving ? "Saving" : "Save"}
+            </PrimaryButton>
+            <SecondaryButton type="button" disabled={saving} onClick={cancelDraft} className="px-4 py-2">
+              Cancel
+            </SecondaryButton>
+          </div>
+        ) : (
+          <SecondaryButton type="button" onClick={() => setEditing(true)} className="px-4 py-2">
+            Edit economics
+          </SecondaryButton>
+        )}
       </div>
+
+      {editing ? (
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field
+            label="Sell price"
+            value={draft.selling_price}
+            onChange={(value) => setDraft((prev) => ({ ...prev, selling_price: value }))}
+          />
+          <Field
+            label="Product cost"
+            value={draft.product_cost}
+            onChange={(value) => setDraft((prev) => ({ ...prev, product_cost: value }))}
+          />
+          <Field
+            label="Shipping"
+            value={draft.shipping_to_customer}
+            onChange={(value) => setDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
+          />
+          <Field
+            label="Platform fees"
+            value={draft.platform_fees}
+            onChange={(value) => setDraft((prev) => ({ ...prev, platform_fees: value }))}
+          />
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-baseline gap-3 text-ink-900">
+          <EconomicsTerm label="Sell" value={displayEconomics.selling_price} />
+          <span className="text-lg font-semibold text-ink-300">−</span>
+          <EconomicsTerm label="Cost" value={displayEconomics.product_cost} />
+          <span className="text-lg font-semibold text-ink-300">−</span>
+          <EconomicsTerm label="Shipping" value={displayEconomics.shipping_to_customer} />
+          <span className="text-lg font-semibold text-ink-300">−</span>
+          <EconomicsTerm label="Fees" value={displayEconomics.platform_fees} />
+          <span className="text-lg font-semibold text-ink-300">=</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">Margin</span>
+            <span className={`font-[Manrope] text-xl font-bold ${marginClass}`}>
+              {formatCurrency(projection.margin)}
+            </span>
+            <span className={`text-sm font-bold ${marginClass}`}>
+              ({projection.marginPercent === null ? "—" : formatPercent(projection.marginPercent)})
+            </span>
+          </div>
+        </div>
+      )}
+
       {saving ? <p className="mt-3 text-xs font-semibold text-ink-500">Saving economics...</p> : null}
       {projection.missingNumbers && projection.margin !== null ? (
         <p className="mt-3 text-xs leading-5 text-ink-500">
@@ -870,6 +966,15 @@ function EconomicsSnapshot({
         </p>
       ) : null}
     </section>
+  );
+}
+
+function EconomicsTerm({ label, value }: { label: string; value: string | undefined }) {
+  return (
+    <span className="inline-flex items-baseline gap-2">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-500">{label}</span>
+      <span className="font-[Manrope] text-xl font-bold text-ink-900">{formatMoneyDisplay(value)}</span>
+    </span>
   );
 }
 
@@ -1538,19 +1643,29 @@ export function IdeaDetailClient({
     }
   };
 
-  const saveEconomicsPatch = async (patch: Partial<EconomicsDraft>) => {
+  const saveEconomicsPatch = async (patch: Partial<EconomicsDraft>): Promise<boolean> => {
     const nextDraft = { ...economicsDraft, ...patch };
     setEconomicsDraft(nextDraft);
     setSectionStatus("economics", "saving");
-    const nextRows = economicsRows.map((row) => ({ ...row }));
-    nextRows[economicsMatch.index] = {
-      ...(nextRows[economicsMatch.index] ?? {}),
-      ...nextDraft,
-      idea_id: idea.ideaId,
-      idea_name: ideaDraft.idea_description || idea.label,
-    };
-    const result = await writeWorksheetField("idea_economics", JSON.stringify(nextRows), "unit-economics-worksheet");
-    setSectionStatus("economics", result.ok ? "saved" : "error");
+    try {
+      const response = await fetch("/api/ideas/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_economics",
+          ideaId: idea.ideaId,
+          sellingPrice: nextDraft.selling_price,
+          productCost: nextDraft.product_cost,
+          shippingToCustomer: nextDraft.shipping_to_customer,
+          platformFees: nextDraft.platform_fees,
+        }),
+      });
+      setSectionStatus("economics", response.ok ? "saved" : "error");
+      return response.ok;
+    } catch {
+      setSectionStatus("economics", "error");
+      return false;
+    }
   };
 
   const saveTest = async () => {

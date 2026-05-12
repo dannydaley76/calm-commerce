@@ -74,6 +74,8 @@ export async function POST(request: Request) {
       status?: ProductIdeaWorkspaceStatus;
       sellingPrice?: string;
       productCost?: string;
+      shippingToCustomer?: string;
+      platformFees?: string;
     };
 
     const { supabase, user, projectId } = await getActiveProjectForCurrentUser();
@@ -99,8 +101,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Choose a valid workspace status." }, { status: 400 });
     }
 
-    if (action === "update_economics" && body.sellingPrice === undefined && body.productCost === undefined) {
-      return NextResponse.json({ error: "Add a selling price or product cost to save." }, { status: 400 });
+    if (
+      action === "update_economics" &&
+      body.sellingPrice === undefined &&
+      body.productCost === undefined &&
+      body.shippingToCustomer === undefined &&
+      body.platformFees === undefined
+    ) {
+      return NextResponse.json({ error: "Add at least one economics value to save." }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -177,6 +185,8 @@ export async function POST(request: Request) {
         idea_name: normalize(productIdeas[targetIndex].idea_description) || `Idea ${targetIndex + 1}`,
         selling_price: body.sellingPrice === undefined ? existing.selling_price ?? "" : normalize(body.sellingPrice),
         product_cost: body.productCost === undefined ? existing.product_cost ?? "" : normalize(body.productCost),
+        shipping_to_customer: body.shippingToCustomer === undefined ? existing.shipping_to_customer ?? "" : normalize(body.shippingToCustomer),
+        platform_fees: body.platformFees === undefined ? existing.platform_fees ?? "" : normalize(body.platformFees),
       };
       const nextEconomics = economicsIndex >= 0
         ? ideaEconomics.map((row, index) => (index === economicsIndex ? nextRow : row))
