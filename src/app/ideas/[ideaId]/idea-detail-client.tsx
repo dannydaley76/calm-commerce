@@ -1073,14 +1073,6 @@ function EconomicsSnapshot({
               <h2 className="font-[Manrope] text-lg font-bold text-ink-900">Economics</h2>
               <p className="mt-1 text-sm text-ink-500">Projected margin</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <PrimaryButton type="button" disabled={saving} onClick={() => void saveDraft()} className="px-4 py-2">
-                {saving ? "Saving" : "Save"}
-              </PrimaryButton>
-              <SecondaryButton type="button" disabled={saving} onClick={cancelDraft} className="px-4 py-2">
-                Cancel
-              </SecondaryButton>
-            </div>
           </div>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <Field
@@ -1105,6 +1097,16 @@ function EconomicsSnapshot({
             currency="GBP"
             onChange={(rows) => setDraft((prev) => ({ ...prev, platform_fees: serializeFeeRows(rows) }))}
           />
+          <div className="mt-5 border-t border-ink-100 pt-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <PrimaryButton type="button" disabled={saving} onClick={() => void saveDraft()} className="px-4 py-2">
+                {saving ? "Saving" : "Save"}
+              </PrimaryButton>
+              <SecondaryButton type="button" disabled={saving} onClick={cancelDraft} className="px-4 py-2">
+                Cancel
+              </SecondaryButton>
+            </div>
+          </div>
         </>
       ) : (
         <EconomicsSection
