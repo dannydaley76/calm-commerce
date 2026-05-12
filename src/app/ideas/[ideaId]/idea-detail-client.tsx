@@ -991,7 +991,7 @@ function ScoutSignalSummary({
             <LockedSignalCard label="Any-site analysis" detail="Scan product pages beyond Amazon and AliExpress." />
           </div>
           <p className="mt-3 text-sm text-ink-500">
-            <a href="/upgrade" className="font-semibold !text-cobalt-600 underline-offset-4 hover:!text-cobalt-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2">
+            <a href="/upgrade?plan=scout_pro" className="font-semibold !text-cobalt-600 underline-offset-4 hover:!text-cobalt-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2">
               Upgrade Scout to Pro
             </a>{" "}
             to unlock AI research features.
@@ -1780,7 +1780,7 @@ function ScoutUpgradePanel({ canUseResearchWorkspace }: { canUseResearchWorkspac
             Move from basic saves to deeper Scout research, better product-page extraction, and richer product notes before the full OS launches.
           </p>
         </div>
-        <PrimaryButton href="/upgrade" className="shrink-0">
+        <PrimaryButton href="/upgrade?plan=scout_pro" className="shrink-0">
           Upgrade Scout
         </PrimaryButton>
       </div>
@@ -1917,7 +1917,7 @@ function NotesSection({
           <p className="mt-1 text-sm leading-6 text-ink-600">
             Free Scout captures let you save a few products. Notes, follow-ups, and ongoing workspace organisation are included with Scout Basic and Pro.
           </p>
-          <PrimaryButton href="/upgrade" className="mt-3 px-4 py-2">
+          <PrimaryButton href="/upgrade?plan=scout_basic" className="mt-3 px-4 py-2">
             Upgrade Scout
           </PrimaryButton>
         </div>

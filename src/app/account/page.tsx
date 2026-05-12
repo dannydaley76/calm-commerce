@@ -1,6 +1,6 @@
 import { AccessStatusBadge } from "@/components/access-status-badge";
 import { LearnerShell } from "@/components/learner-shell";
-import { PrimaryButton, SecondaryButton, DestructiveButton } from "@/components/design-system";
+import { PrimaryButton, DestructiveButton } from "@/components/design-system";
 import { getActiveProjectForCurrentUser } from "@/lib/auth/get-active-project";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
@@ -15,7 +15,7 @@ async function getAccountState() {
   }
 
   const [{ data: learner }, { data: deletionRequest }] = await Promise.all([
-    supabase.from("learners").select("email, full_name").eq("id", learnerId).maybeSingle(),
+    supabase.from("learners").select("email").eq("id", learnerId).maybeSingle(),
     supabase
       .from("account_deletion_requests")
       .select("id, status")
@@ -28,7 +28,6 @@ async function getAccountState() {
   return {
     authenticated: true as const,
     email: learner?.email ?? user.email ?? null,
-    fullName: learner?.full_name ?? null,
     access,
     deletionRequested: !!deletionRequest,
     deletionStatus: deletionRequest?.status ?? null,
@@ -65,23 +64,32 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<{ profile?: string; deletion?: string }>;
 }) {
-  const [state, { profile, deletion }] = await Promise.all([
+  const [state, { deletion }] = await Promise.all([
     getAccountState(),
     searchParams,
   ]);
+  const scoutOnlyNav = !state.access.canAccessOsContent;
+  const navItems = scoutOnlyNav
+    ? [
+      { href: "/ideas", label: "Scout Workspace" },
+      { href: "/upgrade", label: "Upgrade" },
+      { href: "/account", label: "Account", active: true },
+    ]
+    : [
+      { href: "/",            label: "Dashboard" },
+      { href: "/program",     label: "Program" },
+      { href: "/ideas",       label: "Ideas" },
+      { href: "/lean-canvas", label: "Lean Canvas" },
+      { href: "/metrics",     label: "Metrics" },
+      { href: "/account",     label: "Account", active: true },
+    ];
 
   return (
     <LearnerShell
-      items={[
-        { href: "/",            label: "Dashboard" },
-        { href: "/program",     label: "Program" },
-        { href: "/ideas",       label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics",     label: "Metrics" },
-        { href: "/account",     label: "Account", active: true },
-      ]}
+      items={navItems}
+      homeHref={scoutOnlyNav ? "/ideas" : "/"}
       title="Account"
-      subtitle="Manage your learner account details and access."
+      subtitle="Manage your account and access."
     >
       <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
 
@@ -101,23 +109,11 @@ export default async function AccountPage({
           ) : (
             <div className="mt-6 space-y-6">
 
-              {/* Profile updated / error feedback */}
-              {profile === "updated" && (
-                <Banner variant="success">Profile saved successfully.</Banner>
-              )}
-              {profile === "error" && (
-                <Banner variant="error">Something went wrong saving your profile. Please try again.</Banner>
-              )}
-
               {/* Info tiles */}
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl bg-surface-sunken p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Email</p>
                   <p className="mt-2 text-sm leading-7 text-ink-900 break-all">{state.email || "Unknown"}</p>
-                </div>
-                <div className="rounded-xl bg-surface-sunken p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Currency</p>
-                  <p className="mt-2 text-sm leading-7 text-ink-500">GBP (fixed)</p>
                 </div>
                 <div className="rounded-xl bg-surface-sunken p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-500">Access</p>
@@ -131,63 +127,6 @@ export default async function AccountPage({
                   </div>
                 </div>
               </div>
-
-              {/* Edit profile form */}
-              <form
-                action="/api/account/update-profile"
-                method="post"
-                className="rounded-xl border border-ink-100 bg-surface-sunken p-5"
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-600">
-                  Edit profile
-                </p>
-                <div className="mt-4 grid max-w-2xl gap-4 sm:grid-cols-2">
-                  <div>
-                    <label
-                      className="block text-sm font-medium text-ink-900"
-                      htmlFor="full_name"
-                    >
-                      Full name
-                    </label>
-                    <input
-                      id="full_name"
-                      name="full_name"
-                      type="text"
-                      defaultValue={state.fullName ?? ""}
-                      className="mt-2 w-full rounded-xl border border-ink-100 bg-surface-raised px-4 py-3 text-sm text-ink-900 outline-none transition focus:border-cobalt-600 focus:ring-2 focus:ring-cobalt-500/20"
-                      placeholder="Your name"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium text-ink-900"
-                      htmlFor="currency_code"
-                    >
-                      Currency
-                    </label>
-                    {/* defaultValue + readOnly prevents the React controlled-input warning */}
-                    <input
-                      id="currency_code"
-                      name="currency_code"
-                      type="text"
-                      defaultValue="GBP"
-                      readOnly
-                      className="mt-2 w-full cursor-not-allowed rounded-xl border border-ink-100 bg-surface-sunken px-4 py-3 text-sm text-ink-500 outline-none"
-                    />
-                  </div>
-                </div>
-                <p className="mt-3 max-w-2xl text-xs leading-6 text-ink-500">
-                  Currency preference is fixed to GBP while locale-aware onboarding is in development.
-                </p>
-                <div className="mt-5">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center justify-center rounded-lg bg-cobalt-600 px-5 py-3 text-[13px] font-medium text-white shadow-[0_1px_2px_rgba(11,42,57,0.08)] transition hover:bg-cobalt-700 motion-safe:hover:-translate-y-px hover:shadow-[0_6px_14px_rgba(0,73,207,0.30)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
-                  >
-                    Save profile
-                  </button>
-                </div>
-              </form>
 
             </div>
           )}
@@ -205,7 +144,7 @@ export default async function AccountPage({
               Subscription and access
             </h3>
             <p className="mt-3 text-sm leading-7 text-ink-500">
-              Review your current access and upgrade to the full program when you&apos;re ready.
+              Review your current Scout access and upgrade when you need more research depth.
             </p>
             <div className="mt-6">
               <PrimaryButton href="/upgrade">View upgrade options</PrimaryButton>
@@ -221,8 +160,7 @@ export default async function AccountPage({
               Request account deletion
             </h3>
             <p className="mt-3 text-sm leading-7 text-ink-500">
-              If you want your account removed, submit a deletion request here.
-              It will be processed through our support flow.
+              If you want your account and saved Scout products removed, submit a deletion request here. We record the request and process it through support.
             </p>
 
             {/* Deletion feedback */}

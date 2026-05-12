@@ -21,6 +21,11 @@ This file tracks improvements to make after the first paid Scout / Calm Commerce
   - Preserve filters, search, and status tabs across page changes.
   - Consider page size options around 25 / 50 / 100 products.
   - Reason: Basic allows 50 saves now, Pro may accumulate hundreds, and the current table is optimized for launch testing rather than large catalog browsing.
+- [ ] Add global default economics fees.
+  - Let users define common fees once, such as Shopify, Stripe, Etsy, Amazon referral fees, or fixed payment-processing fees.
+  - New product candidates should inherit those defaults automatically.
+  - Product-level economics should still allow per-product overrides.
+  - Reason: repeated fee entry is tedious and will get worse as users save more candidates.
 
 ## Scout Enrichment Infrastructure
 

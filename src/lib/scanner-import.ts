@@ -182,8 +182,10 @@ export function parseScannerImportPayloadParam(value: string | null | undefined)
 }
 
 function isExpiredScan(scannedAt: string | undefined): boolean {
-  if (!scannedAt || !/^\d{4}-\d{2}-\d{2}$/.test(scannedAt)) return false;
-  const scanned = new Date(`${scannedAt}T12:00:00Z`).getTime();
+  if (!scannedAt) return false;
+  const scanned = /^\d{4}-\d{2}-\d{2}$/.test(scannedAt)
+    ? new Date(`${scannedAt}T12:00:00Z`).getTime()
+    : new Date(scannedAt).getTime();
   if (!Number.isFinite(scanned)) return false;
   const ageDays = (Date.now() - scanned) / (1000 * 60 * 60 * 24);
   return ageDays > MAX_IMPORT_AGE_DAYS || ageDays < -1;

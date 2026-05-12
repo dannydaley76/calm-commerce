@@ -89,18 +89,26 @@ export default async function IdeaDetailPage({
   const data = await getIdeaDetail(decodeURIComponent(ideaId));
 
   if (data.authenticated && !data.idea) notFound();
+  const navItems = data.canAccessOsContent
+    ? [
+      { href: "/",            label: "Dashboard" },
+      { href: "/program",     label: "Program" },
+      { href: "/ideas",       label: "Ideas", active: true },
+      { href: "/lean-canvas", label: "Lean Canvas" },
+      { href: "/metrics",     label: "Metrics" },
+      { href: "/account",     label: "Account" },
+    ]
+    : [
+      { href: "/ideas", label: "Scout Workspace", active: true },
+      { href: "/upgrade", label: "Upgrade" },
+      { href: "/account", label: "Account" },
+    ];
 
   return (
     <LearnerShell
-      items={[
-        { href: "/",            label: "Dashboard" },
-        { href: "/program",     label: "Program" },
-        { href: "/ideas",       label: "Ideas", active: true },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics",     label: "Metrics" },
-        { href: "/account",     label: "Account" },
-      ]}
-      title="Ideas"
+      items={navItems}
+      homeHref={data.canAccessOsContent ? "/" : "/ideas"}
+      title={data.canAccessOsContent ? "Ideas" : "Scout Workspace"}
       showLogout={data.authenticated}
     >
       {data.error ? (

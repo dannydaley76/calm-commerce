@@ -1,28 +1,50 @@
 import Link from "next/link";
 import { LearnerShell } from "@/components/learner-shell";
 import { BILLING_PLANS } from "@/lib/billing/products";
+import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 import { CheckoutAutostart } from "./checkout-autostart";
 
 const PLAN_ORDER = ["scout_basic", "scout_pro", "calm_commerce_os"] as const;
+
+function nextCheckoutPlan(selectedPlan: string | undefined, activeProducts: string[]): string | undefined {
+  if (selectedPlan === "calm_commerce_os") return undefined;
+  if (selectedPlan === "scout_basic" && activeProducts.includes("scanner_extension")) return "scout_pro";
+  if (selectedPlan === "scout_basic" && activeProducts.includes("research_workspace")) return undefined;
+  if (selectedPlan === "scout_pro" && activeProducts.includes("research_workspace")) return undefined;
+  return selectedPlan;
+}
 
 export default async function UpgradePage({
   searchParams,
 }: {
   searchParams?: Promise<{ plan?: string }>;
 }) {
-  const selectedPlan = (await searchParams)?.plan;
-  const checkoutPlan = selectedPlan === "calm_commerce_os" ? undefined : selectedPlan;
+  const [params, access] = await Promise.all([searchParams, getAccessStateForCurrentUser()]);
+  const selectedPlan = params?.plan;
+  const checkoutPlan = nextCheckoutPlan(selectedPlan, access.activeProducts);
+  const hasBasic = access.activeProducts.includes("scanner_extension");
+  const hasPro = access.activeProducts.includes("research_workspace");
+  const hasOs = access.activeProducts.includes("calm_commerce_os");
+  const scoutOnlyNav = !access.canAccessOsContent;
+  const navItems = scoutOnlyNav
+    ? [
+      { href: "/ideas", label: "Scout Workspace" },
+      { href: "/upgrade", label: "Upgrade", active: true },
+      { href: "/account", label: "Account" },
+    ]
+    : [
+      { href: "/", label: "Dashboard" },
+      { href: "/program", label: "Program" },
+      { href: "/ideas", label: "Ideas" },
+      { href: "/lean-canvas", label: "Lean Canvas" },
+      { href: "/metrics", label: "Metrics" },
+      { href: "/account", label: "Account" },
+    ];
 
   return (
     <LearnerShell
-      items={[
-        { href: "/", label: "Dashboard" },
-        { href: "/program", label: "Program" },
-        { href: "/ideas", label: "Ideas" },
-        { href: "/lean-canvas", label: "Lean Canvas" },
-        { href: "/metrics", label: "Metrics" },
-        { href: "/account", label: "Account" },
-      ]}
+      items={navItems}
+      homeHref={scoutOnlyNav ? "/ideas" : "/"}
       title="Upgrade"
       subtitle="Choose the product research or operating system tier that fits where you are."
     >
@@ -40,6 +62,10 @@ export default async function UpgradePage({
           {PLAN_ORDER.map((planCode) => {
             const plan = BILLING_PLANS[planCode];
             const comingSoon = plan.code === "calm_commerce_os";
+            const currentPlan =
+              (plan.code === "scout_basic" && hasBasic && !hasPro && !hasOs) ||
+              (plan.code === "scout_pro" && hasPro && !hasOs) ||
+              (plan.code === "calm_commerce_os" && hasOs);
             return (
               <article key={plan.code} className="flex rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-card">
                 <div className="flex min-h-full flex-col">
@@ -61,7 +87,15 @@ export default async function UpgradePage({
                     ))}
                   </ul>
 
-                  {comingSoon ? (
+                  {currentPlan ? (
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-auto inline-flex w-full cursor-default items-center justify-center rounded-xl border border-success-100 bg-success-100 px-5 py-3 font-semibold text-[#005e3f]"
+                    >
+                      Current plan
+                    </button>
+                  ) : comingSoon ? (
                     <button
                       type="button"
                       disabled
@@ -84,8 +118,8 @@ export default async function UpgradePage({
         </div>
 
         <div>
-          <Link href="/" className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-6 py-4 font-semibold text-ink-900">
-            Back to dashboard
+          <Link href={scoutOnlyNav ? "/ideas" : "/"} className="inline-flex items-center justify-center rounded-xl border border-ink-100 bg-white px-6 py-4 font-semibold text-ink-900">
+            {scoutOnlyNav ? "Back to Scout Workspace" : "Back to dashboard"}
           </Link>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AccessStatusBadge } from "@/components/access-status-badge";
 import { LearnerShell } from "@/components/learner-shell";
 import { PrimaryButton, SecondaryButton, ProgressBar, Eyebrow } from "@/components/design-system";
@@ -451,6 +452,10 @@ export default async function DashboardPage() {
     getDashboardData(),
     getAccessStateForCurrentUser(),
   ]);
+
+  if (access.authenticated && !access.canAccessOsContent) {
+    redirect("/ideas");
+  }
 
   const cta = deriveCta(data);
 

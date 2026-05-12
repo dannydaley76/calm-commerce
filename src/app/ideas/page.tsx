@@ -163,6 +163,7 @@ export default async function IdeasPage({
   return (
     <LearnerShell
       items={navItems}
+      homeHref={data.canAccessOsContent ? "/" : "/ideas"}
       showLogout={data.authenticated}
     >
       <div className="space-y-5">
