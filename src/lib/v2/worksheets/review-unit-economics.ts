@@ -1,3 +1,5 @@
+import { calculateFeeRowsTotal, parseFeeRows } from "./economics-fees";
+
 export type UnitEconomicsIdeaRow = Record<string, string | undefined>;
 
 export type IdeaReviewLabel =
@@ -31,6 +33,8 @@ function parseMoney(value: string | undefined): number | null {
 
 function parseFee(value: string | undefined, sellingPrice: number): number | null {
   if (!value) return null;
+  const feeRows = parseFeeRows(value);
+  if (feeRows.length > 0) return calculateFeeRowsTotal(feeRows, sellingPrice);
   const parsed = parseMoney(value);
   if (parsed === null) return null;
   return value.includes("%") ? sellingPrice * (parsed / 100) : parsed;

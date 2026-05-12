@@ -99,6 +99,21 @@ describe("reviewUnitEconomicsIdeas", () => {
     expect(economics.marginPercent).toBeCloseTo(43.33, 2);
   });
 
+  it("calculates structured percentage and fixed fee rows", () => {
+    const economics = calculateUnitEconomics({
+      selling_price: "£20",
+      product_cost: "£10",
+      shipping_to_customer: "£2",
+      platform_fees: JSON.stringify([
+        { id: "fee_1", name: "Stripe", type: "percent", value: "2.9" },
+        { id: "fee_2", name: "Payment fixed", type: "fixed", value: "0.20" },
+      ]),
+    });
+
+    expect(economics.margin).toBeCloseTo(7.22, 2);
+    expect(economics.marginPercent).toBeCloseTo(36.1, 1);
+  });
+
   it("requires raw costs rather than accepting a manual margin", () => {
     const [review] = reviewUnitEconomicsIdeas([
       {

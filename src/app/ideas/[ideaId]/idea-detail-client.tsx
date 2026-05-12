@@ -18,6 +18,14 @@ import type {
   ProductIdeaLifecycle,
   ProductIdeaLifecycleStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
+import {
+  calculateFeeRowAmount,
+  calculateFeeRowsTotal,
+  parseFeeRows,
+  serializeFeeRows,
+  type EconomicsFeeRow,
+  type EconomicsFeeType,
+} from "@/lib/v2/worksheets/economics-fees";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 
 type ResponseMap = Record<string, string>;
@@ -186,6 +194,50 @@ function formatMoneyDisplay(value: string | null | undefined): string {
   const parsed = parsedMoney(value);
   if (parsed === null) return "Not added";
   return formatCurrency(parsed);
+}
+
+function createFeeId(): string {
+  return `fee_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function feeRowsFromStorage(value: string | null | undefined): EconomicsFeeRow[] {
+  const rows = parseFeeRows(value ?? undefined);
+  if (rows.length > 0) return rows;
+
+  const trimmed = (value ?? "").trim();
+  if (!trimmed || trimmed === "[]") return [];
+
+  return [
+    {
+      id: "fee_legacy",
+      name: "Platform fee",
+      type: trimmed.includes("%") ? "percent" : "fixed",
+      value: trimmed.replace(/[^0-9.\-]/g, ""),
+    },
+  ];
+}
+
+function feeTotalFromStorage(value: string | null | undefined, sellingPrice: number | null): number | null {
+  if (sellingPrice === null) return null;
+  const rows = feeRowsFromStorage(value);
+  if (rows.length === 0) return null;
+  return calculateFeeRowsTotal(rows, sellingPrice);
+}
+
+function formatFeeSummary(value: string | null | undefined, sellingPrice: number | null): string {
+  const rows = feeRowsFromStorage(value);
+  if (rows.length === 0) return "";
+
+  return rows
+    .map((row) => {
+      const label = row.name.trim() || "Fee";
+      const amount = sellingPrice === null ? null : calculateFeeRowAmount(row, sellingPrice);
+      const rawValue = row.type === "percent"
+        ? `${row.value || "0"}%`
+        : formatCurrency(parsedMoney(row.value), "GBP");
+      return amount === null ? `${label}: ${rawValue}` : `${label}: ${rawValue} (${formatCurrency(amount)})`;
+    })
+    .join("\n");
 }
 
 function projectedEconomics(row: InstanceRow): {
@@ -1009,6 +1061,9 @@ function EconomicsSnapshot({
     setEditing(false);
   }
 
+  const displaySell = parsedMoney(displayEconomics.selling_price);
+  const displayFees = feeTotalFromStorage(displayEconomics.platform_fees, displaySell);
+
   return (
     <section className="rounded-xl border border-ink-100 bg-surface-raised p-5 shadow-card">
       {editing ? (
@@ -1027,7 +1082,7 @@ function EconomicsSnapshot({
               </SecondaryButton>
             </div>
           </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <Field
               label="Sell price"
               value={draft.selling_price}
@@ -1043,19 +1098,20 @@ function EconomicsSnapshot({
               value={draft.shipping_to_customer}
               onChange={(value) => setDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
             />
-            <Field
-              label="Platform fees"
-              value={draft.platform_fees}
-              onChange={(value) => setDraft((prev) => ({ ...prev, platform_fees: value }))}
-            />
           </div>
+          <FeeRowsEditor
+            value={draft.platform_fees}
+            sellingPrice={parsedMoney(draft.selling_price)}
+            currency="GBP"
+            onChange={(rows) => setDraft((prev) => ({ ...prev, platform_fees: serializeFeeRows(rows) }))}
+          />
         </>
       ) : (
         <EconomicsSection
-          sell={parsedMoney(displayEconomics.selling_price)}
+          sell={displaySell}
           cost={parsedMoney(displayEconomics.product_cost)}
           shipping={parsedMoney(displayEconomics.shipping_to_customer)}
-          fees={parsedMoney(displayEconomics.platform_fees)}
+          fees={displayFees}
           currency="GBP"
           onEdit={() => setEditing(true)}
         />
@@ -1063,6 +1119,127 @@ function EconomicsSnapshot({
 
       {saving ? <p className="mt-3 text-xs font-semibold text-ink-500">Saving economics...</p> : null}
     </section>
+  );
+}
+
+function FeeRowsEditor({
+  value,
+  sellingPrice,
+  currency,
+  onChange,
+}: {
+  value: string;
+  sellingPrice: number | null;
+  currency: string;
+  onChange: (rows: EconomicsFeeRow[]) => void;
+}) {
+  const rows = feeRowsFromStorage(value);
+
+  function updateRows(nextRows: EconomicsFeeRow[]) {
+    onChange(nextRows);
+  }
+
+  function updateRow(id: string, patch: Partial<EconomicsFeeRow>) {
+    updateRows(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  }
+
+  function addRow() {
+    updateRows([
+      ...rows,
+      {
+        id: createFeeId(),
+        name: "",
+        type: "percent",
+        value: "",
+      },
+    ]);
+  }
+
+  function removeRow(id: string) {
+    updateRows(rows.filter((row) => row.id !== id));
+  }
+
+  return (
+    <div className="mt-5 rounded-xl border border-ink-100 bg-surface-sunken/50 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-[Manrope] text-sm font-bold text-ink-900">Fees</h3>
+          <p className="mt-1 text-xs leading-5 text-ink-500">
+            Add payment, marketplace, or platform fees as percentages or fixed per-order costs.
+          </p>
+        </div>
+        <SecondaryButton type="button" onClick={addRow} className="px-3 py-2 text-sm">
+          Add fee
+        </SecondaryButton>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          {rows.map((row, index) => {
+            const amount = sellingPrice === null ? null : calculateFeeRowAmount(row, sellingPrice);
+            const typeId = `fee-type-${row.id}`;
+            return (
+              <div key={row.id} className="grid gap-3 rounded-lg border border-ink-100 bg-white p-3 md:grid-cols-[minmax(0,1fr)_120px_120px_110px_auto] md:items-end">
+                <label className="block">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Fee name</span>
+                  <input
+                    value={row.name}
+                    onChange={(event) => updateRow(row.id, { name: event.target.value })}
+                    placeholder={index === 0 ? "Stripe" : "Marketplace fee"}
+                    className={inputBase}
+                  />
+                </label>
+                <label className="block" htmlFor={typeId}>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Type</span>
+                  <select
+                    id={typeId}
+                    value={row.type}
+                    onChange={(event) => updateRow(row.id, { type: event.target.value as EconomicsFeeType })}
+                    className={selectBase}
+                  >
+                    <option value="percent">Percent</option>
+                    <option value="fixed">Fixed</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">
+                    {row.type === "percent" ? "Percent" : "Amount"}
+                  </span>
+                  <input
+                    value={row.value}
+                    onChange={(event) => updateRow(row.id, { value: event.target.value })}
+                    placeholder={row.type === "percent" ? "2.9" : "0.30"}
+                    inputMode="decimal"
+                    className={inputBase}
+                  />
+                </label>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Per sale</p>
+                  <p className="mt-2 font-[Manrope] text-sm font-semibold text-ink-900">
+                    {amount === null ? "Needs sell price" : formatCurrency(amount, currency)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeRow(row.id)}
+                  className="rounded-md px-2 py-2 text-sm font-semibold text-error-700 transition hover:bg-error-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+                >
+                  Remove
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={addRow}
+          className="mt-4 w-full rounded-lg border border-dashed border-ink-300 px-4 py-4 text-left text-sm font-semibold text-ink-500 transition hover:border-cobalt-500 hover:text-cobalt-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          + Add your first fee
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -1286,8 +1463,7 @@ function MarginDisclaimer({
   if (fees === null) {
     return (
       <p className="mt-3 text-sm leading-6 text-ink-500">
-        Margin includes product cost{shipping !== null ? " and shipping" : ""}. Add platform fees for a complete
-        picture.
+        Margin includes product cost{shipping !== null ? " and shipping" : ""}. Add fees for a complete picture.
         <button
           type="button"
           onClick={() => onEdit("fees")}
@@ -2432,15 +2608,18 @@ export function IdeaDetailClient({
                 onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, shipping_to_customer: value }))}
               />
               <Field
-                label="Platform fees"
-                value={economicsDraft.platform_fees}
-                onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, platform_fees: value }))}
-              />
-              <Field
                 label="Selling price"
                 value={economicsDraft.selling_price}
                 onChange={(value) => setEconomicsDraft((prev) => ({ ...prev, selling_price: value }))}
               />
+              <div className="md:col-span-2">
+                <FeeRowsEditor
+                  value={economicsDraft.platform_fees}
+                  sellingPrice={parsedMoney(economicsDraft.selling_price)}
+                  currency="GBP"
+                  onChange={(rows) => setEconomicsDraft((prev) => ({ ...prev, platform_fees: serializeFeeRows(rows) }))}
+                />
+              </div>
               <SelectField
                 label="Variant complexity"
                 value={economicsDraft.variant_complexity}
@@ -2482,7 +2661,10 @@ export function IdeaDetailClient({
               <ReviewValue label="Selling price" value={economicsDraft.selling_price} />
               <ReviewValue label="Product cost" value={economicsDraft.product_cost} />
               <ReviewValue label="Shipping" value={economicsDraft.shipping_to_customer} />
-              <ReviewValue label="Platform fees" value={economicsDraft.platform_fees} />
+              <ReviewValue
+                label="Fees"
+                value={formatFeeSummary(economicsDraft.platform_fees, parsedMoney(economicsDraft.selling_price))}
+              />
               <ReviewValue label="Variant complexity" value={optionLabel(economicsDraft.variant_complexity)} />
               <ReviewValue label="Upfront risk" value={optionLabel(economicsDraft.upfront_cost_risk)} />
               <ReviewValue label="Test speed" value={optionLabel(economicsDraft.test_speed)} />
