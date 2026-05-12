@@ -5,6 +5,13 @@ export type ScoutWorkspaceLimit = {
   label: "free" | "basic" | "pro" | "os";
 };
 
+function configuredLimit(envKey: string, fallback: number): number {
+  const value = process.env[envKey];
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
 export function getScoutWorkspaceLimit(access: LearnerAccessState): ScoutWorkspaceLimit {
   if (access.activeProducts.includes("calm_commerce_os")) {
     return { limit: null, label: "os" };
@@ -13,9 +20,9 @@ export function getScoutWorkspaceLimit(access: LearnerAccessState): ScoutWorkspa
     return { limit: null, label: "pro" };
   }
   if (access.activeProducts.includes("scanner_extension")) {
-    return { limit: 50, label: "basic" };
+    return { limit: configuredLimit("SCOUT_BASIC_SAVE_LIMIT", 50), label: "basic" };
   }
-  return { limit: 3, label: "free" };
+  return { limit: configuredLimit("SCOUT_FREE_SAVE_LIMIT", 3), label: "free" };
 }
 
 export function canSaveMoreScoutProducts(count: number, access: LearnerAccessState): boolean {

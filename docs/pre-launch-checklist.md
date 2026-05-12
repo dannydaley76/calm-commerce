@@ -63,6 +63,10 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
   - Basic users can save 50 products.
   - Archive still counts.
   - Delete frees capacity.
+- [ ] Use temporary low save limits in local/staging for checkout QA.
+  - Set `SCOUT_FREE_SAVE_LIMIT=1` and `SCOUT_BASIC_SAVE_LIMIT=2` locally or in staging when testing the upgrade path.
+  - Keep production at `SCOUT_FREE_SAVE_LIMIT=3` and `SCOUT_BASIC_SAVE_LIMIT=50`.
+  - Remove temporary low limits before any public traffic.
 - [ ] Test duplicate source URL handling.
   - Duplicate import should offer to open or update existing product.
 - [ ] Test extension import target uses production URL once DNS is ready.

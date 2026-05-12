@@ -30,6 +30,8 @@ STRIPE_WEBHOOK_SECRET=whsec_from_stripe_cli
 STRIPE_SCOUT_BASIC_PRICE_ID=price_test_...
 STRIPE_SCOUT_PRO_PRICE_ID=price_test_...
 STRIPE_CALM_COMMERCE_OS_PRICE_ID=
+SCOUT_FREE_SAVE_LIMIT=3
+SCOUT_BASIC_SAVE_LIMIT=50
 ```
 
 `NEXT_PUBLIC_SUPABASE_URL` must be the project base URL, not the REST URL. Do not include `/rest/v1/`.

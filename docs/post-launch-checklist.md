@@ -13,6 +13,15 @@ This file tracks improvements to make after the first paid Scout / Calm Commerce
   - Keep server-side checks as the source of truth, because extension UI checks can be bypassed.
   - Reason: otherwise users can keep scanning, read/copy the popup output, and avoid upgrading even if Workspace saves are blocked.
 
+## Scout Workspace Scale
+
+- [ ] Add pagination to the Scout Workspace product list once real usage grows.
+  - Target the `/ideas` table first.
+  - Keep the default sort as newest first.
+  - Preserve filters, search, and status tabs across page changes.
+  - Consider page size options around 25 / 50 / 100 products.
+  - Reason: Basic allows 50 saves now, Pro may accumulate hundreds, and the current table is optimized for launch testing rather than large catalog browsing.
+
 ## Scout Enrichment Infrastructure
 
 - [ ] Consider Oxylabs or a similar ecommerce scraping API once "scan any product website" becomes painful to maintain.
