@@ -7,6 +7,7 @@ import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/design
 import { writeWorksheetField } from "@/components/lean-canvas/write-worksheet-field";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { formatDate } from "@/lib/format-date";
+import { capturedSignalsSummary } from "@/lib/scout-signals";
 import {
   ensureProductIdeaIds,
   getProductIdeaId,
@@ -120,13 +121,6 @@ function scoreOutOfTen(score: number | null): string {
 function scoreOutOfHundred(score: number | null): string {
   if (score === null) return "-";
   return `${score}/100`;
-}
-
-function signalCoverageLabel(score: number | null): string {
-  if (score === null) return "Signal coverage not captured";
-  if (score >= 100) return "Signal coverage high";
-  if (score >= 60) return "Signal coverage medium";
-  return "Signal coverage low";
 }
 
 function scoreBorderTone(score: number | null): string {
@@ -636,10 +630,8 @@ function EvidencePanel({
   const competition = idea.scannerCompetitionScore === null
     ? ideaDraft.competition_notes.trim()
     : `${idea.scannerCompetitionScore}/100${ideaDraft.competition_notes.trim() ? ` · ${ideaDraft.competition_notes.trim().replace(/^Competition score:\s*/i, "").replace(/^Competition signal:\s*/i, "")}` : ""}`;
-  const coverage = idea.scannerConfidenceScore === null
-    ? ""
-    : `${signalCoverageLabel(idea.scannerConfidenceScore).replace("Signal coverage ", "")} (${idea.scannerConfidenceScore}/100)`;
   const missingSignals = sourceIdea.missing_signals?.trim();
+  const capturedSignals = capturedSignalsSummary(idea.scannerConfidenceScore, missingSignals);
   const addable = [
     !seasonality ? "Seasonality" : "",
     !ideaDraft.competition_notes.trim() ? "Competition" : "",
@@ -687,10 +679,10 @@ function EvidencePanel({
         </section>
 
         <section className="pt-5">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Confidence</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-500">Captured signals</h3>
           <dl className="mt-4 space-y-3">
-            {coverage ? <InlineValue label="Coverage" value={coverage} onSave={async () => undefined} /> : null}
-            <InlineValue label="Missing signals" value={missingSignals || "None"} onSave={async () => undefined} />
+            <InlineValue label="Signals" value={capturedSignals.label} caption={capturedSignals.detail} onSave={async () => undefined} />
+            <InlineValue label="Missing signals" value={capturedSignals.missing.length ? capturedSignals.missing.join(", ") : "None"} onSave={async () => undefined} />
           </dl>
         </section>
       </div>
@@ -759,6 +751,7 @@ function ScoutSignalSummary({
   const orders = parsedNumber(sourceIdea.observed_order_count);
   const reviews = parsedNumber(sourceIdea.observed_review_count);
   const hasUnusualRatio = orders !== null && reviews !== null && orders <= 5 && reviews >= 500;
+  const capturedSignals = capturedSignalsSummary(idea.scannerConfidenceScore, sourceIdea.missing_signals);
   const observed = [
     ["Orders", compactNumber(sourceIdea.observed_order_count), hasUnusualRatio ? "Unusual ratio" : ""],
     ["Reviews", compactNumber(sourceIdea.observed_review_count), ""],
@@ -779,9 +772,9 @@ function ScoutSignalSummary({
           {idea.scannerConfidenceScore !== null ? (
             <span
               className="rounded-full bg-surface-sunken px-2 py-1"
-              title="Signal coverage measures how much usable scan data Scout found. It is not a product quality score."
+              title={`${capturedSignals.detail} This is not a product quality score.`}
             >
-              {signalCoverageLabel(idea.scannerConfidenceScore)} · {idea.scannerConfidenceScore}/100
+              Captured signals · {capturedSignals.label}
             </span>
           ) : null}
         </div>

@@ -1,3 +1,5 @@
+import { capturedSignalsSummary } from "@/lib/scout-signals";
+
 export type ScannerImportPayload = {
   source?: "scanner" | "research_workspace";
   sourcePlatform?: "amazon" | "aliexpress" | "shopify" | "other";
@@ -303,10 +305,13 @@ export function buildScannerImportDraft(payload: ScannerImportPayload | null): S
     evidenceLine("Competition score", payload?.competitionScore !== undefined ? `${payload.competitionScore}/100` : undefined),
     payload?.competitionNotes,
   ].filter((line): line is string => !!line);
+  const capturedSignals = payload?.confidenceScore !== undefined || payload?.missingSignals?.length
+    ? capturedSignalsSummary(payload?.confidenceScore, payload?.missingSignals).label.toLowerCase()
+    : "";
   const noteParts = [
     payload?.notes,
     payload?.differentiationAngle ? `Differentiation angle: ${payload.differentiationAngle}` : "",
-    payload?.confidenceScore !== undefined ? `Signal coverage: ${payload.confidenceScore}/100` : "",
+    capturedSignals ? `Captured signals: ${capturedSignals}` : "",
     payload?.missingSignals?.length ? `Missing signals: ${payload.missingSignals.join(", ")}` : "",
   ].filter(Boolean);
 

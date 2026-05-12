@@ -187,6 +187,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
     scanner_score: scoreValue(normalizedPayload?.opportunityScore),
     scanner_verdict: scannerVerdictForScore(normalizedPayload?.opportunityScore),
     scanner_confidence_score: scoreValue(normalizedPayload?.confidenceScore),
+    missing_signals: normalizedPayload?.missingSignals?.join(", ") ?? "",
     scanner_demand_score: scoreValue(normalizedPayload?.demandScore),
     scanner_competition_score: scoreValue(normalizedPayload?.competitionScore),
     scanner_scored_at: draft.scannedAt,
