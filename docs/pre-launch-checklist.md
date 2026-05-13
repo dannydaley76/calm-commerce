@@ -107,6 +107,12 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Launch QA
 
+- [ ] Resolve current npm audit findings before public launch.
+  - `npm audit --omit=dev` currently reports Next.js high-severity advisories and a PostCSS moderate advisory via Next.
+  - Current app version checked: `next@16.1.6`.
+  - Suggested audit target: upgrade Next deliberately rather than running `npm audit fix --force` blindly.
+  - After upgrade, run `npm run typecheck`, `npx vitest run`, and a smoke test for auth, Scout import, checkout, and account access.
+  - Separate note: the 2026-05-11 TanStack npm supply-chain incident does not appear to affect this repo based on current dependency checks, but continue checking dependency advisories before release.
 - [ ] **Very important:** run end-to-end margin calculation QA before launch.
   - Do this after development / staging / production environments are separated.
   - Cover AliExpress and Amazon scans from popup preview → payload → Workspace list → product detail page.

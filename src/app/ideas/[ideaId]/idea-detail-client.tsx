@@ -2543,12 +2543,6 @@ export function IdeaDetailClient({
             from {ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} · scanned {formatDate(displayIdea.scannerScoredAt || displayIdea.scoutCapturedAt, "relative").toLowerCase()}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <WorkspaceStatusSelector
-              idea={displayIdea}
-              saving={status.workspace === "saving"}
-              saved={status.workspace === "saved"}
-              onChange={(nextStatus) => void saveWorkspaceStatus(nextStatus)}
-            />
             {canAccessOsContent ? (
               <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
                 {displayIdea.statusLabel}
@@ -2567,6 +2561,28 @@ export function IdeaDetailClient({
           </div>
         </div>
       </header>
+
+      <section className="rounded-xl border border-ink-100 bg-surface-raised px-5 py-4 shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-500">Workspace status</p>
+            <p className="mt-1 text-sm leading-6 text-ink-600">
+              Move this product through your review funnel.
+            </p>
+          </div>
+          <WorkspaceStatusSelector
+            idea={displayIdea}
+            saving={status.workspace === "saving"}
+            saved={status.workspace === "saved"}
+            onChange={(nextStatus) => void saveWorkspaceStatus(nextStatus)}
+          />
+        </div>
+        {displayIdea.workspaceStatus === "new" ? (
+          <p className="mt-3 border-t border-ink-100 pt-3 text-xs leading-5 text-ink-500">
+            Start by moving promising products to Reviewing or Shortlist.
+          </p>
+        ) : null}
+      </section>
 
       <ScoutSignalSummary
         idea={displayIdea}
