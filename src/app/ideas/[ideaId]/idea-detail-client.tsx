@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import { GhostButton, PrimaryButton, SecondaryButton } from "@/components/design-system";
 import { writeWorksheetField } from "@/components/lean-canvas/write-worksheet-field";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
+import {
+  WorkspaceStatusSelector,
+  workspaceStatusLabel,
+} from "@/components/scout/workspace-status-selector";
 import { formatDate } from "@/lib/format-date";
 import { pageSignalsSummary } from "@/lib/scout-signals";
 import {
@@ -17,6 +21,7 @@ import {
 import type {
   ProductIdeaLifecycle,
   ProductIdeaLifecycleStatus,
+  ProductIdeaWorkspaceStatus,
 } from "@/lib/v2/worksheets/product-idea-lifecycle";
 import {
   calculateFeeRowAmount,
@@ -2175,6 +2180,8 @@ export function IdeaDetailClient({
   const [localIdeaView, setLocalIdeaView] = useState({
     status: idea.status,
     statusLabel: idea.statusLabel,
+    workspaceStatus: idea.workspaceStatus,
+    workspaceStatusLabel: idea.workspaceStatusLabel,
     latestSignal: idea.latestSignal,
     nextAction: idea.nextAction,
   });
@@ -2183,6 +2190,7 @@ export function IdeaDetailClient({
     economics: "idle",
     test: "idle",
     notes: "idle",
+    workspace: "idle",
   });
   const [editSection, setEditSection] = useState<EditSection>(null);
 
@@ -2190,10 +2198,12 @@ export function IdeaDetailClient({
     setLocalIdeaView({
       status: idea.status,
       statusLabel: idea.statusLabel,
+      workspaceStatus: idea.workspaceStatus,
+      workspaceStatusLabel: idea.workspaceStatusLabel,
       latestSignal: idea.latestSignal,
       nextAction: idea.nextAction,
     });
-  }, [idea.latestSignal, idea.nextAction, idea.status, idea.statusLabel]);
+  }, [idea.latestSignal, idea.nextAction, idea.status, idea.statusLabel, idea.workspaceStatus, idea.workspaceStatusLabel]);
 
   const displayIdea: ProductIdeaLifecycle = {
     ...idea,
@@ -2275,6 +2285,50 @@ export function IdeaDetailClient({
     }
   };
 
+  const saveWorkspaceStatus = async (nextStatus: ProductIdeaWorkspaceStatus) => {
+    if (nextStatus === displayIdea.workspaceStatus) return;
+    const previousStatus = displayIdea.workspaceStatus;
+    const previousLabel = displayIdea.workspaceStatusLabel;
+    const nextLabel = workspaceStatusLabel(nextStatus);
+
+    setSectionStatus("workspace", "saving");
+    setLocalIdeaView((prev) => ({
+      ...prev,
+      workspaceStatus: nextStatus,
+      workspaceStatusLabel: nextLabel,
+    }));
+
+    try {
+      const response = await fetch("/api/ideas/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "set_status",
+          ideaId: idea.ideaId,
+          status: nextStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Unable to update status.");
+
+      setSectionStatus("workspace", "saved");
+      addLocalActivity({
+        label: "Workspace status changed",
+        detail: `Moved to ${nextLabel}.`,
+        sourceLabel: "Scout Workspace",
+        href: "#history",
+      });
+      window.setTimeout(() => setSectionStatus("workspace", "idle"), 1200);
+    } catch {
+      setLocalIdeaView((prev) => ({
+        ...prev,
+        workspaceStatus: previousStatus,
+        workspaceStatusLabel: previousLabel,
+      }));
+      setSectionStatus("workspace", "error");
+    }
+  };
+
   const saveEconomics = async () => {
     setSectionStatus("economics", "saving");
     const nextRows = economicsRows.map((row) => ({ ...row }));
@@ -2312,6 +2366,7 @@ export function IdeaDetailClient({
       setLocalIdeaView((prev) => {
         if (prev.status !== "draft" && prev.status !== "economics_checked") return prev;
         return {
+          ...prev,
           status: nextStatus,
           statusLabel: statusLabel(nextStatus),
           latestSignal: latestSignalForLocalStatus(nextStatus, economicsDraft.viable, "", ""),
@@ -2358,12 +2413,13 @@ export function IdeaDetailClient({
             sourceLabel: "Activity",
             href: "#history",
           });
-          setLocalIdeaView({
+          setLocalIdeaView((prev) => ({
+            ...prev,
             status: nextStatus,
             statusLabel: statusLabel(nextStatus),
             latestSignal: latestSignalForLocalStatus(nextStatus, nextDraft.viable, "", ""),
             nextAction: nextActionForStatus(nextStatus),
-          });
+          }));
         }
       }
       return response.ok;
@@ -2393,12 +2449,13 @@ export function IdeaDetailClient({
         sourceLabel: "Marketplace test",
         href: "#marketplace-test",
       });
-      setLocalIdeaView({
+      setLocalIdeaView((prev) => ({
+        ...prev,
         status: nextStatus,
         statusLabel: statusLabel(nextStatus),
         latestSignal: latestSignalForLocalStatus(nextStatus, economicsDraft.viable, testDraft.decision, testDraft.result),
         nextAction: nextActionForStatus(nextStatus),
-      });
+      }));
       router.refresh();
     }
   };
@@ -2486,9 +2543,17 @@ export function IdeaDetailClient({
             from {ideaDraft.source_label || displayIdea.sourceLabel || "Scout"} · scanned {formatDate(displayIdea.scannerScoredAt || displayIdea.scoutCapturedAt, "relative").toLowerCase()}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
-              {displayIdea.statusLabel}
-            </span>
+            <WorkspaceStatusSelector
+              idea={displayIdea}
+              saving={status.workspace === "saving"}
+              saved={status.workspace === "saved"}
+              onChange={(nextStatus) => void saveWorkspaceStatus(nextStatus)}
+            />
+            {canAccessOsContent ? (
+              <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${lifecycleTone(displayIdea.status)}`}>
+                {displayIdea.statusLabel}
+              </span>
+            ) : null}
             {ideaDraft.source_url ? (
               <a
                 href={ideaDraft.source_url}

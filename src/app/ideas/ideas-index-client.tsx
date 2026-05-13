@@ -3,6 +3,10 @@
 import { type FocusEvent, useEffect, useMemo, useState } from "react";
 import { ActionMenu, TrashIcon } from "@/components/ActionMenu";
 import { PrimaryButton } from "@/components/design-system";
+import {
+  WorkspaceStatusSelector,
+  workspaceStatusLabel,
+} from "@/components/scout/workspace-status-selector";
 import { formatDate } from "@/lib/format-date";
 import { calculateUnitEconomics } from "@/lib/v2/worksheets/review-unit-economics";
 import {
@@ -13,14 +17,6 @@ import {
 
 type SortKey = "newest" | "priority" | "name" | "status" | "scanner_score" | "selling_price" | "margin" | "orders" | "reviews" | "rating" | "metrics";
 type ViewFilter = "new" | "shortlist" | "reviewing" | "testing" | "archived" | "all";
-
-const WORKSPACE_STATUS_OPTIONS: Array<{ value: ProductIdeaWorkspaceStatus; label: string }> = [
-  { value: "new", label: "New" },
-  { value: "reviewing", label: "Reviewing" },
-  { value: "shortlist", label: "Shortlist" },
-  { value: "testing", label: "Testing" },
-  { value: "archived", label: "Archived" },
-];
 
 const VIEW_FILTERS: Array<{ value: ViewFilter; label: string }> = [
   { value: "new", label: "New" },
@@ -38,22 +34,6 @@ function lifecycleTone(status: ProductIdeaLifecycleStatus): string {
     return "bg-[#eef4ff] text-cobalt-600";
   }
   return "bg-surface-sunken text-ink-500";
-}
-
-function workspaceDotTone(status: ProductIdeaWorkspaceStatus): string {
-  if (status === "shortlist") return "bg-[#007a52]";
-  if (status === "reviewing") return "bg-cobalt-600";
-  if (status === "testing") return "bg-[#b7791f]";
-  if (status === "archived") return "bg-ink-300";
-  return "bg-ink-400";
-}
-
-function workspaceSelectorTone(status: ProductIdeaWorkspaceStatus): string {
-  if (status === "shortlist") return "border-success-100 bg-success-100 text-[#005e3f] hover:bg-[#d9f4e8]";
-  if (status === "reviewing") return "border-cobalt-100 bg-[#eef4ff] text-cobalt-600 hover:bg-[#e2ecff]";
-  if (status === "testing") return "border-amber-100 bg-[#fff8e6] text-[#835700] hover:bg-[#fff0c2]";
-  if (status === "archived") return "border-ink-100 bg-surface-sunken text-ink-500 hover:bg-ink-50";
-  return "border-ink-100 bg-surface-sunken text-ink-700 hover:bg-ink-50";
 }
 
 function scoreTone(score: number | null): string {
@@ -365,63 +345,6 @@ function SignalStrip({ idea }: { idea: ProductIdeaLifecycle }) {
   );
 }
 
-function StatusSelector({
-  idea,
-  saving,
-  saved,
-  onChange,
-}: {
-  idea: ProductIdeaLifecycle;
-  saving: boolean;
-  saved: boolean;
-  onChange: (idea: ProductIdeaLifecycle, status: ProductIdeaWorkspaceStatus) => void;
-}) {
-  return (
-    <details className="group relative">
-      <summary
-        title="Change status"
-        className={[
-          "inline-flex cursor-pointer list-none items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] transition",
-          "focus:outline-none focus:ring-2 focus:ring-cobalt-100",
-          workspaceSelectorTone(idea.workspaceStatus),
-          saved ? "ring-2 ring-success-100" : "",
-        ].join(" ")}
-      >
-        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${workspaceDotTone(idea.workspaceStatus)}`} />
-        <span>{idea.workspaceStatusLabel}</span>
-        <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3 w-3 opacity-65">
-          <path d="M3 4.5 6 7.5l3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </summary>
-      <div className="absolute left-0 z-30 mt-2 w-40 rounded-lg border border-ink-100 bg-white p-1 shadow-card">
-        {WORKSPACE_STATUS_OPTIONS.map((item) => {
-          const isCurrent = item.value === idea.workspaceStatus;
-          return (
-            <button
-              key={item.value}
-              type="button"
-              disabled={saving}
-              onClick={(event) => {
-                event.currentTarget.closest("details")?.removeAttribute("open");
-                if (!isCurrent) onChange(idea, item.value);
-              }}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-semibold text-ink-700 hover:bg-surface-sunken disabled:opacity-60"
-            >
-              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${workspaceDotTone(item.value)}`} />
-              <span className="flex-1">{item.label}</span>
-              {isCurrent ? (
-                <svg aria-hidden="true" viewBox="0 0 12 12" className="h-3.5 w-3.5 text-cobalt-600">
-                  <path d="m2.5 6 2 2 5-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-    </details>
-  );
-}
-
 function PricingEditor({
   idea,
   saving,
@@ -651,11 +574,11 @@ function IdeaMobileCard({
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <ScoreBadge idea={idea} />
         <div className="flex flex-col items-start gap-1">
-          <StatusSelector
+          <WorkspaceStatusSelector
             idea={idea}
             saving={saving}
             saved={savedStatus}
-            onChange={onStatusChange}
+            onChange={(status) => onStatusChange(idea, status)}
           />
           {idea.scannerScoredAt ? (
             <span className="text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
@@ -777,7 +700,7 @@ export function IdeasIndexClient({
         setLocalIdeas((current) => current.filter((item) => item.ideaId !== idea.ideaId));
       } else {
         const nextStatus = action === "archive" ? "archived" : action === "restore" ? "new" : status ?? idea.workspaceStatus;
-        const nextLabel = WORKSPACE_STATUS_OPTIONS.find((item) => item.value === nextStatus)?.label ?? idea.workspaceStatusLabel;
+        const nextLabel = workspaceStatusLabel(nextStatus);
         setLocalIdeas((current) => current.map((item) => (
           item.ideaId === idea.ideaId
             ? { ...item, workspaceStatus: nextStatus, workspaceStatusLabel: nextLabel }
@@ -960,11 +883,11 @@ export function IdeasIndexClient({
                         ) : null}
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <div className="flex flex-col items-start gap-1">
-                            <StatusSelector
+                            <WorkspaceStatusSelector
                               idea={idea}
                               saving={savingIdeaId === idea.ideaId}
                               saved={savedStatusIdeaId === idea.ideaId}
-                              onChange={(target, status) => void mutateIdea(target, "set_status", status)}
+                              onChange={(status) => void mutateIdea(idea, "set_status", status)}
                             />
                             {idea.scannerScoredAt ? (
                               <span className="text-[10px] font-semibold leading-none text-ink-400">Scanned {formatDate(idea.scannerScoredAt, "relative")}</span>
