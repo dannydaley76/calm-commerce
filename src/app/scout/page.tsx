@@ -71,44 +71,31 @@ function CheckItem({ children, dark = false }: { children: React.ReactNode; dark
 }
 
 function ScoutMockup() {
-  const rows = [
-    ["Demand", "bg-teal-600", 4],
-    ["Competition", "bg-cobalt-600", 3],
-    ["Trend", "bg-teal-600", 4],
-    ["Margin potential", "bg-amber-500", 3],
-  ];
-
   return (
-    <div className="rounded-xl bg-surface-sunken p-8 shadow-[0_24px_60px_rgba(11,42,57,0.16)] ring-1 ring-ink-100/80">
-      <div className="rounded-xl border border-ink-100 bg-surface-raised p-6 shadow-[0_18px_44px_rgba(11,42,57,0.12)]">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-[Manrope] text-base font-bold text-ink-900">Scout Analysis</p>
-            <span className="mt-4 inline-flex rounded-lg bg-teal-100 px-4 py-2 text-xs font-bold text-teal-700">
-              Strong research signal
-            </span>
-          </div>
-          <p className="font-[Manrope] text-3xl font-bold text-teal-600">7.2/10</p>
-        </div>
-        <div className="mt-6 space-y-4">
-          {rows.map(([label, color, filled]) => (
-            <div key={label} className="grid grid-cols-[140px_1fr] items-center gap-4">
-              <p className="text-sm font-semibold text-ink-700">{label}</p>
-              <div className="flex gap-1">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <span
-                    key={index}
-                    className={[
-                      "h-1.5 flex-1 rounded-full",
-                      index < Number(filled) ? color : "bg-ink-100",
-                    ].join(" ")}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="rounded-xl bg-surface-sunken p-3 shadow-[0_24px_60px_rgba(11,42,57,0.16)] ring-1 ring-ink-100/80">
+      <img
+        src="/scout/popup-product-page.png"
+        alt="Scout popup scoring a product page and saving it to Scout Workspace"
+        className="aspect-[16/10] w-full rounded-lg border border-ink-100 object-cover shadow-[0_18px_44px_rgba(11,42,57,0.12)]"
+      />
+    </div>
+  );
+}
+
+function ProductScreenshot({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  return (
+    <div className="rounded-xl bg-surface-sunken p-3 shadow-[0_18px_48px_rgba(11,42,57,0.1)] ring-1 ring-ink-100">
+      <img
+        src={src}
+        alt={alt}
+        className="aspect-[16/10] w-full rounded-lg border border-ink-100 object-cover"
+      />
     </div>
   );
 }
@@ -339,25 +326,29 @@ export default async function ScoutLandingPage() {
               ))}
             </ul>
           </div>
-          <div className="grid gap-4 rounded-xl bg-surface-sunken p-5 shadow-[0_18px_48px_rgba(11,42,57,0.1)] ring-1 ring-ink-100">
-            {["New", "Reviewing", "Shortlist", "Testing", "Archived"].map((stage, stageIndex) => (
-              <div key={stage} className="rounded-xl border border-ink-200 bg-white p-4 shadow-[0_10px_24px_rgba(11,42,57,0.07)]">
-                <div className="flex items-center justify-between">
-                  <p className="font-[Manrope] text-lg font-bold text-ink-900">{stage}</p>
-                  <span className="rounded-full bg-cobalt-100 px-3 py-1 text-xs font-bold text-cobalt-700">
-                    {[3, 2, 4, 1, 5][stageIndex]}
-                  </span>
-                </div>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {Array.from({ length: stageIndex === 3 ? 1 : 2 }).map((_, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-lg bg-surface-canvas px-3 py-2 ring-1 ring-ink-100">
-                      <span className="text-sm font-semibold text-ink-800">Product {index + 1}</span>
-                      <span className="text-sm font-bold text-teal-600">{(7 + index * 0.5).toFixed(1)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <ProductScreenshot
+            src="/scout/workspace-listing.png"
+            alt="Scout Workspace showing saved product candidates, scores, pricing, and signal chips"
+          />
+        </div>
+      </section>
+
+      <section className="bg-surface-canvas px-5 py-20 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <ProductScreenshot
+            src="/scout/product-detail.png"
+            alt="Scout product detail page showing verdict, economics, evidence, activity, and notes"
+          />
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cobalt-700">Product detail</p>
+            <h2 className="mt-3 font-[Manrope] text-4xl font-bold tracking-tight text-ink-900 lg:text-5xl">
+              Keep the evidence behind every decision.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-ink-700">
+              Open any saved candidate to review the verdict, captured facts, economics, activity, and your own notes.
+              Scout keeps the research trail attached to the product so you can come back later and still know why it
+              made the shortlist.
+            </p>
           </div>
         </div>
       </section>
