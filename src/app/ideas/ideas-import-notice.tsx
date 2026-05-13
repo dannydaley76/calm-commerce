@@ -90,7 +90,7 @@ export function IdeasImportNotice({ title, body, tone, cta }: ImportNoticeProps)
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {cta ? (
-            <PrimaryButton href="/upgrade?plan=scout_basic">
+            <PrimaryButton href="/upgrade">
               {cta}
             </PrimaryButton>
           ) : null}

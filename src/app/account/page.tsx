@@ -163,14 +163,6 @@ export default async function AccountPage({
               If you want your account and saved Scout products removed, submit a deletion request here. We record the request and process it through support.
             </p>
 
-            {/* Deletion feedback */}
-            {deletion === "requested" && (
-              <div className="mt-4">
-                <Banner variant="info">
-                  Deletion request received. We'll process this as soon as possible.
-                </Banner>
-              </div>
-            )}
             {deletion === "error" && (
               <div className="mt-4">
                 <Banner variant="error">Something went wrong. Please try again.</Banner>
@@ -180,7 +172,11 @@ export default async function AccountPage({
             {state.authenticated && state.deletionRequested ? (
               <div className="mt-5">
                 <Banner variant="info">
-                  <p className="font-semibold">Deletion request already received</p>
+                  <p className="font-semibold">
+                    {deletion === "requested"
+                      ? "Deletion request received"
+                      : "Deletion request already received"}
+                  </p>
                   <p className="mt-1">
                     Status: {state.deletionStatus ?? "requested"}
                   </p>

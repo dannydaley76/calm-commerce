@@ -2357,10 +2357,10 @@ export function IdeaDetailClient({
       const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
       if (localIdeaView.status === "draft") {
         addLocalActivity({
-          label: "Status changed",
-          detail: `Status changed to ${statusLabel(nextStatus)}.`,
-          sourceLabel: "Activity",
-          href: "#history",
+          label: "Economics updated",
+          detail: "Economics review is now marked as updated.",
+          sourceLabel: "Economics",
+          href: "#economics",
         });
       }
       setLocalIdeaView((prev) => {
@@ -2408,10 +2408,10 @@ export function IdeaDetailClient({
         const nextStatus: ProductIdeaLifecycleStatus = "economics_checked";
         if (localIdeaView.status === "draft") {
           addLocalActivity({
-            label: "Status changed",
-            detail: `Status changed to ${statusLabel(nextStatus)}.`,
-            sourceLabel: "Activity",
-            href: "#history",
+            label: "Economics updated",
+            detail: "Economics review is now marked as updated.",
+            sourceLabel: "Economics",
+            href: "#economics",
           });
           setLocalIdeaView((prev) => ({
             ...prev,

@@ -407,7 +407,7 @@ function buildTimeline({
   if (economics) {
     events.push({
       key: "economics",
-      label: "Economics checked",
+      label: "Economics updated",
       detail: normalize(economics.viable)
         ? `Decision: ${economics.viable}.`
         : "Unit economics were entered in Chapter 5.",

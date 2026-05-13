@@ -6,13 +6,13 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Production Infrastructure
 
-- [ ] Split Supabase into separate development and production projects.
+- [x] Split Supabase into separate development and production projects.
   - Dev should keep localhost redirects, test users, and Stripe test data.
   - Production should hold real users, real entitlements, and production redirects only.
 - [ ] Run the current schema and product-entitlement migration on the production Supabase project.
 - [ ] Point Vercel production env vars at the production Supabase project.
 - [ ] Keep local `.env.local` pointed at the development Supabase project.
-- [ ] Update Supabase production auth URL configuration.
+- [x] Update Supabase production auth URL configuration.
   - Site URL: `https://www.calmcommerce.net`
   - Redirect URLs:
     - `https://www.calmcommerce.net/auth/callback`
@@ -24,14 +24,14 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
 
 ## Billing And Plans
 
-- [ ] Confirm live Stripe products and prices.
+- [x] Confirm live Stripe products and prices.
   - Scout Basic: one-time payment, 50 saved products.
   - Scout Pro: subscription, any-site / MCP-enhanced research.
   - Calm Commerce OS: coming soon until pricing is final.
-- [ ] In production env vars, set only live Stripe keys and live price IDs.
-- [ ] Ensure Stripe webhook endpoint points at production:
+- [x] In production env vars, set only live Stripe keys and live price IDs.
+- [x] Ensure Stripe webhook endpoint points at production:
   - `https://www.calmcommerce.net/api/billing/webhook`
-- [ ] Test Stripe webhook creates the correct entitlement rows.
+- [x] Test Stripe webhook creates the correct entitlement rows.
   - Scout Basic: `product_code = scanner_extension`, `billing_type = one_time`, `status = active`.
   - Scout Pro: `product_code = research_workspace`, `billing_type = subscription`, `status = active`.
 - [ ] Disable the Calm Commerce OS checkout button until the OS plan is ready.
@@ -71,6 +71,12 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
   - Duplicate import should offer to open or update existing product.
 - [ ] Test extension import target uses production URL once DNS is ready.
   - `https://www.calmcommerce.net/ideas/import?payload=...`
+- [ ] Build the production entitlement handoff between Calm Commerce and the Chrome extension.
+  - When a user upgrades to Scout Pro in the web app, the extension should recognise Pro access without manual console storage changes.
+  - Use the secure account-link flow at `/scout/connect?extensionId=...`; the extension stores a short-lived Calm Commerce token and calls the web app Scout proxy.
+  - Add production env vars before testing: `SCOUT_EXTENSION_TOKEN_SECRET` and `SCOUT_MCP_API_KEY`.
+  - Do not expose shared MCP server secrets in extension storage.
+  - Verify the popup no longer shows Pro upgrade prompts for a confirmed Pro user, and that trend / any-site research can connect cleanly.
 
 ## Abuse And Tool Protection
 
@@ -113,13 +119,13 @@ This file tracks the practical work needed before taking Scout / Calm Commerce i
   - Suggested audit target: upgrade Next deliberately rather than running `npm audit fix --force` blindly.
   - After upgrade, run `npm run typecheck`, `npx vitest run`, and a smoke test for auth, Scout import, checkout, and account access.
   - Separate note: the 2026-05-11 TanStack npm supply-chain incident does not appear to affect this repo based on current dependency checks, but continue checking dependency advisories before release.
-- [ ] **Very important:** run end-to-end margin calculation QA before launch.
+- [x] **Very important:** run end-to-end margin calculation QA before launch.
   - Do this after development / staging / production environments are separated.
   - Cover AliExpress and Amazon scans from popup preview → payload → Workspace list → product detail page.
   - Verify simple known cases such as sell price `£20`, product cost `£10`, shipping `£0`.
   - Confirm whether platform fees, shipping, cached inputs, or old extension state are affecting displayed margin.
   - Add regression tests or documented fixtures once the expected calculation rules are final.
-- [ ] Run a blank-account production smoke test.
+- [x] Run a blank-account production smoke test.
   - Signup confirmation email redirects to production, not localhost.
   - Stripe checkout redirects back to production.
   - Entitlement appears in Supabase.
