@@ -4,7 +4,7 @@ import { ScoutLogo } from "@/components/calm-commerce-logo";
 import { BILLING_PLANS, type BillingPlanCode } from "@/lib/billing/products";
 import { getAccessStateForCurrentUser } from "@/lib/auth/get-access-state";
 
-const INSTALL_ANCHOR = "#pricing";
+const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/scout/anfgldgjjhhickihgpjbgkecchpngeok";
 const WORKSPACE_PATH = "/ideas";
 
 async function isSignedIn() {
@@ -216,7 +216,7 @@ export default async function ScoutLandingPage() {
               <a href="#pricing" className="transition hover:text-cobalt-600">Pricing</a>
               <a href="#how-it-works" className="transition hover:text-cobalt-600">How it works</a>
             </nav>
-            <PrimaryButton href={INSTALL_ANCHOR} className="px-5 py-2.5">
+            <PrimaryButton href={CHROME_WEB_STORE_URL} className="px-5 py-2.5">
               Install Scout
             </PrimaryButton>
           </div>
@@ -232,7 +232,7 @@ export default async function ScoutLandingPage() {
             Scout reads every product page in seconds, scores the signals that decide whether it&apos;s worth testing, and saves your shortlist into one organised workspace. Make the call with evidence, before you spend.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <PrimaryButton href={INSTALL_ANCHOR}>Install Scout</PrimaryButton>
+            <PrimaryButton href={CHROME_WEB_STORE_URL}>Install Scout</PrimaryButton>
             <SecondaryButton href="#how-it-works">See how it works</SecondaryButton>
           </div>
         </div>
@@ -485,7 +485,7 @@ export default async function ScoutLandingPage() {
             Install Scout, scan the product page, and decide whether it deserves a place in your shortlist.
           </p>
           <div className="mt-8 flex justify-center">
-            <PrimaryButton href={INSTALL_ANCHOR}>Install Scout</PrimaryButton>
+            <PrimaryButton href={CHROME_WEB_STORE_URL}>Install Scout</PrimaryButton>
           </div>
         </div>
       </section>
