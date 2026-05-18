@@ -9,7 +9,6 @@ function isPublicPath(pathname: string) {
 
 function isProtectedLearnerPath(pathname: string) {
   return (
-    pathname === "/" ||
     pathname === "/program" ||
     pathname === "/resume" ||
     pathname.startsWith("/chapter/") ||
