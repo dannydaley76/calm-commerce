@@ -216,7 +216,10 @@ export default async function ScoutLandingPage() {
               <a href="#pricing" className="transition hover:text-cobalt-600">Pricing</a>
               <a href="#how-it-works" className="transition hover:text-cobalt-600">How it works</a>
             </nav>
-            <PrimaryButton href={CHROME_WEB_STORE_URL} className="px-5 py-2.5">
+            <SecondaryButton href={signedIn ? "/ideas" : "/login"} className="hidden px-5 py-2.5 md:inline-flex">
+              {signedIn ? "Open Workspace" : "Log in"}
+            </SecondaryButton>
+            <PrimaryButton href={CHROME_WEB_STORE_URL} target="_blank" rel="noopener noreferrer" className="px-5 py-2.5">
               Install Scout
             </PrimaryButton>
           </div>
@@ -232,7 +235,7 @@ export default async function ScoutLandingPage() {
             Scout reads every product page in seconds, scores the signals that decide whether it&apos;s worth testing, and saves your shortlist into one organised workspace. Make the call with evidence, before you spend.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <PrimaryButton href={CHROME_WEB_STORE_URL}>Install Scout</PrimaryButton>
+            <PrimaryButton href={CHROME_WEB_STORE_URL} target="_blank" rel="noopener noreferrer">Install Scout</PrimaryButton>
             <SecondaryButton href="#how-it-works">See how it works</SecondaryButton>
           </div>
         </div>
@@ -485,7 +488,7 @@ export default async function ScoutLandingPage() {
             Install Scout, scan the product page, and decide whether it deserves a place in your shortlist.
           </p>
           <div className="mt-8 flex justify-center">
-            <PrimaryButton href={CHROME_WEB_STORE_URL}>Install Scout</PrimaryButton>
+            <PrimaryButton href={CHROME_WEB_STORE_URL} target="_blank" rel="noopener noreferrer">Install Scout</PrimaryButton>
           </div>
         </div>
       </section>

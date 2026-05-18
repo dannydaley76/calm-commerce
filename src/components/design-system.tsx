@@ -101,6 +101,8 @@ const BTN_BASE =
 export function PrimaryButton({
   children,
   href,
+  target,
+  rel,
   onClick,
   type = "button",
   disabled,
@@ -108,6 +110,8 @@ export function PrimaryButton({
 }: {
   children: ReactNode;
   href?: string;
+  target?: string;
+  rel?: string;
   onClick?: () => void;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
@@ -128,7 +132,7 @@ export function PrimaryButton({
   ].join(' ');
 
   if (href) {
-    return <a href={href} className={cls}>{children}</a>;
+    return <a href={href} target={target} rel={rel} className={cls}>{children}</a>;
   }
   return (
     <button type={type} onClick={onClick} disabled={disabled} className={cls}>
