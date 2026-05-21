@@ -11,6 +11,7 @@ import {
 } from "@/lib/scanner-import";
 import { getProductIdeaId } from "@/lib/v2/worksheets/product-idea-identity";
 import { canSaveMoreScoutProducts, scoutLimitMessage } from "@/lib/scout-workspace-limits";
+import { recordScoutEvent } from "@/lib/scout/events";
 
 type WorksheetRow = {
   worksheet_id: string;
@@ -88,12 +89,20 @@ type ImportIdeaInput = {
   autoUpdateDuplicate?: boolean;
 };
 
+function payloadText(input: ImportIdeaInput, key: "sourcePlatform" | "sourceUrl"): string | undefined {
+  const payload = input.payload;
+  if (!payload || typeof payload !== "object" || !(key in payload)) return undefined;
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
+}
+
 type ImportIdeaResult =
-  | { ok: true; ideaId: string; ideaHref: string; duplicateUpdated: boolean }
+  | { ok: true; ideaId: string; ideaHref: string; duplicateUpdated: boolean; authUserId: string }
   | {
       ok: false;
       status: number;
       error: string;
+      authUserId?: string;
       code?: string;
       limitMessage?: string;
       duplicate?: boolean;
@@ -113,14 +122,14 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
   const normalizedPayload = normalizeScannerImportPayload(input.payload);
   const validation = validateScannerImportPayload(normalizedPayload);
   if (!validation.ok) {
-    return { ok: false, status: 400, error: validation.message, code: validation.code };
+    return { ok: false, status: 400, error: validation.message, code: validation.code, authUserId: user.id };
   }
 
   const draft = mergeDraftWithPayload(buildScannerImportDraft(normalizedPayload), input.draft);
   const title = draft.productTitle.trim();
 
   if (!title) {
-    return { ok: false, status: 400, error: "Product title is required" };
+    return { ok: false, status: 400, error: "Product title is required", authUserId: user.id };
   }
 
   const { data, error } = await supabase
@@ -149,6 +158,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
       ok: false,
       status: 409,
       error: "This product already exists in your ideas.",
+      authUserId: user.id,
       duplicate: true,
       ideaId: duplicateIdeaId,
       ideaHref: `/ideas/${encodeURIComponent(duplicateIdeaId)}`,
@@ -161,6 +171,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
       ok: false,
       status: 402,
       error: "You have reached your Scout Workspace save limit.",
+      authUserId: user.id,
       code: "scout_save_limit",
       limitMessage: scoutLimitMessage(productIdeas.length, access),
     };
@@ -248,6 +259,7 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
     ideaId,
     ideaHref: `/ideas/${encodeURIComponent(ideaId)}`,
     duplicateUpdated: Boolean(isUpdatingDuplicate),
+    authUserId: user.id,
   };
 }
 
@@ -303,6 +315,18 @@ export async function POST(req: Request) {
     const result = await importIdea(body);
 
     if (!result.ok) {
+      await recordScoutEvent({
+        eventName: "workspace_save_failed",
+        authUserId: result.authUserId,
+        platform: payloadText(body, "sourcePlatform"),
+        pageUrl: payloadText(body, "sourceUrl"),
+        metadata: {
+          code: result.code ?? null,
+          status: result.status,
+          duplicate: result.duplicate ?? false,
+        },
+      });
+
       return NextResponse.json(
         {
           error: result.error,
@@ -316,6 +340,17 @@ export async function POST(req: Request) {
         { status: result.status },
       );
     }
+
+    await recordScoutEvent({
+      eventName: "workspace_save_success",
+      authUserId: result.authUserId,
+      platform: payloadText(body, "sourcePlatform"),
+      pageUrl: payloadText(body, "sourceUrl"),
+      metadata: {
+        ideaId: result.ideaId,
+        duplicateUpdated: result.duplicateUpdated,
+      },
+    });
 
     return NextResponse.json({
       ok: true,

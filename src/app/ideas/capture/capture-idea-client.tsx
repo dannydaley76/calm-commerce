@@ -7,6 +7,20 @@ import { parseScannerImportPayloadParamDetailed } from "@/lib/scanner-import";
 
 type CaptureState = "saving" | "error";
 
+function trackScoutEvent(eventName: string, payload?: unknown, metadata?: Record<string, unknown>) {
+  const sourcePayload = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
+  void fetch("/api/scout/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventName,
+      platform: typeof sourcePayload.sourcePlatform === "string" ? sourcePayload.sourcePlatform : undefined,
+      pageUrl: typeof sourcePayload.sourceUrl === "string" ? sourcePayload.sourceUrl : undefined,
+      metadata,
+    }),
+  }).catch(() => {});
+}
+
 export function CaptureIdeaClient({ payloadParam }: { payloadParam?: string }) {
   const router = useRouter();
   const started = useRef(false);
@@ -20,9 +34,12 @@ export function CaptureIdeaClient({ payloadParam }: { payloadParam?: string }) {
     async function saveCapture() {
       const parsed = parseScannerImportPayloadParamDetailed(payloadParam);
       if (!parsed.ok) {
+        trackScoutEvent("workspace_save_failed", undefined, { code: parsed.code, stage: "payload_parse" });
         router.replace(`/ideas?importError=${encodeURIComponent(parsed.code)}`);
         return;
       }
+
+      trackScoutEvent("workspace_capture_opened", parsed.payload, { stage: "capture_page" });
 
       try {
         const response = await fetch("/api/ideas/import", {
@@ -38,6 +55,7 @@ export function CaptureIdeaClient({ payloadParam }: { payloadParam?: string }) {
         };
 
         if (response.status === 401) {
+          trackScoutEvent("workspace_auth_prompt_shown", parsed.payload, { stage: "capture_page" });
           router.replace(`/login?next=${encodeURIComponent(`/ideas/capture?payload=${payloadParam ?? ""}`)}`);
           return;
         }
@@ -49,6 +67,7 @@ export function CaptureIdeaClient({ payloadParam }: { payloadParam?: string }) {
 
         router.replace(`/ideas?imported=${encodeURIComponent(result.ideaId)}&importStatus=${result.duplicateUpdated ? "updated" : "added"}`);
       } catch {
+        trackScoutEvent("workspace_save_failed", parsed.payload, { code: "network_error" });
         setState("error");
         setMessage("Scout could not save this product. Try again from the extension.");
       }
