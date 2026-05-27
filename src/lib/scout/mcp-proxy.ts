@@ -12,7 +12,7 @@ export function isScoutMcpConfigured(): boolean {
   return Boolean(mcpApiKey());
 }
 
-export async function proxyScoutMcp(path: "/extract" | "/trends" | "/title", body: unknown) {
+export async function proxyScoutMcp(path: "/extract" | "/trends" | "/title" | "/enrich", body: unknown) {
   const apiKey = mcpApiKey();
   if (!apiKey) {
     return Response.json(
