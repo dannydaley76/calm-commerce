@@ -903,26 +903,47 @@ function LockedSignalCard({
   );
 }
 
-function MarketContextCard({ sourceIdea }: { sourceIdea: ProductIdeaRow }) {
+function MarketContextCard({
+  sourceIdea,
+  onCheck,
+  state,
+}: {
+  sourceIdea: ProductIdeaRow;
+  onCheck: () => void;
+  state: SaveState;
+}) {
   const status = sourceIdea.market_context_status?.trim();
   const note = sourceIdea.market_context_note?.trim();
   const requestedAt = sourceIdea.market_context_requested_at?.trim();
-
-  if (!status && !note) return null;
+  const checkedAt = sourceIdea.market_context_checked_at?.trim();
+  const similarCount = sourceIdea.market_similar_count?.trim();
+  const trend = sourceIdea.market_trend_direction?.trim();
+  const priceMin = sourceIdea.market_price_min?.trim();
+  const priceMedian = sourceIdea.market_price_median?.trim();
+  const priceMax = sourceIdea.market_price_max?.trim();
+  const currency = sourceIdea.market_currency?.trim();
 
   const title = status === "ready"
     ? "Market context ready"
     : status === "failed"
       ? "Market context unavailable"
-      : "Market context queued";
+      : status === "queued"
+        ? "Market context queued"
+        : "Market context not checked";
   const detail = note || (
     status === "failed"
       ? "Scout could not add wider market context for this product yet."
-      : "Scout Pro will add wider-market context here after save."
+      : status === "queued"
+        ? "Scout Pro will add wider-market context here after save."
+        : "Check similar listings, price spread, and wider-market signal for this product."
   );
   const tone = status === "failed"
     ? "border-amber-200 bg-amber-50 text-amber-800"
     : "border-cobalt-100 bg-cobalt-50 text-cobalt-700";
+
+  const priceRange = priceMin || priceMedian || priceMax
+    ? [priceMin, priceMax].filter(Boolean).join(" - ") + (priceMedian ? ` · median ${priceMedian}` : "")
+    : "";
 
   return (
     <div className={`rounded-xl border px-4 py-3 ${tone}`}>
@@ -932,11 +953,26 @@ function MarketContextCard({ sourceIdea }: { sourceIdea: ProductIdeaRow }) {
           <h3 className="mt-1 font-[Manrope] text-lg font-bold">{title}</h3>
           <p className="mt-1 text-sm leading-6 opacity-85">{detail}</p>
         </div>
-        {requestedAt ? (
-          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] opacity-80">
-            {formatDate(requestedAt, "relative")}
-          </span>
-        ) : null}
+        <button
+          type="button"
+          onClick={onCheck}
+          disabled={state === "saving"}
+          className="inline-flex items-center justify-center rounded-xl bg-cobalt-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-cobalt-700 disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt-500 focus-visible:ring-offset-2"
+        >
+          {state === "saving" ? "Checking..." : status === "ready" ? "Refresh" : "Check now"}
+        </button>
+      </div>
+      {status === "ready" ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <CapturedFactCard label="Trend" value={trend || "-"} />
+          <CapturedFactCard label="Similar listings" value={similarCount || "-"} />
+          <CapturedFactCard label="Price spread" value={priceRange ? `${currency ? `${currency} ` : ""}${priceRange}` : "-"} />
+        </div>
+      ) : null}
+      <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] opacity-75">
+        {requestedAt ? <span>Requested {formatDate(requestedAt, "relative")}</span> : null}
+        {checkedAt ? <span>Checked {formatDate(checkedAt, "relative")}</span> : null}
+        {state === "error" ? <span>Check failed</span> : null}
       </div>
     </div>
   );
@@ -946,10 +982,14 @@ function ScoutSignalSummary({
   idea,
   sourceIdea,
   canUseResearchWorkspace,
+  onCheckMarketContext,
+  marketState,
 }: {
   idea: ProductIdeaLifecycle;
   sourceIdea: ProductIdeaRow;
   canUseResearchWorkspace: boolean;
+  onCheckMarketContext: () => void;
+  marketState: SaveState;
 }) {
   const orders = parsedNumber(sourceIdea.observed_order_count);
   const reviews = parsedNumber(sourceIdea.observed_review_count);
@@ -1023,7 +1063,7 @@ function ScoutSignalSummary({
 
       {canUseResearchWorkspace ? (
         <div className="mt-5">
-          <MarketContextCard sourceIdea={sourceIdea} />
+          <MarketContextCard sourceIdea={sourceIdea} onCheck={onCheckMarketContext} state={marketState} />
         </div>
       ) : null}
 
@@ -2236,6 +2276,7 @@ export function IdeaDetailClient({
     test: "idle",
     notes: "idle",
     workspace: "idle",
+    market: "idle",
   });
   const [editSection, setEditSection] = useState<EditSection>(null);
 
@@ -2371,6 +2412,29 @@ export function IdeaDetailClient({
         workspaceStatusLabel: previousLabel,
       }));
       setSectionStatus("workspace", "error");
+    }
+  };
+
+  const checkMarketContext = async () => {
+    setSectionStatus("market", "saving");
+    try {
+      const response = await fetch(`/api/ideas/${encodeURIComponent(idea.ideaId)}/market-context`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Unable to check market context.");
+
+      setSectionStatus("market", "saved");
+      addLocalActivity({
+        label: "Market context checked",
+        detail: "Scout Pro checked wider-market context for this product.",
+        sourceLabel: "Scout Pro",
+        href: "#scout-verdict",
+      });
+      router.refresh();
+      window.setTimeout(() => setSectionStatus("market", "idle"), 1200);
+    } catch {
+      setSectionStatus("market", "error");
     }
   };
 
@@ -2633,6 +2697,8 @@ export function IdeaDetailClient({
         idea={displayIdea}
         sourceIdea={sourceIdea}
         canUseResearchWorkspace={canUseResearchWorkspace}
+        onCheckMarketContext={checkMarketContext}
+        marketState={status.market}
       />
       <EconomicsSnapshot
         economics={economicsDraft}
