@@ -206,6 +206,11 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
     demand_evidence: draft.demandEvidence,
     competition_notes: draft.competitionNotes,
     seasonality: draft.seasonality,
+    market_context_status: access.canUseResearchWorkspace ? "queued" : "",
+    market_context_note: access.canUseResearchWorkspace
+      ? "Scout Pro market context will be added in Workspace after save."
+      : "",
+    market_context_requested_at: access.canUseResearchWorkspace ? capturedAt : "",
   };
 
   const nextProductIdeas = isUpdatingDuplicate && duplicateIndex >= 0

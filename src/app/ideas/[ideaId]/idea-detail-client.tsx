@@ -903,6 +903,45 @@ function LockedSignalCard({
   );
 }
 
+function MarketContextCard({ sourceIdea }: { sourceIdea: ProductIdeaRow }) {
+  const status = sourceIdea.market_context_status?.trim();
+  const note = sourceIdea.market_context_note?.trim();
+  const requestedAt = sourceIdea.market_context_requested_at?.trim();
+
+  if (!status && !note) return null;
+
+  const title = status === "ready"
+    ? "Market context ready"
+    : status === "failed"
+      ? "Market context unavailable"
+      : "Market context queued";
+  const detail = note || (
+    status === "failed"
+      ? "Scout could not add wider market context for this product yet."
+      : "Scout Pro will add wider-market context here after save."
+  );
+  const tone = status === "failed"
+    ? "border-amber-200 bg-amber-50 text-amber-800"
+    : "border-cobalt-100 bg-cobalt-50 text-cobalt-700";
+
+  return (
+    <div className={`rounded-xl border px-4 py-3 ${tone}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-75">Scout Pro</p>
+          <h3 className="mt-1 font-[Manrope] text-lg font-bold">{title}</h3>
+          <p className="mt-1 text-sm leading-6 opacity-85">{detail}</p>
+        </div>
+        {requestedAt ? (
+          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] opacity-80">
+            {formatDate(requestedAt, "relative")}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function ScoutSignalSummary({
   idea,
   sourceIdea,
@@ -981,6 +1020,12 @@ function ScoutSignalSummary({
           <CapturedFactCard key={label} label={label} value={value} badge={badge} />
         ))}
       </div>
+
+      {canUseResearchWorkspace ? (
+        <div className="mt-5">
+          <MarketContextCard sourceIdea={sourceIdea} />
+        </div>
+      ) : null}
 
       {!canUseResearchWorkspace ? (
         <>
