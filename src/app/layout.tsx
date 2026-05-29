@@ -17,7 +17,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 
-const googleAnalyticsId = "G-C230XRZL0G";
+const googleAnalyticsId = "G-B5F5L2KVWF";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
