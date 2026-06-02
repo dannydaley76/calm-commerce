@@ -12,6 +12,7 @@ import {
 import { getProductIdeaId } from "@/lib/v2/worksheets/product-idea-identity";
 import { canSaveMoreScoutProducts, scoutLimitMessage } from "@/lib/scout-workspace-limits";
 import { recordScoutEvent } from "@/lib/scout/events";
+import { saveAnonymousScoutProduct } from "@/lib/scout/anonymous-workspace";
 
 type WorksheetRow = {
   worksheet_id: string;
@@ -87,6 +88,9 @@ type ImportIdeaInput = {
   draft?: ScannerImportDraft;
   updateExistingIdeaId?: string;
   autoUpdateDuplicate?: boolean;
+  workspaceToken?: string;
+  anonymousId?: string;
+  extensionId?: string;
 };
 
 function payloadText(input: ImportIdeaInput, key: "sourcePlatform" | "sourceUrl"): string | undefined {
@@ -99,10 +103,21 @@ function payloadText(input: ImportIdeaInput, key: "sourcePlatform" | "sourceUrl"
 type ImportIdeaResult =
   | { ok: true; ideaId: string; ideaHref: string; duplicateUpdated: boolean; authUserId: string }
   | {
+      ok: true;
+      anonymous: true;
+      productId: string;
+      productTitle: string;
+      duplicateUpdated: boolean;
+      anonymousId?: string;
+      extensionId?: string;
+    }
+  | {
       ok: false;
       status: number;
       error: string;
       authUserId?: string;
+      anonymousId?: string;
+      extensionId?: string;
       code?: string;
       limitMessage?: string;
       duplicate?: boolean;
@@ -268,6 +283,50 @@ async function importIdea(input: ImportIdeaInput): Promise<ImportIdeaResult> {
   };
 }
 
+async function importIdeaOrAnonymous(input: ImportIdeaInput): Promise<ImportIdeaResult> {
+  const activeProject = await getActiveProjectForCurrentUser();
+
+  const normalizedPayload = normalizeScannerImportPayload(input.payload);
+  const validation = validateScannerImportPayload(normalizedPayload);
+  if (!validation.ok) {
+    return {
+      ok: false,
+      status: 400,
+      error: validation.message,
+      code: validation.code,
+      authUserId: activeProject.user?.id,
+      anonymousId: input.anonymousId,
+      extensionId: input.extensionId,
+    };
+  }
+
+  const payload = validation.payload;
+
+  if (!activeProject.user || !activeProject.projectId) {
+    const anonymousResult = await saveAnonymousScoutProduct({
+      payload,
+      draft: input.draft,
+      workspaceToken: input.workspaceToken,
+      anonymousId: input.anonymousId,
+      extensionId: input.extensionId,
+    });
+
+    if (!anonymousResult.ok) return anonymousResult;
+
+    return {
+      ok: true,
+      anonymous: true,
+      productId: anonymousResult.productId,
+      productTitle: anonymousResult.productTitle,
+      duplicateUpdated: anonymousResult.duplicateUpdated,
+      anonymousId: anonymousResult.anonymousId,
+      extensionId: anonymousResult.extensionId,
+    };
+  }
+
+  return importIdea(input);
+}
+
 function workspaceRedirect(request: Request, params: Record<string, string>): NextResponse {
   const url = new URL("/ideas", request.url);
   Object.entries(params).forEach(([key, value]) => {
@@ -305,6 +364,13 @@ export async function GET(request: Request) {
       });
     }
 
+    if ("anonymous" in result) {
+      return workspaceRedirect(request, {
+        imported: result.productId,
+        importStatus: result.duplicateUpdated ? "updated" : "added",
+      });
+    }
+
     return workspaceRedirect(request, {
       imported: result.ideaId,
       importStatus: result.duplicateUpdated ? "updated" : "added",
@@ -317,12 +383,18 @@ export async function GET(request: Request) {
 export async function POST(req: Request) {
   try {
     const body = (await req.json().catch(() => ({}))) as ImportIdeaInput;
-    const result = await importIdea(body);
+    const result = await importIdeaOrAnonymous(body);
 
     if (!result.ok) {
       await recordScoutEvent({
-        eventName: "workspace_save_failed",
+        eventName: result.code === "anonymous_workspace_limit_reached"
+          ? "anonymous_workspace_limit_reached"
+          : result.authUserId
+            ? "workspace_save_failed"
+            : "anonymous_workspace_save_failed",
         authUserId: result.authUserId,
+        anonymousId: result.anonymousId ?? body.anonymousId,
+        extensionId: result.extensionId ?? body.extensionId,
         platform: payloadText(body, "sourcePlatform"),
         pageUrl: payloadText(body, "sourceUrl"),
         metadata: {
@@ -347,15 +419,29 @@ export async function POST(req: Request) {
     }
 
     await recordScoutEvent({
-      eventName: "workspace_save_success",
-      authUserId: result.authUserId,
+      eventName: "anonymous" in result ? "anonymous_workspace_save_success" : "workspace_save_success",
+      authUserId: "anonymous" in result ? undefined : result.authUserId,
+      anonymousId: "anonymous" in result ? result.anonymousId : body.anonymousId,
+      extensionId: "anonymous" in result ? result.extensionId : body.extensionId,
       platform: payloadText(body, "sourcePlatform"),
       pageUrl: payloadText(body, "sourceUrl"),
       metadata: {
-        ideaId: result.ideaId,
+        ideaId: "anonymous" in result ? null : result.ideaId,
+        productId: "anonymous" in result ? result.productId : null,
         duplicateUpdated: result.duplicateUpdated,
+        anonymous: "anonymous" in result,
       },
     });
+
+    if ("anonymous" in result) {
+      return NextResponse.json({
+        ok: true,
+        anonymous: true,
+        productId: result.productId,
+        productTitle: result.productTitle,
+        duplicateUpdated: result.duplicateUpdated,
+      });
+    }
 
     return NextResponse.json({
       ok: true,

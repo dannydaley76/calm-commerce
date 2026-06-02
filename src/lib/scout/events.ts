@@ -11,6 +11,13 @@ const ALLOWED_EVENTS = new Set([
   "workspace_auth_prompt_shown",
   "workspace_save_success",
   "workspace_save_failed",
+  "anonymous_workspace_capture_opened",
+  "anonymous_workspace_save_success",
+  "anonymous_workspace_save_failed",
+  "anonymous_workspace_limit_reached",
+  "anonymous_workspace_signup_prompt_shown",
+  "anonymous_workspace_preview_viewed",
+  "anonymous_workspace_claimed",
   "upgrade_clicked",
 ]);
 

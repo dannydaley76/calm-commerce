@@ -114,6 +114,13 @@ function importNotice(importStatus?: string, importError?: string) {
       tone: "success",
     };
   }
+  if (importStatus === "claimed") {
+    return {
+      title: "Temporary workspace claimed",
+      body: "Your temporary Scout products are now saved in your account. You can edit notes, update status, and keep building the shortlist.",
+      tone: "success",
+    };
+  }
   if (!importError) return null;
   const messages: Record<string, string> = {
     missing: "Scout did not include product data. Open Scout on a product page and try Save to Workspace again.",
