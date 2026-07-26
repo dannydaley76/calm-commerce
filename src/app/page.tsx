@@ -453,10 +453,6 @@ export default async function DashboardPage() {
     getAccessStateForCurrentUser(),
   ]);
 
-  if (!access.authenticated) {
-    redirect("/scout");
-  }
-
   if (access.authenticated && !access.canAccessOsContent) {
     redirect("/ideas");
   }
